@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import ContestantsGrid from './components/ContestantsGrid'
-import ContestantDetail from './components/ContestantDetail'
+import ContestantsGrid from './components/contestantsGrid'
+import ContestantDetail from './components/contestantDetail'
 
 function App() {
   const [selected, setSelected] = useState(null)
