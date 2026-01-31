@@ -1,59 +1,50 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import { useNavigate } from 'react-router-dom'
 
-function ContestantsGrid({ onSelect }) {
+export default function ContestantsGrid() {
   const [contestants, setContestants] = useState([])
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetchContestants()
   }, [])
 
-  const fetchContestants = async () => {
+  async function fetchContestants() {
     const { data, error } = await supabase
       .from('contestants')
       .select('*')
-      .order('name')
 
     if (error) console.error(error)
     else setContestants(data)
   }
 
   return (
-    <div style={{ padding: '2rem' }}>
+    <div>
       <h1>Contestants</h1>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-          gap: '1rem'
-        }}
-      >
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
         {contestants.map(c => (
           <div
             key={c.id}
-            onClick={() => onSelect(c, contestants)}
+            onClick={() => navigate(`/contestant/${c.id}`)}
             style={{
               cursor: 'pointer',
-              textAlign: 'center'
+              border: '1px solid #ccc',
+              padding: '1rem',
+              width: '150px'
             }}
           >
             <img
               src={c.picture_url}
               alt={c.name}
-              style={{
-                width: '140px',
-                height: '180px',
-                objectFit: 'cover',
-                borderRadius: '8px'
-              }}
+              width="100%"
             />
-            <p>{c.name}</p>
+
+            <h3>{c.name}</h3>
           </div>
         ))}
       </div>
     </div>
   )
 }
-
-export default ContestantsGrid
