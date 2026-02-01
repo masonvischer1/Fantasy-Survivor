@@ -10,13 +10,15 @@ export default function ContestantDetail() {
   const [allContestants, setAllContestants] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [draftedIds, setDraftedIds] = useState([])
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     fetchContestants()
     fetchDrafted()
+    checkAdmin()
   }, [])
 
-  // Load all contestants to enable next/prev
+  // Fetch all contestants
   async function fetchContestants() {
     const { data, error } = await supabase
       .from('contestants')
@@ -32,9 +34,10 @@ export default function ContestantDetail() {
     }
   }
 
-  // Load drafted players for current user
+  // Fetch current user's drafted team
   async function fetchDrafted() {
-    const user = (await supabase.auth.getUser()).data.user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
     const { data } = await supabase
       .from('fantasy_teams')
       .select('contestant_id')
@@ -43,40 +46,44 @@ export default function ContestantDetail() {
     if (data) setDraftedIds(data.map(d => d.contestant_id))
   }
 
-  // Draft current contestant
+  // Check if current user is admin
+  async function checkAdmin() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single()
+
+    if (data?.is_admin) setIsAdmin(true)
+  }
+
+  // Draft player
   const draftPlayer = async () => {
     if (draftedIds.includes(contestant.id)) {
       alert("Player already drafted!")
       return
     }
 
-    const user = (await supabase.auth.getUser()).data.user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
-    // Check current picks
-    const { data: currentPicks, error: fetchError } = await supabase
+    const { data: currentPicks } = await supabase
       .from('fantasy_teams')
       .select('*')
       .eq('user_id', user.id)
-
-    if (fetchError) {
-      console.error(fetchError)
-      return
-    }
 
     if (currentPicks.length >= 5) {
       alert("You have already drafted 5 players!")
       return
     }
 
-    // Insert new pick
     const { error } = await supabase
       .from('fantasy_teams')
       .insert([
-        {
-          user_id: user.id,
-          contestant_id: contestant.id,
-          pick_type: 'initial'
-        }
+        { user_id: user.id, contestant_id: contestant.id, pick_type: 'initial' }
       ])
 
     if (error) console.error(error)
@@ -86,6 +93,27 @@ export default function ContestantDetail() {
     }
   }
 
+  // Admin elimination logic
+  const eliminatePlayer = async () => {
+    const dayElim = prompt("Enter the day this player was eliminated (Cancel to abort)")
+    if (!dayElim) return
+
+    const { error } = await supabase
+      .from('contestants')
+      .update({
+        is_eliminated: true,
+        elim_day: parseInt(dayElim)
+      })
+      .eq('id', contestant.id)
+
+    if (error) console.error(error)
+    else {
+      setContestant({ ...contestant, is_eliminated: true, elim_day: parseInt(dayElim) })
+      alert(`${contestant.name} has been eliminated (Day ${dayElim})`)
+    }
+  }
+
+  // Navigation
   const next = () => {
     const newIndex = (currentIndex + 1) % allContestants.length
     setCurrentIndex(newIndex)
@@ -102,16 +130,34 @@ export default function ContestantDetail() {
   if (!contestant) return <div>Loading contestant...</div>
 
   return (
-    <div style={{ padding: '2rem', textAlign: 'center' }}>
+    <div style={{ padding: '2rem', textAlign: 'center', position: 'relative' }}>
       <button onClick={() => navigate(-1)}>← Back</button>
 
-      <p>
-        Picks remaining: {Math.max(0, 5 - draftedIds.length)}
-      </p>
+      {/* Admin button at top-right */}
+      {isAdmin && !contestant.is_eliminated && (
+        <button
+          onClick={eliminatePlayer}
+          style={{
+            position: 'absolute',
+            top: '2rem',
+            right: '2rem',
+            backgroundColor: 'red',
+            color: 'white',
+            padding: '0.5rem 1rem',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer'
+          }}
+        >
+          Eliminate Player
+        </button>
+      )}
+
+      <p>Picks remaining: {Math.max(0, 5 - draftedIds.length)}</p>
 
       <div style={{ marginTop: '1rem' }}>
         <img
-          src={contestant.picture_url}
+          src={contestant.is_eliminated ? contestant.elimPhoto_url : contestant.picture_url}
           alt={contestant.name}
           style={{ width: '250px', borderRadius: '10px' }}
         />
