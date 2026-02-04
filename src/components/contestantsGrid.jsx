@@ -37,34 +37,59 @@ export default function ContestantsGrid() {
   }
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', padding: '2rem' }}>
-      {contestants.map(c => (
-        <div
-          key={c.id}
-          onClick={() => navigate(`/contestant/${c.id}`)}
-          style={{
-            position: 'relative',
-            width: '150px',
-            cursor: 'pointer',
-            textAlign: 'center'
-          }}
-        >
-          <img
-            src={c.picture_url || '/fallback.png'}
-            alt={c.name}
-            style={{
-              width: '150px',
-              height: '150px',
-              objectFit: 'cover',
-              borderRadius: '10px',
-              border: draftedIds.includes(c.id) ? '3px solid green' : 'none',
-              filter: c.is_eliminated ? 'grayscale(100%)' : 'none'  // Grey out eliminated contestants
-            }}
-          />
+    <div style={{ padding: '2rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+      {contestants.map(c => {
+        const isDrafted = draftedIds.includes(c.id)
+        const isEliminated = c.is_eliminated
 
-          <p style={{ marginTop: '0.5rem', fontWeight: 'bold' }}>{c.name}</p>
-        </div>
-      ))}
+        return (
+          <div
+            key={c.id}
+            onClick={() => navigate(`/contestant/${c.id}`)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              padding: '1rem',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              background: 'linear-gradient(135deg, rgba(0,0,0,0.8), rgba(70,40,0,0.6))',
+              border: '1px solid #fff',
+              filter: isEliminated ? 'grayscale(100%)' : 'none',
+              opacity: isEliminated ? 0.6 : 1
+            }}
+          >
+            <img
+              src={c.picture_url || '/fallback.png'}
+              alt={c.name}
+              style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                border: isDrafted ? '3px solid #00FF00' : '2px solid #fff'
+              }}
+            />
+            <div style={{ flex: 1, color: 'white' }}>
+              <p style={{ fontWeight: 'bold', textTransform: 'uppercase', margin: 0, fontSize: '1rem' }}>
+                {c.name}
+              </p>
+              <p style={{ margin: '0.2rem 0', fontSize: '0.85rem', opacity: 0.8 }}>
+                {c.city ? `${c.city}, ${c.state}` : ''}
+              </p>
+              <span
+                style={{
+                  fontWeight: 'bold',
+                  fontSize: '0.8rem',
+                  color: '#FFD700'
+                }}
+              >
+                Contestant Details
+              </span>
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
