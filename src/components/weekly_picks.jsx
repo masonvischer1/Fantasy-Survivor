@@ -5,20 +5,22 @@ import { supabase } from "../supabaseClient";
 const TEAMS = [
   { name: "Kalo", color: "#3B82F6" }, // Blue
   { name: "Cila", color: "#F97316" }, // Orange
-  { name: "Vatu", color: "#A855F7" }, // Pinkish Purple
+  { name: "Vatu", color: "#A855F7" }, // Purple
 ];
 
-export default function WeeklyPicks() {
+const TOTAL_EPISODES = 14;
+
+export default function WeeklyPicks({ currentWeek }) {
   const [profile, setProfile] = useState(null);
-  const [selectedWeek, setSelectedWeek] = useState(1);
-  const [selectedTeam, setSelectedTeam] = useState("");
+  const [selectedEpisode, setSelectedEpisode] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Fetch profile
+  // Fetch profile once
   useEffect(() => {
     const fetchProfile = async () => {
-      const user = supabase.auth.user();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) return console.error(userError);
       if (!user) return;
 
       const { data, error } = await supabase
@@ -28,92 +30,109 @@ export default function WeeklyPicks() {
         .single();
 
       if (error) console.error(error);
-      else {
-        setProfile(data);
-        setSelectedTeam(data.weekly_picks?.[selectedWeek] || "");
-      }
+      else setProfile(data);
     };
-
     fetchProfile();
-  }, [selectedWeek]);
+  }, []);
 
-  const handlePick = async (team) => {
-    if (!profile) return;
+  const handleTeamPick = async (teamName) => {
+    if (!profile || selectedEpisode === null) return;
 
-    setSelectedTeam(team);
     setLoading(true);
     setSaved(false);
 
     const updatedPicks = {
       ...profile.weekly_picks,
-      [selectedWeek]: team,
+      [selectedEpisode]: teamName,
     };
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) {
+      console.error(userError);
+      setLoading(false);
+      return;
+    }
 
     const { error } = await supabase
       .from("profiles")
       .update({ weekly_picks: updatedPicks })
-      .eq("id", supabase.auth.user().id);
+      .eq("id", user.id);
 
     if (!error) {
       setProfile((prev) => ({ ...prev, weekly_picks: updatedPicks }));
       setSaved(true);
+      setSelectedEpisode(null);
     } else {
-      console.error("Error saving pick:", error);
+      console.error(error);
     }
 
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6">
-      <h1 className="text-4xl font-bold mb-6 text-center">
-        Week {selectedWeek} Immunity Pick
-      </h1>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-6">
+      <h1 className="text-4xl font-bold mb-6 text-center">Survivor Picks</h1>
+      <p className="text-center mb-6">
+        Click an episode to pick a team (up to episode {currentWeek})
+      </p>
 
-      {/* Week selector */}
-      <div className="mb-8">
-        <label className="mr-2 font-semibold text-lg">Select Week:</label>
-        <select
-          value={selectedWeek}
-          onChange={(e) => setSelectedWeek(Number(e.target.value))}
-          className="border border-gray-300 rounded px-3 py-2 text-lg"
-        >
-          {Array.from({ length: 10 }, (_, i) => i + 1).map((week) => (
-            <option key={week} value={week}>
-              Week {week}
-            </option>
+      {/* Game Board */}
+      <div className="flex justify-center w-full mb-8">
+        <div className="grid grid-cols-7 gap-3 border-4 border-gray-700 rounded-lg p-3 bg-gray-200">
+          {Array.from({ length: TOTAL_EPISODES }, (_, i) => {
+            const episodeNum = i + 1;
+            const pickedTeam = profile?.weekly_picks?.[episodeNum];
+            const isDisabled = episodeNum > currentWeek;
+
+            return (
+              <div
+                key={episodeNum}
+                onClick={() => !isDisabled && setSelectedEpisode(episodeNum)}
+                style={{
+                  backgroundColor: pickedTeam
+                    ? TEAMS.find((t) => t.name === pickedTeam)?.color
+                    : isDisabled
+                    ? "#E5E7EB"
+                    : "#FFFFFF",
+                  border: "2px solid #6B7280",
+                  width: "70px",
+                  height: "70px",
+                }}
+                className={`flex items-center justify-center font-extrabold text-2xl rounded-md cursor-pointer transition-all ${
+                  isDisabled ? "cursor-not-allowed" : "hover:scale-105"
+                }`}
+              >
+                {episodeNum}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Team Selection Panel */}
+      {selectedEpisode !== null && (
+        <div className="flex flex-wrap gap-6 justify-center w-full max-w-3xl mt-6 mb-8">
+          <p className="w-full text-center mb-2 text-lg font-semibold">
+            Select a team for Episode {selectedEpisode}
+          </p>
+          {TEAMS.map((team) => (
+            <button
+              key={team.name}
+              onClick={() => handleTeamPick(team.name)}
+              disabled={loading}
+              style={{ backgroundColor: team.color, color: "#ffffff" }}
+              className="flex-1 min-w-[140px] sm:min-w-[180px] px-6 py-6 text-xl font-extrabold rounded-2xl shadow-lg hover:scale-105 transform transition-all text-center"
+            >
+              {team.name}
+            </button>
           ))}
-        </select>
-      </div>
-
-      {/* Team Buttons */}
-      <div className="flex flex-col sm:flex-row gap-6 justify-center w-full max-w-3xl">
-        {TEAMS.map((team) => (
-          <button
-            key={team.name}
-            onClick={() => handlePick(team.name)}
-            disabled={loading}
-            style={{
-              backgroundColor: selectedTeam === team.name ? team.color : "#ffffff",
-              color: selectedTeam === team.name ? "#ffffff" : team.color,
-              border: `3px solid ${team.color}`,
-            }}
-            className="flex-1 px-10 py-8 text-2xl font-bold rounded-lg shadow-lg hover:scale-105 transform transition-all"
-          >
-            {team.name}
-          </button>
-        ))}
-      </div>
+        </div>
+      )}
 
       {/* Status */}
-      <div className="mt-6 text-center">
+      <div className="text-center">
         {saved && <p className="text-green-600 text-xl font-semibold">Pick saved!</p>}
         {loading && <p className="text-gray-500 text-lg">Saving...</p>}
-        {!loading && selectedTeam && (
-          <p className="text-lg mt-2">
-            You selected <strong>{selectedTeam}</strong> for Week {selectedWeek}.
-          </p>
-        )}
       </div>
     </div>
   );
