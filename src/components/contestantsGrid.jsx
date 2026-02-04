@@ -1,25 +1,33 @@
 import React, { useEffect, useState } from 'react'
-import { supabase } from '../supabaseClient'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../supabaseClient'
 
 export default function ContestantsGrid() {
+  const navigate = useNavigate()
   const [contestants, setContestants] = useState([])
   const [draftedIds, setDraftedIds] = useState([])
-  const navigate = useNavigate()
 
   useEffect(() => {
     fetchContestants()
     fetchDrafted()
   }, [])
 
+  // Fetch all contestants from Supabase
   async function fetchContestants() {
-    const { data, error } = await supabase.from('contestants').select('*')
+    const { data, error } = await supabase
+      .from('contestants')
+      .select('*')
+      .order('name')
+
     if (error) console.error(error)
     else setContestants(data)
   }
 
+  // Fetch drafted contestants for the current user
   async function fetchDrafted() {
-    const user = (await supabase.auth.getUser()).data.user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
     const { data } = await supabase
       .from('fantasy_teams')
       .select('contestant_id')
@@ -29,30 +37,69 @@ export default function ContestantsGrid() {
   }
 
   return (
-    <div>
-      <h1>Contestants</h1>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', padding: '2rem' }}>
+        <button
+      onClick={fetchContestants}
+      style={{
+        marginBottom: '1rem',
+        padding: '0.5rem 1rem',
+        borderRadius: '5px',
+        border: 'none',
+        backgroundColor: '#0070f3',
+        color: 'white',
+        cursor: 'pointer'
+      }}
+    ></button>
+      {contestants.map(c => (
+        <div
+          key={c.id}
+          onClick={() => navigate(`/contestant/${c.id}`)}
+          style={{
+            position: 'relative',
+            width: '150px',
+            cursor: 'pointer',
+            textAlign: 'center'
+          }}
+        >
+          <img
+            src={c.is_eliminated ? c.elimPhoto_url : c.picture_url}
+            alt={c.name}
+            style={{
+              width: '150px',
+              height: '150px',
+              objectFit: 'cover',
+              borderRadius: '10px',
+              border: draftedIds.includes(c.id) ? '3px solid green' : 'none',
+              filter: c.is_eliminated ? 'grayscale(80%)' : 'none'
+            }}
+          />
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-        {contestants.map(c => {
-          const drafted = draftedIds.includes(c.id)
-          return (
+          {/* Overlay for eliminated players */}
+          {c.is_eliminated && (
             <div
-              key={c.id}
-              onClick={() => navigate(`/contestant/${c.id}`)}
               style={{
-                cursor: 'pointer',
-                border: drafted ? '3px solid green' : '1px solid #ccc',
-                padding: '1rem',
-                width: '150px',
-                opacity: drafted ? 0.7 : 1
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                backgroundColor: 'rgba(255,0,0,0.4)',
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 'bold',
+                color: 'white',
+                fontSize: '0.9rem'
               }}
             >
-              <img src={c.picture_url} alt={c.name} width="100%" />
-              <h3>{c.name}</h3>
+              Eliminated
             </div>
-          )
-        })}
-      </div>
+          )}
+
+          <p style={{ marginTop: '0.5rem', fontWeight: 'bold' }}>{c.name}</p>
+        </div>
+      ))}
     </div>
   )
 }

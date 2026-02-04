@@ -13,22 +13,20 @@ export default function MyTeam() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    // Get profile
-    const { data: profileData, error: profileError } = await supabase
+    // Fetch profile including the team
+    const { data, error } = await supabase
       .from('profiles')
-      .select('team_name, profile_pic_url')
+      .select('team_name, avatar_url, team')
       .eq('id', user.id)
       .single()
-    if (profileError) console.error(profileError)
-    else setProfile(profileData)
 
-    // Get drafted team
-    const { data: teamData, error: teamError } = await supabase
-      .from('fantasy_teams')
-      .select('contestant_id(name, tribe, season, picture_url, is_eliminated, elimPhoto_url)')
-      .eq('user_id', user.id)
-    if (teamError) console.error(teamError)
-    else setTeam(teamData.map(t => t.contestant_id))
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    setProfile(data)
+    setTeam(data.team || []) // 'team' is JSONB array of drafted contestants
   }
 
   if (!profile) return <div>Loading profile...</div>
@@ -37,9 +35,9 @@ export default function MyTeam() {
     <div style={{ padding: '2rem', textAlign: 'center' }}>
       {/* Profile header */}
       <div style={{ marginBottom: '2rem' }}>
-        {profile.profile_pic_url && (
+        {profile.avatar_url && (
           <img
-            src={profile.profile_pic_url}
+            src={profile.avatar_url}
             alt="Profile"
             style={{ width: '100px', borderRadius: '50%' }}
           />

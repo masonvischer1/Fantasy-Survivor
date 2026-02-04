@@ -1,69 +1,125 @@
-import React, { useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 
+import Navbar from './components/Navbar'
+
 import Login from './components/Login'
-import ContestantsGrid from './components/contestantsGrid'
+import Contestants from './components/contestantsGrid'
 import ContestantDetail from './components/contestantDetail'
 import MyTeam from './components/MyTeam'
+import Teams from './components/Teams'
+import CreateTeam from './components/CreateTeam'
 
 function App() {
   const [session, setSession] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [profile, setProfile] = useState(null)
+  const [loadingProfile, setLoadingProfile] = useState(true)
 
+  // Get auth session
   useEffect(() => {
-    // Get current session
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
-      setLoading(false)
     })
 
-    // Listen for login/logout
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session)
       }
     )
 
-    return () => {
-      listener.subscription.unsubscribe()
-    }
+    return () => listener.subscription.unsubscribe()
   }, [])
 
-  if (loading) return <div>Loading...</div>
+  // Fetch profile once session exists
+  useEffect(() => {
+    if (!session) {
+      setProfile(null)
+      setLoadingProfile(false)
+      return
+    }
 
-  // Show login if not authenticated
-  if (!session) {
-    return <Login />
+    fetchProfile()
+  }, [session])
+
+  async function fetchProfile() {
+    setLoadingProfile(true)
+
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .single()
+
+    setProfile(data)
+    setLoadingProfile(false)
+  }
+
+  if (loadingProfile) {
+    return <div style={{ padding: '2rem' }}>Loading...</div>
   }
 
   return (
-    <BrowserRouter>
-      <div style={{ padding: '1rem' }}>
-        {/* Navigation */}
-        <nav style={{ marginBottom: '1rem' }}>
-          <Link to="/">Contestants</Link>{" | "}
-          <Link to="/my-team">My Team</Link>{" | "}
-          <button onClick={() => supabase.auth.signOut()}>
-            Logout
-          </button>
-        </nav>
+    <Router>
+      <Navbar session={session} profile={profile} />
 
-        {/* Routes */}
-        <Routes>
-          <Route path="/" element={<ContestantsGrid />} />
+      <Routes>
+        {/* Login */}
+        <Route path="/login" element={<Login />} />
 
-          {/* Detail page */}
-          <Route
-            path="/contestant/:id"
-            element={<ContestantDetail />}
-          />
+        {/* Create team required after signup */}
+        <Route
+          path="/create-team"
+          element={
+            session ? <CreateTeam /> : <Navigate to="/login" />
+          }
+        />
 
-          {/* My fantasy team */}
-          <Route path="/my-team" element={<MyTeam />} />
-        </Routes>
-      </div>
-    </BrowserRouter>
+        {/* Contestants */}
+        <Route
+          path="/"
+          element={
+            session && !profile
+              ? <Navigate to="/create-team" />
+              : <Contestants />
+          }
+        />
+
+        {/* Contestant Detail */}
+        <Route
+          path="/contestant/:id"
+          element={
+            session && !profile
+              ? <Navigate to="/create-team" />
+              : <ContestantDetail />
+          }
+        />
+
+        {/* My Team */}
+        <Route
+          path="/my-team"
+          element={
+            session ? (
+              profile ? <MyTeam /> : <Navigate to="/create-team" />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+
+        {/* League Teams */}
+        <Route
+          path="/teams"
+          element={
+            session ? (
+              profile ? <Teams /> : <Navigate to="/create-team" />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+      </Routes>
+    </Router>
   )
 }
 

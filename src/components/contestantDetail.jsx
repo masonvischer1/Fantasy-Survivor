@@ -11,15 +11,17 @@ export default function ContestantDetail() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [draftedIds, setDraftedIds] = useState([])
   const [isAdmin, setIsAdmin] = useState(false)
+  const [userProfile, setUserProfile] = useState(null)
 
+  // Fetch contestant, all contestants, drafted picks, and admin status
   useEffect(() => {
-    fetchContestants()
-    fetchDrafted()
-    checkAdmin()
-  }, [])
+    fetchAllContestants()
+    fetchContestant()
+    fetchUserProfile()
+  }, [id])
 
-  // Fetch all contestants
-  async function fetchContestants() {
+  // Fetch all contestants for navigation
+  async function fetchAllContestants() {
     const { data, error } = await supabase
       .from('contestants')
       .select('*')
@@ -30,70 +32,81 @@ export default function ContestantDetail() {
       setAllContestants(data)
       const index = data.findIndex(c => c.id.toString() === id)
       setCurrentIndex(index)
-      setContestant(data[index])
     }
   }
 
-  // Fetch current user's drafted team
-  async function fetchDrafted() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { data } = await supabase
-      .from('fantasy_teams')
-      .select('contestant_id')
-      .eq('user_id', user.id)
+  // Fetch the current contestant
+  async function fetchContestant() {
+    const { data, error } = await supabase
+      .from('contestants')
+      .select('*')
+      .eq('id', id)
+      .single()
 
-    if (data) setDraftedIds(data.map(d => d.contestant_id))
+    if (error) console.error(error)
+    else setContestant(data)
   }
 
-  // Check if current user is admin
-  async function checkAdmin() {
+  // Fetch current user's profile and picks
+  async function fetchUserProfile() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
-      .select('is_admin')
+      .select('id, team, is_admin')
       .eq('id', user.id)
       .single()
 
-    if (data?.is_admin) setIsAdmin(true)
+    if (error) console.error(error)
+    else {
+      setUserProfile(data)
+      setDraftedIds(data.team?.map(p => p.id) || [])
+      setIsAdmin(data.is_admin || false)
+    }
   }
 
-  // Draft player
+  // Draft a player
   const draftPlayer = async () => {
     if (draftedIds.includes(contestant.id)) {
       alert("Player already drafted!")
       return
     }
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!userProfile) return
 
-    const { data: currentPicks } = await supabase
-      .from('fantasy_teams')
-      .select('*')
-      .eq('user_id', user.id)
+    const currentPicks = userProfile.team || []
 
     if (currentPicks.length >= 5) {
       alert("You have already drafted 5 players!")
       return
     }
 
+    const newTeam = [
+      ...currentPicks,
+      {
+        id: contestant.id,
+        name: contestant.name,
+        picture_url: contestant.picture_url,
+        elimPhoto_url: contestant.elimPhoto_url,
+        is_eliminated: contestant.is_eliminated || false
+      }
+    ]
+
     const { error } = await supabase
-      .from('fantasy_teams')
-      .insert([
-        { user_id: user.id, contestant_id: contestant.id, pick_type: 'initial' }
-      ])
+      .from('profiles')
+      .update({ team: newTeam })
+      .eq('id', userProfile.id)
 
     if (error) console.error(error)
     else {
+      setUserProfile({ ...userProfile, team: newTeam })
+      setDraftedIds(newTeam.map(p => p.id))
       alert(`${contestant.name} added to your team!`)
-      setDraftedIds([...draftedIds, contestant.id])
     }
   }
 
-  // Admin elimination logic
+  // Admin eliminate logic
   const eliminatePlayer = async () => {
     const dayElim = prompt("Enter the day this player was eliminated (Cancel to abort)")
     if (!dayElim) return
@@ -108,7 +121,7 @@ export default function ContestantDetail() {
 
     if (error) console.error(error)
     else {
-      setContestant({ ...contestant, is_eliminated: true, elim_day: parseInt(dayElim) })
+      fetchContestant()
       alert(`${contestant.name} has been eliminated (Day ${dayElim})`)
     }
   }
@@ -133,7 +146,6 @@ export default function ContestantDetail() {
     <div style={{ padding: '2rem', textAlign: 'center', position: 'relative' }}>
       <button onClick={() => navigate(-1)}>← Back</button>
 
-      {/* Admin button at top-right */}
       {isAdmin && !contestant.is_eliminated && (
         <button
           onClick={eliminatePlayer}
@@ -165,17 +177,13 @@ export default function ContestantDetail() {
         <p><b>Season:</b> {contestant.season}</p>
         <p><b>Tribe:</b> {contestant.tribe}</p>
         <p><b>Score:</b> {contestant.score}</p>
-        <p style={{ maxWidth: '600px', margin: '1rem auto' }}>
-          {contestant.bio}
-        </p>
+        <p style={{ maxWidth: '600px', margin: '1rem auto' }}>{contestant.bio}</p>
 
         <button
           onClick={draftPlayer}
           disabled={draftedIds.includes(contestant.id)}
           style={{
-            backgroundColor: draftedIds.includes(contestant.id)
-              ? 'gray'
-              : 'green',
+            backgroundColor: draftedIds.includes(contestant.id) ? 'gray' : 'green',
             color: 'white',
             padding: '0.5rem 1rem',
             marginTop: '1rem',
@@ -189,9 +197,7 @@ export default function ContestantDetail() {
 
         <div style={{ marginTop: '1rem' }}>
           <button onClick={prev}>← Prev</button>
-          <button onClick={next} style={{ marginLeft: '1rem' }}>
-            Next →
-          </button>
+          <button onClick={next} style={{ marginLeft: '1rem' }}>Next →</button>
         </div>
       </div>
     </div>
