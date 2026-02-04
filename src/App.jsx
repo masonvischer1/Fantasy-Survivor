@@ -1,61 +1,62 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
-import { supabase } from './supabaseClient'
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "./supabaseClient";
 
-import Navbar from './components/Navbar'
+import Navbar from "./components/Navbar";
 
-import Login from './components/Login'
-import Contestants from './components/contestantsGrid'
-import ContestantDetail from './components/contestantDetail'
-import MyTeam from './components/MyTeam'
-import Teams from './components/Teams'
-import CreateTeam from './components/CreateTeam'
-import Profile from './components/Profile'
+import Login from "./components/Login";
+import Contestants from "./components/contestantsGrid";
+import ContestantDetail from "./components/contestantDetail";
+import MyTeam from "./components/MyTeam";
+import Teams from "./components/Teams";
+import CreateTeam from "./components/CreateTeam";
+import Profile from "./components/Profile";
+import WeeklyPicksPage from "./components/weekly_picks"; // <- new page import
 
 function App() {
-  const [session, setSession] = useState(null)
-  const [profile, setProfile] = useState(null)
-  const [loadingProfile, setLoadingProfile] = useState(true)
+  const [session, setSession] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   // Track Supabase auth session
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-    })
+      setSession(data.session);
+    });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
+      setSession(session);
+    });
 
-    return () => listener.subscription.unsubscribe()
-  }, [])
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
   // Fetch profile once session exists
   useEffect(() => {
     if (!session) {
-      setProfile(null)
-      setLoadingProfile(false)
-      return
+      setProfile(null);
+      setLoadingProfile(false);
+      return;
     }
 
-    fetchProfile()
-  }, [session])
+    fetchProfile();
+  }, [session]);
 
   async function fetchProfile() {
-    setLoadingProfile(true)
+    setLoadingProfile(true);
     const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', session.user.id)
-      .single()
+      .from("profiles")
+      .select("*")
+      .eq("id", session.user.id)
+      .single();
 
-    if (error) console.error(error)
-    else setProfile(data)
-    setLoadingProfile(false)
+    if (error) console.error(error);
+    else setProfile(data);
+    setLoadingProfile(false);
   }
 
   if (loadingProfile) {
-    return <div style={{ padding: '2rem' }}>Loading...</div>
+    return <div style={{ padding: "2rem" }}>Loading...</div>;
   }
 
   return (
@@ -87,38 +88,20 @@ function App() {
         {/* Contestants */}
         <Route
           path="/"
-          element={
-            session && !profile ? (
-              <Navigate to="/create-team" />
-            ) : (
-              <Contestants />
-            )
-          }
+          element={session && !profile ? <Navigate to="/create-team" /> : <Contestants />}
         />
 
         {/* Contestant Detail */}
         <Route
           path="/contestant/:id"
-          element={
-            session && !profile ? (
-              <Navigate to="/create-team" />
-            ) : (
-              <ContestantDetail />
-            )
-          }
+          element={session && !profile ? <Navigate to="/create-team" /> : <ContestantDetail />}
         />
 
         {/* My Team */}
         <Route
           path="/my-team"
           element={
-            session ? (
-              profile ? (
-                <MyTeam profile={profile} />
-              ) : (
-                <Navigate to="/create-team" />
-              )
-            ) : (
+            session ? (profile ? <MyTeam profile={profile} /> : <Navigate to="/create-team" />) : (
               <Navigate to="/login" />
             )
           }
@@ -127,17 +110,17 @@ function App() {
         {/* League Teams */}
         <Route
           path="/teams"
-          element={
-            session ? (
-              profile ? <Teams /> : <Navigate to="/create-team" />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
+          element={session ? (profile ? <Teams /> : <Navigate to="/create-team" />) : <Navigate to="/login" />}
+        />
+
+        {/* Weekly Picks Page */}
+        <Route
+          path="/weekly-picks"
+          element={session ? (profile ? <WeeklyPicksPage /> : <Navigate to="/create-team" />) : <Navigate to="/login" />}
         />
       </Routes>
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;
