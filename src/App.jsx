@@ -3,26 +3,25 @@ import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 
 import Navbar from './components/Navbar'
+
 import Login from './components/Login'
 import Contestants from './components/contestantsGrid'
 import ContestantDetail from './components/contestantDetail'
 import MyTeam from './components/MyTeam'
 import Teams from './components/Teams'
 import CreateTeam from './components/CreateTeam'
+import Profile from './components/Profile'
 
 function App() {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loadingProfile, setLoadingProfile] = useState(true)
 
-  // Listen to auth state changes
+  // Track Supabase auth session
   useEffect(() => {
-    const getSession = async () => {
-      const { data } = await supabase.auth.getSession()
+    supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
-    }
-
-    getSession()
+    })
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
@@ -31,40 +30,32 @@ function App() {
     return () => listener.subscription.unsubscribe()
   }, [])
 
-  // Fetch profile when session exists
+  // Fetch profile once session exists
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!session?.user) {
-        setProfile(null)
-        setLoading(false)
-        return
-      }
-
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single()
-
-      if (error) console.error(error)
-      setProfile(data)
-      setLoading(false)
+    if (!session) {
+      setProfile(null)
+      setLoadingProfile(false)
+      return
     }
 
     fetchProfile()
   }, [session])
 
-  // Show loading screen while fetching profile
-  if (loading) {
-    return <div style={{ padding: '2rem' }}>Loading...</div>
+  async function fetchProfile() {
+    setLoadingProfile(true)
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .single()
+
+    if (error) console.error(error)
+    else setProfile(data)
+    setLoadingProfile(false)
   }
 
-  // ProtectedRoute wrapper
-  const ProtectedRoute = ({ children, requireProfile = false }) => {
-    if (!session) return <Navigate to="/login" />
-    if (requireProfile && !profile) return <Navigate to="/create-team" />
-    return children
+  if (loadingProfile) {
+    return <div style={{ padding: '2rem' }}>Loading...</div>
   }
 
   return (
@@ -73,35 +64,47 @@ function App() {
 
       <Routes>
         {/* Login */}
-        <Route path="/login" element={session ? <Navigate to="/my-team" /> : <Login />} />
+        <Route path="/login" element={<Login />} />
 
-        {/* Create team */}
+        {/* Profile */}
         <Route
-          path="/create-team"
+          path="/profile"
           element={
-            <ProtectedRoute>
-              <CreateTeam />
-            </ProtectedRoute>
+            session ? (
+              <Profile session={session} profile={profile} setProfile={setProfile} />
+            ) : (
+              <Navigate to="/login" />
+            )
           }
         />
 
-        {/* Contestants grid */}
+        {/* Create team required after signup */}
+        <Route
+          path="/create-team"
+          element={session ? <CreateTeam /> : <Navigate to="/login" />}
+        />
+
+        {/* Contestants */}
         <Route
           path="/"
           element={
-            <ProtectedRoute requireProfile={false}>
+            session && !profile ? (
+              <Navigate to="/create-team" />
+            ) : (
               <Contestants />
-            </ProtectedRoute>
+            )
           }
         />
 
-        {/* Contestant detail */}
+        {/* Contestant Detail */}
         <Route
           path="/contestant/:id"
           element={
-            <ProtectedRoute requireProfile={false}>
+            session && !profile ? (
+              <Navigate to="/create-team" />
+            ) : (
               <ContestantDetail />
-            </ProtectedRoute>
+            )
           }
         />
 
@@ -109,9 +112,15 @@ function App() {
         <Route
           path="/my-team"
           element={
-            <ProtectedRoute requireProfile={true}>
-              <MyTeam />
-            </ProtectedRoute>
+            session ? (
+              profile ? (
+                <MyTeam profile={profile} />
+              ) : (
+                <Navigate to="/create-team" />
+              )
+            ) : (
+              <Navigate to="/login" />
+            )
           }
         />
 
@@ -119,16 +128,12 @@ function App() {
         <Route
           path="/teams"
           element={
-            <ProtectedRoute requireProfile={true}>
-              <Teams />
-            </ProtectedRoute>
+            session ? (
+              profile ? <Teams /> : <Navigate to="/create-team" />
+            ) : (
+              <Navigate to="/login" />
+            )
           }
-        />
-
-        {/* Catch-all */}
-        <Route
-          path="*"
-          element={<Navigate to={session ? "/my-team" : "/login"} />}
         />
       </Routes>
     </Router>

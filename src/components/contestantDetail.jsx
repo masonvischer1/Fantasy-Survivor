@@ -11,16 +11,14 @@ export default function ContestantDetail() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [draftedIds, setDraftedIds] = useState([])
   const [isAdmin, setIsAdmin] = useState(false)
-  const [userProfile, setUserProfile] = useState(null)
 
-  // Fetch contestant, all contestants, drafted picks, and admin status
   useEffect(() => {
     fetchAllContestants()
     fetchContestant()
-    fetchUserProfile()
+    fetchDrafted()
+    checkAdmin()
   }, [id])
 
-  // Fetch all contestants for navigation
   async function fetchAllContestants() {
     const { data, error } = await supabase
       .from('contestants')
@@ -35,7 +33,6 @@ export default function ContestantDetail() {
     }
   }
 
-  // Fetch the current contestant
   async function fetchContestant() {
     const { data, error } = await supabase
       .from('contestants')
@@ -47,76 +44,67 @@ export default function ContestantDetail() {
     else setContestant(data)
   }
 
-  // Fetch current user's profile and picks
-  async function fetchUserProfile() {
+  async function fetchDrafted() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const { data, error } = await supabase
+    const { data } = await supabase
+      .from('fantasy_teams')
+      .select('contestant_id')
+      .eq('user_id', user.id)
+
+    if (data) setDraftedIds(data.map(d => d.contestant_id))
+  }
+
+  async function checkAdmin() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data } = await supabase
       .from('profiles')
-      .select('id, team, is_admin')
+      .select('is_admin')
       .eq('id', user.id)
       .single()
 
-    if (error) console.error(error)
-    else {
-      setUserProfile(data)
-      setDraftedIds(data.team?.map(p => p.id) || [])
-      setIsAdmin(data.is_admin || false)
-    }
+    if (data?.is_admin) setIsAdmin(true)
   }
 
-  // Draft a player
   const draftPlayer = async () => {
+    if (!contestant || contestant.is_eliminated) return
+
     if (draftedIds.includes(contestant.id)) {
       alert("Player already drafted!")
       return
     }
 
-    if (!userProfile) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
-    const currentPicks = userProfile.team || []
+    const { data: currentPicks } = await supabase
+      .from('fantasy_teams')
+      .select('*')
+      .eq('user_id', user.id)
 
     if (currentPicks.length >= 5) {
       alert("You have already drafted 5 players!")
       return
     }
 
-    const newTeam = [
-      ...currentPicks,
-      {
-        id: contestant.id,
-        name: contestant.name,
-        picture_url: contestant.picture_url,
-        elimPhoto_url: contestant.elimPhoto_url,
-        is_eliminated: contestant.is_eliminated || false
-      }
-    ]
-
     const { error } = await supabase
-      .from('profiles')
-      .update({ team: newTeam })
-      .eq('id', userProfile.id)
+      .from('fantasy_teams')
+      .insert([{ user_id: user.id, contestant_id: contestant.id, pick_type: 'initial' }])
 
     if (error) console.error(error)
-    else {
-      setUserProfile({ ...userProfile, team: newTeam })
-      setDraftedIds(newTeam.map(p => p.id))
-      alert(`${contestant.name} added to your team!`)
-    }
+    else setDraftedIds([...draftedIds, contestant.id])
   }
 
-  // Admin eliminate logic
   const eliminatePlayer = async () => {
     const dayElim = prompt("Enter the day this player was eliminated (Cancel to abort)")
     if (!dayElim) return
 
     const { error } = await supabase
       .from('contestants')
-      .update({
-        is_eliminated: true,
-        elim_day: parseInt(dayElim)
-      })
+      .update({ is_eliminated: true, elim_day: parseInt(dayElim) })
       .eq('id', contestant.id)
 
     if (error) console.error(error)
@@ -126,7 +114,6 @@ export default function ContestantDetail() {
     }
   }
 
-  // Navigation
   const next = () => {
     const newIndex = (currentIndex + 1) % allContestants.length
     setCurrentIndex(newIndex)
@@ -134,8 +121,7 @@ export default function ContestantDetail() {
   }
 
   const prev = () => {
-    const newIndex =
-      (currentIndex - 1 + allContestants.length) % allContestants.length
+    const newIndex = (currentIndex - 1 + allContestants.length) % allContestants.length
     setCurrentIndex(newIndex)
     setContestant(allContestants[newIndex])
   }
@@ -169,9 +155,13 @@ export default function ContestantDetail() {
 
       <div style={{ marginTop: '1rem' }}>
         <img
-          src={contestant.is_eliminated ? contestant.elimPhoto_url : contestant.picture_url}
+          src={contestant.picture_url || '/fallback.png'}
           alt={contestant.name}
-          style={{ width: '250px', borderRadius: '10px' }}
+          style={{
+            width: '250px',
+            borderRadius: '10px',
+            filter: contestant.is_eliminated ? 'grayscale(100%)' : 'none' // Grey out eliminated
+          }}
         />
         <h2>{contestant.name}</h2>
         <p><b>Season:</b> {contestant.season}</p>
@@ -181,18 +171,18 @@ export default function ContestantDetail() {
 
         <button
           onClick={draftPlayer}
-          disabled={draftedIds.includes(contestant.id)}
+          disabled={draftedIds.includes(contestant.id) || contestant.is_eliminated}
           style={{
-            backgroundColor: draftedIds.includes(contestant.id) ? 'gray' : 'green',
+            backgroundColor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'gray' : 'green',
             color: 'white',
             padding: '0.5rem 1rem',
             marginTop: '1rem',
             border: 'none',
             borderRadius: '5px',
-            cursor: draftedIds.includes(contestant.id) ? 'not-allowed' : 'pointer'
+            cursor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'not-allowed' : 'pointer'
           }}
         >
-          {draftedIds.includes(contestant.id) ? 'Drafted' : 'Draft Player'}
+          {contestant.is_eliminated ? 'Eliminated' : draftedIds.includes(contestant.id) ? 'Drafted' : 'Draft Player'}
         </button>
 
         <div style={{ marginTop: '1rem' }}>

@@ -12,7 +12,7 @@ export default function ContestantsGrid() {
     fetchDrafted()
   }, [])
 
-  // Fetch all contestants from Supabase
+  // Fetch all contestants
   async function fetchContestants() {
     const { data, error } = await supabase
       .from('contestants')
@@ -38,18 +38,6 @@ export default function ContestantsGrid() {
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', padding: '2rem' }}>
-        <button
-      onClick={fetchContestants}
-      style={{
-        marginBottom: '1rem',
-        padding: '0.5rem 1rem',
-        borderRadius: '5px',
-        border: 'none',
-        backgroundColor: '#0070f3',
-        color: 'white',
-        cursor: 'pointer'
-      }}
-    ></button>
       {contestants.map(c => (
         <div
           key={c.id}
@@ -62,7 +50,7 @@ export default function ContestantsGrid() {
           }}
         >
           <img
-            src={c.is_eliminated ? c.elimPhoto_url : c.picture_url}
+            src={c.picture_url || '/fallback.png'}
             alt={c.name}
             style={{
               width: '150px',
@@ -70,32 +58,9 @@ export default function ContestantsGrid() {
               objectFit: 'cover',
               borderRadius: '10px',
               border: draftedIds.includes(c.id) ? '3px solid green' : 'none',
-              filter: c.is_eliminated ? 'grayscale(80%)' : 'none'
+              filter: c.is_eliminated ? 'grayscale(100%)' : 'none'  // Grey out eliminated contestants
             }}
           />
-
-          {/* Overlay for eliminated players */}
-          {c.is_eliminated && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                backgroundColor: 'rgba(255,0,0,0.4)',
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 'bold',
-                color: 'white',
-                fontSize: '0.9rem'
-              }}
-            >
-              Eliminated
-            </div>
-          )}
 
           <p style={{ marginTop: '0.5rem', fontWeight: 'bold' }}>{c.name}</p>
         </div>

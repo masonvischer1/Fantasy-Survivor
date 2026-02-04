@@ -35,19 +35,21 @@ export default function Navbar({ session, profile }) {
       >
         {session && profile ? (
           <>
-            {/* Team avatar */}
-            {profile.avatar_url && (
-              <img
+            {/* Inside your navbar */}
+    {profile?.avatar_url && (
+        <Link to="/profile">
+            <img
                 src={profile.avatar_url}
-                alt="team avatar"
+                alt="Profile"
                 style={{
-                  width: '36px',
-                  height: '36px',
+                  width: '40px',
+                  height: '40px',
                   borderRadius: '50%',
-                  objectFit: 'cover'
-                }}
-              />
-            )}
+                  cursor: 'pointer'
+      }}
+    />
+  </Link>
+)}
 
             {/* Team name */}
             <span style={{ fontWeight: 'bold' }}>
