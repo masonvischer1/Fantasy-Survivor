@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import siteLogo from '../assets/Logo.png'
+import leftArrowIcon from '../assets/arrow-left-circle.svg'
+import rightArrowIcon from '../assets/arrow-right-circle.svg'
 
 export default function ContestantDetail() {
   const { id } = useParams()
@@ -170,28 +172,48 @@ export default function ContestantDetail() {
   if (!contestant) return <div>Loading contestant...</div>
 
   return (
-    <div style={{ padding: '1rem', textAlign: 'center' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(42px,56px) minmax(0,760px) minmax(42px,56px)', gap: '0.8rem', alignItems: 'center', maxWidth: '980px', margin: '0 auto' }}>
-        <button
-          onClick={prev}
-          aria-label="Previous contestant"
-          style={{
-            width: 'clamp(42px, 10vw, 56px)',
-            height: 'clamp(42px, 10vw, 56px)',
-            borderRadius: '999px',
-            border: '2px solid rgba(255,255,255,0.85)',
-            backgroundColor: 'rgba(0,0,0,0.35)',
-            color: 'white',
-            fontSize: '1.4rem',
-            lineHeight: 1,
-            cursor: 'pointer',
-            padding: 0
-          }}
-        >
-          &#8592;
-        </button>
+    <div style={{ padding: '1rem', textAlign: 'center', position: 'relative' }}>
+      <button
+        onClick={prev}
+        aria-label="Previous contestant"
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: 'max(10px, env(safe-area-inset-left))',
+          transform: 'translateY(-50%)',
+          width: 'clamp(42px, 10vw, 56px)',
+          height: 'clamp(42px, 10vw, 56px)',
+          border: 'none',
+          background: 'transparent',
+          cursor: 'pointer',
+          padding: 0,
+          zIndex: 20
+        }}
+      >
+        <img src={leftArrowIcon} alt="Previous" width="48" height="48" style={{ display: 'block' }} />
+      </button>
 
-        <div style={{ maxWidth: '760px', margin: '0 auto', backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid rgba(209,213,219,0.9)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
+      <button
+        onClick={next}
+        aria-label="Next contestant"
+        style={{
+          position: 'fixed',
+          top: '50%',
+          right: 'max(10px, env(safe-area-inset-right))',
+          transform: 'translateY(-50%)',
+          width: 'clamp(42px, 10vw, 56px)',
+          height: 'clamp(42px, 10vw, 56px)',
+          border: 'none',
+          background: 'transparent',
+          cursor: 'pointer',
+          padding: 0,
+          zIndex: 20
+        }}
+      >
+        <img src={rightArrowIcon} alt="Next" width="48" height="48" style={{ display: 'block' }} />
+      </button>
+
+      <div style={{ maxWidth: '760px', margin: '0 auto', backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid rgba(209,213,219,0.9)', borderRadius: '12px', padding: '1rem', paddingBottom: '6rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
         <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
         <button onClick={() => navigate(-1)} style={{ borderRadius: '12px', padding: '0.45rem 0.9rem', border: '1px solid rgba(209,213,219,0.9)', backgroundColor: 'rgba(255,255,255,0.86)' }}>Back</button>
 
@@ -231,44 +253,28 @@ export default function ContestantDetail() {
           <p><b>Tribe:</b> {contestant.tribe}</p>
           <p><b>Score:</b> {contestant.score}</p>
           <p style={{ maxWidth: '600px', margin: '0.75rem auto' }}>{contestant.bio}</p>
-
-          <button
-            onClick={draftPlayer}
-            disabled={draftedIds.includes(contestant.id) || contestant.is_eliminated}
-            style={{
-              backgroundColor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'gray' : 'green',
-              color: 'white',
-              padding: '0.5rem 1rem',
-              marginTop: '1rem',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'not-allowed' : 'pointer'
-            }}
-          >
-            {contestant.is_eliminated ? 'Eliminated' : draftedIds.includes(contestant.id) ? 'Drafted' : 'Draft Player'}
-          </button>
         </div>
-        </div>
-
-        <button
-          onClick={next}
-          aria-label="Next contestant"
-          style={{
-            width: 'clamp(42px, 10vw, 56px)',
-            height: 'clamp(42px, 10vw, 56px)',
-            borderRadius: '999px',
-            border: '2px solid rgba(255,255,255,0.85)',
-            backgroundColor: 'rgba(0,0,0,0.35)',
-            color: 'white',
-            fontSize: '1.4rem',
-            lineHeight: 1,
-            cursor: 'pointer',
-            padding: 0
-          }}
-        >
-          &#8594;
-        </button>
       </div>
+
+      <button
+        onClick={draftPlayer}
+        disabled={draftedIds.includes(contestant.id) || contestant.is_eliminated}
+        style={{
+          position: 'fixed',
+          left: '50%',
+          bottom: 'calc(var(--bottom-nav-height, 0px) + 16px)',
+          transform: 'translateX(-50%)',
+          backgroundColor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'gray' : 'green',
+          color: 'white',
+          padding: '0.6rem 1.2rem',
+          border: 'none',
+          borderRadius: '999px',
+          cursor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'not-allowed' : 'pointer',
+          zIndex: 20
+        }}
+      >
+        {contestant.is_eliminated ? 'Eliminated' : draftedIds.includes(contestant.id) ? 'Drafted' : 'Draft Player'}
+      </button>
     </div>
   )
 }

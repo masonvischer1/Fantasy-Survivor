@@ -4,6 +4,8 @@ import kaloBuff from "../assets/Survivor_50_Kalo_Buff.png";
 import cilaBuff from "../assets/Survivor_50_Cila_Buff.png";
 import vatuBuff from "../assets/Survivor_50_Vatu_Buff.png";
 import siteLogo from "../assets/Logo.png";
+import leftArrowIcon from "../assets/arrow-left-circle.svg";
+import rightArrowIcon from "../assets/arrow-right-circle.svg";
 
 const TEAMS = [
   { name: "Kalo", color: "#3B82F6", flagSrc: kaloBuff },
@@ -214,18 +216,14 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
             style={{
               width: "clamp(42px, 10vw, 56px)",
               height: "clamp(42px, 10vw, 56px)",
-              borderRadius: "999px",
-              border: "2px solid rgba(255,255,255,0.85)",
-              backgroundColor: "rgba(0,0,0,0.35)",
-              color: "white",
-              fontSize: "1.4rem",
-              lineHeight: 1,
+              border: "none",
+              background: "transparent",
               padding: 0,
               cursor: selectedWeek === 1 ? "not-allowed" : "pointer",
               opacity: selectedWeek === 1 ? 0.5 : 1
             }}
           >
-            &#8592;
+            <img src={leftArrowIcon} alt="Previous" width="48" height="48" style={{ display: "block" }} />
           </button>
           <div style={{ textAlign: "center", padding: "0.55rem 0.75rem", borderRadius: "12px", border: "1px solid rgba(209,213,219,0.9)", backgroundColor: "rgba(255,255,255,0.86)", backdropFilter: "blur(2px)" }}>
             <span style={{ fontWeight: "bold", color: "#111827" }}>Week {selectedWeek}</span>
@@ -237,18 +235,14 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
             style={{
               width: "clamp(42px, 10vw, 56px)",
               height: "clamp(42px, 10vw, 56px)",
-              borderRadius: "999px",
-              border: "2px solid rgba(255,255,255,0.85)",
-              backgroundColor: "rgba(0,0,0,0.35)",
-              color: "white",
-              fontSize: "1.4rem",
-              lineHeight: 1,
+              border: "none",
+              background: "transparent",
               padding: 0,
               cursor: selectedWeek === TOTAL_EPISODES ? "not-allowed" : "pointer",
               opacity: selectedWeek === TOTAL_EPISODES ? 0.5 : 1
             }}
           >
-            &#8594;
+            <img src={rightArrowIcon} alt="Next" width="48" height="48" style={{ display: "block" }} />
           </button>
         </div>
       </div>
