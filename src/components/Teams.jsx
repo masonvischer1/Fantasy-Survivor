@@ -80,14 +80,14 @@ export default function Teams() {
         alt=""
         aria-hidden="true"
         style={{
-          position: 'fixed',
-          top: 'calc(var(--top-nav-height, 56px) - 34px)',
-          right: 'calc(-42px + env(safe-area-inset-right))',
-          width: 'clamp(160px, 38vw, 280px)',
+          position: 'absolute',
+          top: '-56px',
+          right: '-72px',
+          width: 'clamp(210px, 46vw, 360px)',
           height: 'auto',
           zIndex: 2,
           pointerEvents: 'none',
-          transform: 'rotate(12deg)',
+          transform: 'rotate(18deg)',
           transformOrigin: 'top right',
           filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))'
         }}
