@@ -64,7 +64,7 @@ export default function ContestantsGrid() {
 
   return (
     <div style={{ padding: '1rem' }}>
-      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
+      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(180px, 46vw)', margin: '0 auto 0.75rem auto' }} />
       <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)', marginBottom: '0.75rem' }}>Castaways</h1>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
       {contestants.map(c => {

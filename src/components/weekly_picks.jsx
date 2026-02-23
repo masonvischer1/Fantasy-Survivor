@@ -132,7 +132,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
         padding: "12px",
       }}
     >
-      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: "block", width: "min(220px, 55vw)", margin: "0 auto 0.75rem auto" }} />
+      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: "block", width: "min(180px, 46vw)", margin: "0 auto 0.75rem auto" }} />
       <h1 style={{ fontSize: "clamp(1.6rem, 7vw, 2.1rem)", fontWeight: "bold", marginBottom: "10px", textAlign: "center", color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
         Survivor Picks
       </h1>

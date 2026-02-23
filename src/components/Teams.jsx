@@ -82,7 +82,7 @@ export default function Teams() {
         style={{
           position: 'absolute',
           top: '-56px',
-          right: '-72px',
+          right: '-96px',
           width: 'clamp(210px, 46vw, 360px)',
           height: 'auto',
           zIndex: 2,
@@ -92,7 +92,7 @@ export default function Teams() {
           filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))'
         }}
       />
-      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
+      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(180px, 46vw)', margin: '0 auto 0.75rem auto' }} />
       <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Leaderboard</h1>
 
       {teams.length === 0 && <p style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>No teams yet</p>}

@@ -4,7 +4,7 @@ export default function Rules() {
   return (
     <div style={{ padding: '1rem' }}>
       <div style={{ maxWidth: '820px', margin: '0 auto', background: 'rgba(255,255,255,0.86)', border: '1px solid rgba(229,231,235,0.9)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)' }}>
-        <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
+        <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(180px, 46vw)', margin: '0 auto 0.75rem auto' }} />
         <h1>Rules</h1>
 
         <h2>THE DRAFT</h2>

@@ -62,7 +62,7 @@ export default function CreateTeam({ onTeamCreated }) {
   return (
     <div style={{ padding: '1rem' }}>
       <div style={{ width: '100%', maxWidth: '430px', margin: '0 auto', background: 'rgba(255,255,255,0.86)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)' }}>
-      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
+      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(180px, 46vw)', margin: '0 auto 0.75rem auto' }} />
       <h1 style={{ color: '#111827', marginTop: 0 }}>Create Your Team</h1>
 
       <input
