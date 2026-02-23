@@ -13,8 +13,19 @@ export default function ContestantDetail() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [draftedIds, setDraftedIds] = useState([])
   const [isAdmin, setIsAdmin] = useState(false)
-  const cardWidth = 'min(580px, calc(100vw - 200px))'
-  const sideArrowOffset = '90px'
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 640px)')
+    const update = () => setIsMobile(mediaQuery.matches)
+    update()
+    mediaQuery.addEventListener('change', update)
+    return () => mediaQuery.removeEventListener('change', update)
+  }, [])
+
+  const cardWidth = isMobile ? 'min(520px, calc(100vw - 116px))' : 'min(620px, calc(100vw - 220px))'
+  const sideArrowOffset = isMobile ? '50px' : '90px'
+  const arrowSize = isMobile ? 44 : 48
 
   useEffect(() => {
     fetchAllContestants()
@@ -173,18 +184,19 @@ export default function ContestantDetail() {
   if (!contestant) return <div>Loading contestant...</div>
 
   return (
-    <div style={{ padding: '0.6rem', textAlign: 'center', position: 'relative' }}>
+    <div style={{ padding: isMobile ? '0.45rem' : '0.7rem', paddingTop: isMobile ? '3.4rem' : '3rem', textAlign: 'center', position: 'relative' }}>
       <button
         onClick={() => navigate(-1)}
         style={{
           position: 'fixed',
-          top: 'calc(var(--top-nav-height, 56px) + 10px)',
-          left: 'max(10px, env(safe-area-inset-left))',
+          top: 'calc(var(--top-nav-height, 56px) + 8px)',
+          left: isMobile ? 'max(8px, env(safe-area-inset-left))' : 'max(10px, env(safe-area-inset-left))',
           zIndex: 30,
           borderRadius: '12px',
-          padding: '0.45rem 0.9rem',
+          padding: isMobile ? '0.4rem 0.75rem' : '0.45rem 0.9rem',
           border: '1px solid rgba(209,213,219,0.9)',
-          backgroundColor: 'rgba(255,255,255,0.92)'
+          backgroundColor: 'rgba(255,255,255,0.92)',
+          fontSize: isMobile ? '1.15rem' : '1.2rem'
         }}
       >
         Back
@@ -196,7 +208,7 @@ export default function ContestantDetail() {
         style={{
           position: 'fixed',
           top: '50%',
-          left: `max(10px, calc(50vw - (${cardWidth}) / 2 - ${sideArrowOffset}))`,
+          left: `max(${isMobile ? '4px' : '10px'}, calc(50vw - (${cardWidth}) / 2 - ${sideArrowOffset}))`,
           transform: 'translateY(-50%)',
           width: 'clamp(42px, 10vw, 56px)',
           height: 'clamp(42px, 10vw, 56px)',
@@ -207,7 +219,7 @@ export default function ContestantDetail() {
           zIndex: 20
         }}
       >
-        <img src={leftArrowIcon} alt="Previous" width="48" height="48" style={{ display: 'block', filter: 'brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.5))' }} />
+        <img src={leftArrowIcon} alt="Previous" width={arrowSize} height={arrowSize} style={{ display: 'block', filter: 'brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.5))' }} />
       </button>
 
       <button
@@ -216,7 +228,7 @@ export default function ContestantDetail() {
         style={{
           position: 'fixed',
           top: '50%',
-          right: `max(10px, calc(50vw - (${cardWidth}) / 2 - ${sideArrowOffset}))`,
+          right: `max(${isMobile ? '4px' : '10px'}, calc(50vw - (${cardWidth}) / 2 - ${sideArrowOffset}))`,
           transform: 'translateY(-50%)',
           width: 'clamp(42px, 10vw, 56px)',
           height: 'clamp(42px, 10vw, 56px)',
@@ -227,29 +239,29 @@ export default function ContestantDetail() {
           zIndex: 20
         }}
       >
-        <img src={rightArrowIcon} alt="Next" width="48" height="48" style={{ display: 'block', filter: 'brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.5))' }} />
+        <img src={rightArrowIcon} alt="Next" width={arrowSize} height={arrowSize} style={{ display: 'block', filter: 'brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.5))' }} />
       </button>
 
-      <div style={{ width: cardWidth, margin: '0 auto', backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid rgba(209,213,219,0.9)', borderRadius: '12px', padding: '0.85rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
-        <p>Picks remaining: {Math.max(0, 5 - draftedIds.length)}</p>
+      <div style={{ width: cardWidth, margin: '0 auto', backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid rgba(209,213,219,0.9)', borderRadius: '12px', padding: isMobile ? '0.7rem' : '0.95rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
+        <p style={{ marginTop: 0, fontSize: isMobile ? '1rem' : '1.1rem' }}>Picks remaining: {Math.max(0, 5 - draftedIds.length)}</p>
 
-        <div style={{ marginTop: '1rem' }}>
+        <div style={{ marginTop: isMobile ? '0.65rem' : '1rem' }}>
           <img
             src={contestant.picture_url || '/fallback.png'}
             alt={contestant.name}
             style={{
               display: 'block',
               margin: '0 auto',
-              width: 'min(220px, 64vw)',
+              width: isMobile ? 'min(190px, 60vw)' : 'min(220px, 64vw)',
               borderRadius: '10px',
               filter: contestant.is_eliminated ? 'grayscale(100%)' : 'none'
             }}
           />
-          <h2>{contestant.name}</h2>
-          <p><b>Season:</b> {contestant.season}</p>
-          <p><b>Tribe:</b> {contestant.tribe}</p>
-          <p><b>Score:</b> {contestant.score}</p>
-          <p style={{ maxWidth: '600px', margin: '0.75rem auto' }}>{contestant.bio}</p>
+          <h2 style={{ fontSize: isMobile ? 'clamp(1.8rem, 8vw, 2.3rem)' : 'clamp(2.2rem, 6vw, 2.8rem)', margin: isMobile ? '0.6rem 0 0.4rem 0' : '0.8rem 0 0.55rem 0' }}>{contestant.name}</h2>
+          <p style={{ margin: isMobile ? '0.35rem 0' : '0.45rem 0', fontSize: isMobile ? '1rem' : '1.08rem' }}><b>Season:</b> {contestant.season}</p>
+          <p style={{ margin: isMobile ? '0.35rem 0' : '0.45rem 0', fontSize: isMobile ? '1rem' : '1.08rem' }}><b>Tribe:</b> {contestant.tribe}</p>
+          <p style={{ margin: isMobile ? '0.35rem 0' : '0.45rem 0', fontSize: isMobile ? '1rem' : '1.08rem' }}><b>Score:</b> {contestant.score}</p>
+          <p style={{ maxWidth: '600px', margin: isMobile ? '0.65rem auto' : '0.85rem auto', fontSize: isMobile ? '1.02rem' : '1.1rem', lineHeight: isMobile ? 1.45 : 1.5 }}>{contestant.bio}</p>
 
           <button
             onClick={draftPlayer}
@@ -257,12 +269,14 @@ export default function ContestantDetail() {
             style={{
               backgroundColor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'gray' : 'green',
               color: 'white',
-              padding: '0.6rem 1.2rem',
-              marginTop: '1rem',
+              minWidth: isMobile ? '70%' : 'auto',
+              padding: isMobile ? '0.62rem 1rem' : '0.6rem 1.2rem',
+              marginTop: isMobile ? '0.8rem' : '1rem',
               border: 'none',
               borderRadius: '999px',
               cursor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'not-allowed' : 'pointer',
-              fontFamily: 'Survivant, system-ui, sans-serif'
+              fontFamily: 'Survivant, system-ui, sans-serif',
+              fontSize: isMobile ? '1.05rem' : '1.1rem'
             }}
           >
             {contestant.is_eliminated ? 'Eliminated' : draftedIds.includes(contestant.id) ? 'Drafted' : 'Draft Player'}
@@ -275,11 +289,13 @@ export default function ContestantDetail() {
                 marginTop: '0.7rem',
                 backgroundColor: 'red',
                 color: 'white',
-                padding: '0.5rem 1rem',
+                minWidth: isMobile ? '70%' : 'auto',
+                padding: isMobile ? '0.56rem 0.95rem' : '0.5rem 1rem',
                 border: 'none',
                 borderRadius: '999px',
                 cursor: 'pointer',
-                fontFamily: 'Survivant, system-ui, sans-serif'
+                fontFamily: 'Survivant, system-ui, sans-serif',
+                fontSize: isMobile ? '1.02rem' : '1.08rem'
               }}
             >
               Eliminate Player
