@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'Survivant';
+  src: url('./survivant/survivant.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -30,6 +38,19 @@ body {
 h1 {
   font-size: clamp(1.6rem, 6vw, 2.4rem);
   line-height: 1.1;
+}
+
+h1, h2, h3, h4, h5, h6,
+strong, b,
+[style*="font-weight: bold"],
+[style*="font-weight:bold"],
+[style*="font-weight: 700"],
+[style*="font-weight:700"],
+[style*="font-weight: 800"],
+[style*="font-weight:800"],
+[style*="font-weight: 900"],
+[style*="font-weight:900"] {
+  font-family: 'Survivant', system-ui, sans-serif;
 }
 
 button {
