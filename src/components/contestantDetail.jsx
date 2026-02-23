@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import siteLogo from '../assets/Logo.png'
 import leftArrowIcon from '../assets/arrow-left-circle.svg'
 import rightArrowIcon from '../assets/arrow-right-circle.svg'
 
@@ -172,7 +171,23 @@ export default function ContestantDetail() {
   if (!contestant) return <div>Loading contestant...</div>
 
   return (
-    <div style={{ padding: '1rem', textAlign: 'center', position: 'relative' }}>
+    <div style={{ padding: '0.6rem', textAlign: 'center', position: 'relative' }}>
+      <button
+        onClick={() => navigate(-1)}
+        style={{
+          position: 'fixed',
+          top: 'calc(var(--top-nav-height, 56px) + 10px)',
+          left: 'max(10px, env(safe-area-inset-left))',
+          zIndex: 30,
+          borderRadius: '12px',
+          padding: '0.45rem 0.9rem',
+          border: '1px solid rgba(209,213,219,0.9)',
+          backgroundColor: 'rgba(255,255,255,0.92)'
+        }}
+      >
+        Back
+      </button>
+
       <button
         onClick={prev}
         aria-label="Previous contestant"
@@ -190,7 +205,7 @@ export default function ContestantDetail() {
           zIndex: 20
         }}
       >
-        <img src={leftArrowIcon} alt="Previous" width="48" height="48" style={{ display: 'block' }} />
+        <img src={leftArrowIcon} alt="Previous" width="48" height="48" style={{ display: 'block', filter: 'brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.5))' }} />
       </button>
 
       <button
@@ -210,13 +225,10 @@ export default function ContestantDetail() {
           zIndex: 20
         }}
       >
-        <img src={rightArrowIcon} alt="Next" width="48" height="48" style={{ display: 'block' }} />
+        <img src={rightArrowIcon} alt="Next" width="48" height="48" style={{ display: 'block', filter: 'brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.5))' }} />
       </button>
 
-      <div style={{ maxWidth: '760px', margin: '0 auto', backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid rgba(209,213,219,0.9)', borderRadius: '12px', padding: '1rem', paddingBottom: '6rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
-        <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
-        <button onClick={() => navigate(-1)} style={{ borderRadius: '12px', padding: '0.45rem 0.9rem', border: '1px solid rgba(209,213,219,0.9)', backgroundColor: 'rgba(255,255,255,0.86)' }}>Back</button>
-
+      <div style={{ width: 'min(640px, calc(100vw - 140px))', margin: '0 auto', backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid rgba(209,213,219,0.9)', borderRadius: '12px', padding: '0.85rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
         {isAdmin && !contestant.is_eliminated && (
           <button
             onClick={eliminatePlayer}
@@ -243,7 +255,7 @@ export default function ContestantDetail() {
             src={contestant.picture_url || '/fallback.png'}
             alt={contestant.name}
             style={{
-              width: 'min(250px, 72vw)',
+              width: 'min(220px, 64vw)',
               borderRadius: '10px',
               filter: contestant.is_eliminated ? 'grayscale(100%)' : 'none'
             }}
@@ -253,28 +265,25 @@ export default function ContestantDetail() {
           <p><b>Tribe:</b> {contestant.tribe}</p>
           <p><b>Score:</b> {contestant.score}</p>
           <p style={{ maxWidth: '600px', margin: '0.75rem auto' }}>{contestant.bio}</p>
+
+          <button
+            onClick={draftPlayer}
+            disabled={draftedIds.includes(contestant.id) || contestant.is_eliminated}
+            style={{
+              backgroundColor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'gray' : 'green',
+              color: 'white',
+              padding: '0.6rem 1.2rem',
+              marginTop: '1rem',
+              border: 'none',
+              borderRadius: '999px',
+              cursor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'not-allowed' : 'pointer',
+              fontFamily: 'Survivant, system-ui, sans-serif'
+            }}
+          >
+            {contestant.is_eliminated ? 'Eliminated' : draftedIds.includes(contestant.id) ? 'Drafted' : 'Draft Player'}
+          </button>
         </div>
       </div>
-
-      <button
-        onClick={draftPlayer}
-        disabled={draftedIds.includes(contestant.id) || contestant.is_eliminated}
-        style={{
-          position: 'fixed',
-          left: '50%',
-          bottom: 'calc(var(--bottom-nav-height, 0px) + 16px)',
-          transform: 'translateX(-50%)',
-          backgroundColor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'gray' : 'green',
-          color: 'white',
-          padding: '0.6rem 1.2rem',
-          border: 'none',
-          borderRadius: '999px',
-          cursor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'not-allowed' : 'pointer',
-          zIndex: 20
-        }}
-      >
-        {contestant.is_eliminated ? 'Eliminated' : draftedIds.includes(contestant.id) ? 'Drafted' : 'Draft Player'}
-      </button>
     </div>
   )
 }
