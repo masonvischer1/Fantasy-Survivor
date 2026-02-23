@@ -277,16 +277,17 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                   <div
                     key={p.id}
                     style={{
-                      flex: "0 0 clamp(190px, 56vw, 260px)",
+                      flex: "0 0 calc((100% - 24px) / 3)",
+                      minWidth: "112px",
                       scrollSnapAlign: "start",
                       border: "1px solid rgba(209,213,219,0.9)",
                       borderRadius: "12px",
                       backgroundColor: "rgba(255,255,255,0.9)",
                       backdropFilter: "blur(2px)",
-                      padding: "10px"
+                      padding: "8px"
                     }}
                   >
-                    <p style={{ margin: "0 0 8px 0", fontWeight: "bold", textAlign: "center" }}>
+                    <p style={{ margin: "0 0 7px 0", fontWeight: "bold", textAlign: "center", fontSize: "0.88rem", lineHeight: 1.15 }}>
                       {p.team_name || "Unnamed Team"}
                     </p>
 
@@ -320,7 +321,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                       </div>
                     )}
 
-                    <p style={{ margin: "9px 0 0 0", fontWeight: "bold", textAlign: "center" }}>
+                    <p style={{ margin: "8px 0 0 0", fontWeight: "bold", textAlign: "center", fontSize: "0.86rem" }}>
                       {pickName || "No Pick"}
                     </p>
                   </div>

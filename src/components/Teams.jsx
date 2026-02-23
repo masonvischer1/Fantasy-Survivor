@@ -7,6 +7,16 @@ import { buildContestantMap, hydrateTeamFromContestants } from '../utils/teamHyd
 export default function Teams() {
   const [teams, setTeams] = useState([])
 
+  const formatOrdinal = (num) => {
+    const mod100 = num % 100
+    if (mod100 >= 11 && mod100 <= 13) return `${num}th`
+    const mod10 = num % 10
+    if (mod10 === 1) return `${num}st`
+    if (mod10 === 2) return `${num}nd`
+    if (mod10 === 3) return `${num}rd`
+    return `${num}th`
+  }
+
   const fetchAllTeams = async () => {
     const [{ data: profileData, error: profileError }, { data: contestantData, error: contestantError }] = await Promise.all([
       supabase
@@ -106,7 +116,7 @@ export default function Teams() {
         const isBronze = rank === 3
         const rankBorder = isGold ? '#d4af37' : isSilver ? '#c0c0c0' : isBronze ? '#cd7f32' : '#ddd'
         const rankBackground = isGold ? 'rgba(255,249,230,0.88)' : isSilver ? 'rgba(248,248,248,0.88)' : isBronze ? 'rgba(255,244,236,0.88)' : 'rgba(255,255,255,0.84)'
-        const rankLabel = isGold ? '1st Place' : isSilver ? '2nd Place' : isBronze ? '3rd Place' : null
+        const rankLabel = `${formatOrdinal(rank)} Place`
 
         return (
         <div
@@ -134,21 +144,21 @@ export default function Teams() {
               />
             )}
             <div style={{ flex: 1 }}>
-              <h2 style={{ margin: 0 }}>{profile.team_name || 'Unnamed Team'}</h2>
-              <p style={{ margin: '0.25rem 0 0 0', color: '#666' }}>
+              <h2 style={{ margin: 0, fontSize: '1.08rem' }}>{profile.team_name || 'Unnamed Team'}</h2>
+              <p style={{ margin: '0.25rem 0 0 0', color: '#666', fontSize: '0.88rem' }}>
                 {profile.player_name || 'Unknown Player'}
               </p>
             </div>
 
             <div style={{ textAlign: 'right', marginLeft: 'auto' }}>
-              <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>
+              <p style={{ margin: 0, fontWeight: 'bold', fontSize: '0.98rem' }}>
                 Points: {teamPoints}
               </p>
-              <p style={{ margin: '0.25rem 0 0 0', color: '#0b7d2b' }}>
+              <p style={{ margin: '0.25rem 0 0 0', color: '#0b7d2b', fontSize: '0.84rem' }}>
                 +{bonusPoints} bonus points
               </p>
               {rankLabel && (
-                <p style={{ margin: '0.25rem 0 0 0', fontWeight: 'bold', color: '#555' }}>
+                <p style={{ margin: '0.25rem 0 0 0', fontWeight: 'bold', color: '#555', fontSize: '0.82rem' }}>
                   {rankLabel}
                 </p>
               )}
