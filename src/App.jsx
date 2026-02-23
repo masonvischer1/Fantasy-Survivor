@@ -39,7 +39,7 @@ function AppLayout({ session, profile, setProfile, needsTeamSetup, hasCompletedI
       className="app-shell"
       style={{
         "--top-nav-height": "56px",
-        "--bottom-nav-height": session ? "78px" : "0px",
+        "--bottom-nav-height": session ? "98px" : "0px",
       }}
     >
       <div className="app-fixed-band-bg" style={{ backgroundImage: pageBackground ? `url(${pageBackground})` : "none" }} />

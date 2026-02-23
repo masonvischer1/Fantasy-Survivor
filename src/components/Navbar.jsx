@@ -70,9 +70,8 @@ export function BottomNav({ session, profile }) {
     alignItems: 'center',
     justifyContent: 'center',
     gap: '0.12rem',
-    color: '#f8fafc',
-    opacity: isActive ? 1 : 0.82,
-    textShadow: isActive ? '0 0 10px rgba(255,255,255,0.35)' : 'none'
+    color: '#0f172a',
+    opacity: isActive ? 1 : 0.78
   })
 
   const labelStyle = {
@@ -84,34 +83,38 @@ export function BottomNav({ session, profile }) {
   return (
     <nav
       style={{
-        height: 'var(--bottom-nav-height)',
+        height: '64px',
         display: 'grid',
         gridTemplateColumns: hasCompletedInitialDraft ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)',
         gap: '0.2rem',
         alignItems: 'center',
-        padding: '0.2rem 0.5rem',
+        padding: '0.2rem 0.55rem',
+        margin: '0 0.6rem calc(0.5rem + env(safe-area-inset-bottom))',
         boxSizing: 'border-box',
-        backgroundColor: 'rgba(0,0,0,0.72)',
-        borderTop: '1px solid rgba(255,255,255,0.22)',
-        backdropFilter: 'blur(10px)'
+        backgroundColor: 'rgba(255,255,255,0.78)',
+        border: '1px solid rgba(15,23,42,0.16)',
+        borderRadius: '16px',
+        backdropFilter: 'blur(12px)',
+        boxShadow: '0 8px 22px rgba(2,6,23,0.22)',
+        alignSelf: 'end'
       }}
     >
       <Link to="/" style={tabStyle(location.pathname === '/' || location.pathname.startsWith('/contestant/'))}>
-        <img src={castawaysIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+        <img src={castawaysIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
         <span style={labelStyle}>Castaways</span>
       </Link>
       {hasCompletedInitialDraft && (
         <Link to="/teams" style={tabStyle(location.pathname === '/teams')}>
-          <img src={leaderboardIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+          <img src={leaderboardIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
           <span style={labelStyle}>Leaderboard</span>
         </Link>
       )}
       <Link to="/weekly-picks" style={tabStyle(location.pathname === '/weekly-picks')}>
-        <img src={weeklyIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+        <img src={weeklyIcon} alt="" aria-hidden="true" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
         <span style={labelStyle}>Weekly Picks</span>
       </Link>
       <Link to="/rules" style={tabStyle(location.pathname === '/rules')}>
-        <img src={rulesIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+        <img src={rulesIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
         <span style={labelStyle}>Rules</span>
       </Link>
     </nav>
