@@ -129,7 +129,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
       style={{
         minHeight: "100dvh",
         backgroundImage: `url(${weeklyPicksBg})`,
-        backgroundSize: "100% auto",
+        backgroundSize: "cover",
         backgroundPosition: "center center",
         backgroundAttachment: "fixed",
         backgroundRepeat: "no-repeat",
@@ -258,4 +258,5 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
     </div>
   );
 }
+
 

@@ -47,7 +47,7 @@ export default function ContestantsGrid() {
   }, [])
 
   return (
-    <div style={{ padding: '1rem', minHeight: '100dvh', backgroundImage: `url(${castawaysBg})`, backgroundSize: '100% auto', backgroundPosition: 'center center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
+    <div style={{ padding: '1rem', minHeight: '100dvh', backgroundImage: `url(${castawaysBg})`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
       <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)', marginBottom: '0.75rem' }}>Castaways</h1>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
       {contestants.map(c => {
@@ -106,4 +106,5 @@ export default function ContestantsGrid() {
     </div>
   )
 }
+
 

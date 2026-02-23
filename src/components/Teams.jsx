@@ -34,7 +34,7 @@ export default function Teams() {
   })
 
   return (
-    <div style={{ padding: '1rem', minHeight: '100dvh', backgroundImage: `url(${leaderboardBg})`, backgroundSize: '100% auto', backgroundPosition: 'center center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
+    <div style={{ padding: '1rem', minHeight: '100dvh', backgroundImage: `url(${leaderboardBg})`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
       <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Leaderboard</h1>
 
       {teams.length === 0 && <p style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>No teams yet</p>}
@@ -129,4 +129,5 @@ export default function Teams() {
     </div>
   )
 }
+
 
