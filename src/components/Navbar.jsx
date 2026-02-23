@@ -64,7 +64,7 @@ export function BottomNav({ session, profile }) {
       </Link>
       <Link to="/weekly-picks" style={tabStyle(location.pathname === '/weekly-picks')}>
         <img src={weeklyIcon} alt="" aria-hidden="true" style={{ width: '18px', height: '18px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
-        <span style={labelStyle}>Weekly Picks</span>
+        <span style={labelStyle}>Picks</span>
       </Link>
       {hasCompletedInitialDraft && (
         <Link to="/teams" style={tabStyle(location.pathname === '/teams')}>
