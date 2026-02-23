@@ -7,7 +7,7 @@ function usernameToEmail(username) {
   return `${username.trim().toLowerCase()}@${USERNAME_DOMAIN}`
 }
 
-function Login() {
+function Login({ onProfileCreated }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [playerName, setPlayerName] = useState('')
@@ -70,7 +70,13 @@ function Login() {
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: internalEmail,
       password,
-      options: { data: { username: normalizedUsername } }
+      options: {
+        data: {
+          username: normalizedUsername,
+          player_name: playerName.trim(),
+          team_name: teamName.trim()
+        }
+      }
     })
     if (signUpError) {
       setLoading(false)
@@ -116,15 +122,17 @@ function Login() {
       }
     }
 
+    const profilePayload = {
+      id: user.id,
+      player_name: playerName.trim(),
+      team_name: teamName.trim(),
+      avatar_url: avatarUrl,
+      team: []
+    }
+
     const { error: profileError } = await supabase
       .from('profiles')
-      .upsert({
-        id: user.id,
-        player_name: playerName.trim(),
-        team_name: teamName.trim(),
-        avatar_url: avatarUrl,
-        team: []
-      }, { onConflict: 'id' })
+      .upsert(profilePayload, { onConflict: 'id' })
 
     setLoading(false)
 
@@ -133,6 +141,7 @@ function Login() {
       return
     }
 
+    if (onProfileCreated) onProfileCreated(profilePayload)
     alert(`Account and profile created successfully.${avatarWarning}`)
     setIsSignUp(false)
     setUsername('')

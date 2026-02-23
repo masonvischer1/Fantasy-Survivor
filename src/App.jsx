@@ -46,8 +46,25 @@ function App() {
       .single();
 
     if (error) {
-      setProfile(null);
-      console.error(error);
+      const sessionUser = session?.user;
+      const fallbackProfile = {
+        id: userId,
+        player_name: sessionUser?.user_metadata?.player_name || "",
+        team_name: sessionUser?.user_metadata?.team_name || "",
+        avatar_url: "",
+        team: []
+      };
+
+      const { error: createError } = await supabase
+        .from("profiles")
+        .upsert(fallbackProfile, { onConflict: "id" });
+
+      if (createError) {
+        setProfile(null);
+        console.error(createError);
+      } else {
+        setProfile(fallbackProfile);
+      }
     } else {
       setProfile(data);
     }
@@ -72,7 +89,20 @@ function App() {
 
       <Routes>
         {/* Login */}
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="/login"
+          element={
+            session ? (
+              <Navigate to="/" />
+            ) : (
+              <Login
+                onProfileCreated={(createdProfile) => {
+                  setProfile(createdProfile);
+                }}
+              />
+            )
+          }
+        />
 
         {/* Profile */}
         <Route
