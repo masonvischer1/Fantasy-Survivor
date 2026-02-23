@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { supabase } from '../supabaseClient.js'
-import createTeamBg from '../assets/Logo - Create Team.png'
 
 const USERNAME_DOMAIN = 'survivor.local'
 
@@ -72,7 +71,7 @@ function Login() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', padding: '12vh 1rem 1rem 1rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', backgroundImage: `url(${createTeamBg})`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
+    <div style={{ padding: '1rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
       <div style={{ width: '100%', maxWidth: '420px', margin: '0 auto' }}>
       <h2 style={{ marginTop: 0 }}>{isSignUp ? 'Create Account' : 'Login'}</h2>
       {error && <p style={{ color: 'red', marginTop: 0 }}>{error}</p>}

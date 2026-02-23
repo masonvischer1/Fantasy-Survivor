@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import castawaysBg from '../assets/Tribe Flags - Castaways.png'
 import siteLogo from '../assets/Logo.png'
 
 export default function ContestantsGrid() {
@@ -64,7 +63,7 @@ export default function ContestantsGrid() {
   }, [])
 
   return (
-    <div style={{ padding: '1rem', minHeight: '100dvh', backgroundImage: `url(${castawaysBg})`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
+    <div style={{ padding: '1rem' }}>
       <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
       <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)', marginBottom: '0.75rem' }}>Castaways</h1>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>

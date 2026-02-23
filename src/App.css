@@ -1,39 +1,41 @@
 #root {
   width: 100%;
-  min-height: 100vh;
+  height: 100dvh;
   margin: 0;
   padding: 0;
   text-align: left;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.app-shell {
+  position: relative;
+  height: 100dvh;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: var(--top-nav-height) minmax(0, 1fr) var(--bottom-nav-height);
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.app-fixed-band-bg {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--top-nav-height);
+  bottom: var(--bottom-nav-height);
+  z-index: 0;
+  pointer-events: none;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.app-shell-top,
+.app-shell-main,
+.app-shell-bottom {
+  position: relative;
+  z-index: 1;
 }
 
-.card {
-  padding: 1em;
+.app-shell-main {
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: transparent;
 }

@@ -3,7 +3,6 @@ import { supabase } from "../supabaseClient";
 import kaloBuff from "../assets/Survivor_50_Kalo_Buff.png";
 import cilaBuff from "../assets/Survivor_50_Cila_Buff.png";
 import vatuBuff from "../assets/Survivor_50_Vatu_Buff.png";
-import weeklyPicksBg from "../assets/Challenge - Weekly Picks.png";
 import siteLogo from "../assets/Logo.png";
 
 const TEAMS = [
@@ -128,12 +127,6 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   return (
     <div
       style={{
-        minHeight: "100dvh",
-        backgroundImage: `url(${weeklyPicksBg})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center center",
-        backgroundAttachment: "fixed",
-        backgroundRepeat: "no-repeat",
         padding: "12px",
       }}
     >
