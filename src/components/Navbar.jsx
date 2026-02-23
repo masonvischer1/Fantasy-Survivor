@@ -60,8 +60,7 @@ export default function Navbar({ session, profile }) {
           </>
         ) : session ? (
           <>
-            {/* Logged in but no profile yet */}
-            <Link to="/create-team">Create Team</Link>
+            <Link to="/profile">Profile</Link>
             <button onClick={signOut}>Logout</button>
           </>
         ) : (

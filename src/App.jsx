@@ -9,7 +9,6 @@ import Contestants from "./components/contestantsGrid";
 import ContestantDetail from "./components/contestantDetail";
 import MyTeam from "./components/MyTeam";
 import Teams from "./components/Teams";
-import CreateTeam from "./components/CreateTeam";
 import Profile from "./components/Profile";
 import WeeklyPicksPage from "./components/weekly_picks"; // <- new page import
 
@@ -57,7 +56,10 @@ function App() {
 
   // Fetch profile once session exists
   useEffect(() => {
-    fetchProfile(session?.user?.id);
+    const userId = session?.user?.id;
+    Promise.resolve().then(() => {
+      fetchProfile(userId);
+    });
   }, [session]);
 
   if (loadingProfile) {
@@ -84,39 +86,23 @@ function App() {
           }
         />
 
-        {/* Create team required after signup */}
-        <Route
-          path="/create-team"
-          element={
-            session ? (
-              <CreateTeam
-                onTeamCreated={(createdProfile) => {
-                  setProfile(createdProfile);
-                }}
-              />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-
         {/* Contestants */}
         <Route
           path="/"
-          element={session && !profile ? <Navigate to="/create-team" /> : <Contestants />}
+          element={session ? <Contestants /> : <Navigate to="/login" />}
         />
 
         {/* Contestant Detail */}
         <Route
           path="/contestant/:id"
-          element={session && !profile ? <Navigate to="/create-team" /> : <ContestantDetail />}
+          element={session ? <ContestantDetail /> : <Navigate to="/login" />}
         />
 
         {/* My Team */}
         <Route
           path="/my-team"
           element={
-            session ? (profile ? <MyTeam profile={profile} /> : <Navigate to="/create-team" />) : (
+            session ? <MyTeam profile={profile} /> : (
               <Navigate to="/login" />
             )
           }
@@ -125,13 +111,13 @@ function App() {
         {/* League Teams */}
         <Route
           path="/teams"
-          element={session ? (profile ? <Teams /> : <Navigate to="/create-team" />) : <Navigate to="/login" />}
+          element={session ? <Teams /> : <Navigate to="/login" />}
         />
 
         {/* Weekly Picks Page */}
         <Route
           path="/weekly-picks"
-          element={session ? (profile ? <WeeklyPicksPage /> : <Navigate to="/create-team" />) : <Navigate to="/login" />}
+          element={session ? <WeeklyPicksPage /> : <Navigate to="/login" />}
         />
       </Routes>
     </Router>
