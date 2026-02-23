@@ -32,9 +32,9 @@ export default function MyTeam() {
   if (!profile) return <div>Loading profile...</div>
 
   return (
-    <div style={{ padding: '2rem', textAlign: 'center' }}>
+    <div style={{ padding: '1rem', textAlign: 'center' }}>
       {/* Profile header */}
-      <div style={{ marginBottom: '2rem' }}>
+      <div style={{ marginBottom: '1rem' }}>
         {profile.avatar_url && (
           <img
             src={profile.avatar_url}
@@ -52,8 +52,8 @@ export default function MyTeam() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '1rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+          gap: '0.75rem',
           marginTop: '1rem'
         }}
       >

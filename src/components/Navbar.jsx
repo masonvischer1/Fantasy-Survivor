@@ -13,11 +13,13 @@ export default function Navbar({ session, profile }) {
   return (
     <nav
       style={{
-        padding: '1rem',
+        padding: '0.75rem 1rem',
         borderBottom: '1px solid #ddd',
         display: 'flex',
         alignItems: 'center',
-        gap: '1rem',
+        gap: '0.75rem',
+        flexWrap: 'wrap',
+        backgroundColor: 'rgba(255,255,255,0.95)'
       }}
     >
       {/* Navigation Links */}

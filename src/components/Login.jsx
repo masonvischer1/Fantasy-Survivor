@@ -71,9 +71,10 @@ function Login() {
   }
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '420px', margin: 'auto' }}>
-      <h2>{isSignUp ? 'Create Account' : 'Login'}</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <div style={{ minHeight: '100vh', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: '420px', margin: '0 auto', background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1rem' }}>
+      <h2 style={{ marginTop: 0 }}>{isSignUp ? 'Create Account' : 'Login'}</h2>
+      {error && <p style={{ color: 'red', marginTop: 0 }}>{error}</p>}
 
       <input
         type="text"
@@ -108,6 +109,7 @@ function Login() {
       >
         {isSignUp ? 'Sign In' : 'Create Account'}
       </button>
+      </div>
     </div>
   )
 }

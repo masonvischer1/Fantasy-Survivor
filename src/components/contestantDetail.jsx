@@ -169,7 +169,7 @@ export default function ContestantDetail() {
   if (!contestant) return <div>Loading contestant...</div>
 
   return (
-    <div style={{ padding: '2rem', textAlign: 'center', position: 'relative' }}>
+    <div style={{ padding: '1rem', textAlign: 'center', position: 'relative' }}>
       <button onClick={() => navigate(-1)}>← Back</button>
 
       {isAdmin && !contestant.is_eliminated && (
@@ -177,8 +177,8 @@ export default function ContestantDetail() {
           onClick={eliminatePlayer}
           style={{
             position: 'absolute',
-            top: '2rem',
-            right: '2rem',
+            top: '1rem',
+            right: '1rem',
             backgroundColor: 'red',
             color: 'white',
             padding: '0.5rem 1rem',
@@ -198,7 +198,7 @@ export default function ContestantDetail() {
           src={contestant.picture_url || '/fallback.png'}
           alt={contestant.name}
           style={{
-            width: '250px',
+            width: 'min(250px, 72vw)',
             borderRadius: '10px',
             filter: contestant.is_eliminated ? 'grayscale(100%)' : 'none' // Grey out eliminated
           }}
@@ -207,7 +207,7 @@ export default function ContestantDetail() {
         <p><b>Season:</b> {contestant.season}</p>
         <p><b>Tribe:</b> {contestant.tribe}</p>
         <p><b>Score:</b> {contestant.score}</p>
-        <p style={{ maxWidth: '600px', margin: '1rem auto' }}>{contestant.bio}</p>
+        <p style={{ maxWidth: '600px', margin: '0.75rem auto' }}>{contestant.bio}</p>
 
         <button
           onClick={draftPlayer}

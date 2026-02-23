@@ -47,9 +47,9 @@ export default function ContestantsGrid() {
   }, [])
 
   return (
-    <div style={{ padding: '2rem', minHeight: '100vh', backgroundImage: `url(${castawaysBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-      <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)', marginBottom: '1rem' }}>Castaways</h1>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+    <div style={{ padding: '1rem', minHeight: '100vh', backgroundImage: `url(${castawaysBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)', marginBottom: '0.75rem' }}>Castaways</h1>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
       {contestants.map(c => {
         const isDrafted = draftedIds.includes(c.id)
         const isEliminated = c.is_eliminated
@@ -61,8 +61,8 @@ export default function ContestantsGrid() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '1rem',
-              padding: '1rem',
+              gap: '0.75rem',
+              padding: '0.75rem',
               borderRadius: '10px',
               cursor: 'pointer',
               background: 'linear-gradient(135deg, rgba(0,0,0,0.8), rgba(70,40,0,0.6))',

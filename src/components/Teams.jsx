@@ -34,7 +34,7 @@ export default function Teams() {
   })
 
   return (
-    <div style={{ padding: '2rem', minHeight: '100vh', backgroundImage: `url(${leaderboardBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+    <div style={{ padding: '1rem', minHeight: '100vh', backgroundImage: `url(${leaderboardBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
       <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Leaderboard</h1>
 
       {teams.length === 0 && <p style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>No teams yet</p>}
@@ -54,14 +54,14 @@ export default function Teams() {
         <div
           key={profile.id}
           style={{
-            marginBottom: '2rem',
+            marginBottom: '1rem',
             border: `2px solid ${rankBorder}`,
-            padding: '1rem',
+            padding: '0.75rem',
             borderRadius: '8px',
             background: rankBackground
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             {profile.avatar_url && (
               <img
                 src={profile.avatar_url}
@@ -81,7 +81,7 @@ export default function Teams() {
               </p>
             </div>
 
-            <div style={{ textAlign: 'right' }}>
+            <div style={{ textAlign: 'right', marginLeft: 'auto' }}>
               <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>
                 Points: {teamPoints}
               </p>
@@ -99,8 +99,8 @@ export default function Teams() {
           <div
             style={{
               display: 'flex',
-              gap: '1rem',
-              marginTop: '1rem',
+              gap: '0.75rem',
+              marginTop: '0.75rem',
               flexWrap: 'wrap'
             }}
           >

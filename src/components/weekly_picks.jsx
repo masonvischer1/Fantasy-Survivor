@@ -131,10 +131,10 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
         backgroundImage: `url(${weeklyPicksBg})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        padding: "20px",
+        padding: "12px",
       }}
     >
-      <h1 style={{ fontSize: "32px", fontWeight: "bold", marginBottom: "10px", textAlign: "center" }}>
+      <h1 style={{ fontSize: "clamp(1.6rem, 7vw, 2.1rem)", fontWeight: "bold", marginBottom: "10px", textAlign: "center" }}>
         Survivor Picks
       </h1>
       <p style={{ textAlign: "center", marginBottom: "20px", color: "#4b5563" }}>
@@ -161,7 +161,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
             }}
           >
             <p style={{ margin: "0 0 12px 0", fontWeight: "bold" }}>Week {selectedWeek}</p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "8px" }}>
               {TEAMS.map((team) => {
                 const imageFailed = imageErrors[team.name];
                 return (
@@ -180,14 +180,14 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                       <img
                         src={team.flagSrc}
                         alt={`${team.name} flag`}
-                        style={{ width: "100%", height: "88px", objectFit: "cover", borderRadius: "8px", backgroundColor: "#f3f4f6" }}
+                        style={{ width: "100%", height: "74px", objectFit: "cover", borderRadius: "8px", backgroundColor: "#f3f4f6" }}
                         onError={() => setImageErrors((prev) => ({ ...prev, [team.name]: true }))}
                       />
                     ) : (
                       <div
                         style={{
                           width: "100%",
-                          height: "88px",
+                          height: "74px",
                           borderRadius: "8px",
                           backgroundColor: team.color,
                           display: "flex",
@@ -208,7 +208,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
           </div>
         )}
 
-        <div style={{ display: "flex", justifyContent: "center", gap: "12px", marginTop: "8px" }}>
+        <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "8px", flexWrap: "wrap" }}>
           <button onClick={goBackWeek} disabled={selectedWeek === 1}>
             Back
           </button>
@@ -242,7 +242,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                 <img
                   src={getTeam(p.weekly_picks?.[selectedWeek])?.flagSrc}
                   alt={`${p.weekly_picks?.[selectedWeek]} flag`}
-                  style={{ width: "100%", height: "110px", objectFit: "cover", borderRadius: "6px", backgroundColor: "#f3f4f6" }}
+                  style={{ width: "100%", height: "96px", objectFit: "cover", borderRadius: "6px", backgroundColor: "#f3f4f6" }}
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
                   }}

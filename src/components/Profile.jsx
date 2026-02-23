@@ -88,10 +88,10 @@ export default function Profile({ session }) {
     setSaving(false)
   }
 
-  if (loading) return <div style={{ padding: '2rem' }}>Loading profile...</div>
+  if (loading) return <div style={{ padding: '1rem' }}>Loading profile...</div>
 
   return (
-    <div style={{ padding: '2rem', minHeight: '100vh', backgroundImage: `url(${profileBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+    <div style={{ padding: '1rem', minHeight: '100vh', backgroundImage: `url(${profileBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
       <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: '12px', padding: '1rem' }}>
       <h1>My Profile</h1>
 
