@@ -38,6 +38,7 @@ export default function Teams() {
 
       {sortedTeams.map((profile, index) => {
         const teamPoints = profile.team_points || 0
+        const bonusPoints = profile.bonus_points || 0
         const rank = index + 1
         const isGold = rank === 1
         const isSilver = rank === 2
@@ -80,6 +81,9 @@ export default function Teams() {
             <div style={{ textAlign: 'right' }}>
               <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>
                 Points: {teamPoints}
+              </p>
+              <p style={{ margin: '0.25rem 0 0 0', color: '#0b7d2b' }}>
+                +{bonusPoints} bonus points
               </p>
               {rankLabel && (
                 <p style={{ margin: '0.25rem 0 0 0', fontWeight: 'bold', color: '#555' }}>
