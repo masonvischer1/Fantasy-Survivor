@@ -196,7 +196,11 @@ export default function Profile({ session, setProfile }) {
                 '/fallback.png'
               }
               alt={c.name}
-              style={{ width: '100%', borderRadius: '5px' }}
+              style={{
+                width: '100%',
+                borderRadius: '5px',
+                filter: c.is_eliminated ? 'grayscale(100%)' : 'none'
+              }}
             />
             <p><b>{c.name}</b></p>
             <p>{c.tribe}</p>
