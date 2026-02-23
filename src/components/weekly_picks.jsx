@@ -173,21 +173,21 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                       borderRadius: "12px",
                       background: "rgba(255,255,255,0.86)",
                       cursor: "pointer",
-                      padding: "10px 8px",
+                      padding: "12px 8px",
                     }}
                   >
                     {!imageFailed ? (
                       <img
                         src={team.flagSrc}
                         alt={`${team.name} flag`}
-                        style={{ width: "100%", height: "clamp(110px, 28vw, 150px)", objectFit: "cover", borderRadius: "10px", backgroundColor: "#f3f4f6" }}
+                        style={{ width: "100%", height: "clamp(180px, 46vw, 260px)", objectFit: "cover", borderRadius: "10px", backgroundColor: "#f3f4f6" }}
                         onError={() => setImageErrors((prev) => ({ ...prev, [team.name]: true }))}
                       />
                     ) : (
                       <div
                         style={{
                           width: "100%",
-                          height: "clamp(110px, 28vw, 150px)",
+                          height: "clamp(180px, 46vw, 260px)",
                           borderRadius: "10px",
                           backgroundColor: team.color,
                           display: "flex",
