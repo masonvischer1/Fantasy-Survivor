@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import siteLogo from '../assets/Logo.png'
 
 export default function ContestantDetail() {
   const { id } = useParams()
@@ -170,6 +171,7 @@ export default function ContestantDetail() {
 
   return (
     <div style={{ padding: '1rem', textAlign: 'center', position: 'relative' }}>
+      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
       <button onClick={() => navigate(-1)}>← Back</button>
 
       {isAdmin && !contestant.is_eliminated && (

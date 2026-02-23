@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import profileBg from '../assets/sand - profile.png'
+import siteLogo from '../assets/Logo.png'
 
 export default function Profile({ session }) {
   const [playerName, setPlayerName] = useState('')
@@ -93,6 +94,7 @@ export default function Profile({ session }) {
   return (
     <div style={{ padding: '1rem', minHeight: '100dvh', backgroundImage: `url(${profileBg})`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
       <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: '12px', padding: '1rem' }}>
+      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
       <h1>My Profile</h1>
 
       <div style={{ margin: '1rem 0' }}>

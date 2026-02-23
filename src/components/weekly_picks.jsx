@@ -4,6 +4,7 @@ import kaloBuff from "../assets/Survivor_50_Kalo_Buff.png";
 import cilaBuff from "../assets/Survivor_50_Cila_Buff.png";
 import vatuBuff from "../assets/Survivor_50_Vatu_Buff.png";
 import weeklyPicksBg from "../assets/Challenge - Weekly Picks.png";
+import siteLogo from "../assets/Logo.png";
 
 const TEAMS = [
   { name: "Kalo", color: "#3B82F6", flagSrc: kaloBuff },
@@ -136,6 +137,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
         padding: "12px",
       }}
     >
+      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: "block", width: "min(220px, 55vw)", margin: "0 auto 0.75rem auto" }} />
       <h1 style={{ fontSize: "clamp(1.6rem, 7vw, 2.1rem)", fontWeight: "bold", marginBottom: "10px", textAlign: "center" }}>
         Survivor Picks
       </h1>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import leaderboardBg from '../assets/Island Life - Leaderboard.png'
+import siteLogo from '../assets/Logo.png'
 
 export default function Teams() {
   const [teams, setTeams] = useState([])
@@ -35,6 +36,7 @@ export default function Teams() {
 
   return (
     <div style={{ padding: '1rem', minHeight: '100dvh', backgroundImage: `url(${leaderboardBg})`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
+      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
       <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Leaderboard</h1>
 
       {teams.length === 0 && <p style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>No teams yet</p>}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import siteLogo from '../assets/Logo.png'
 
 export default function MyTeam() {
   const [team, setTeam] = useState([])
@@ -33,6 +34,7 @@ export default function MyTeam() {
 
   return (
     <div style={{ padding: '1rem', textAlign: 'center' }}>
+      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
       {/* Profile header */}
       <div style={{ marginBottom: '1rem' }}>
         {profile.avatar_url && (
