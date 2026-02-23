@@ -49,7 +49,7 @@ export default function Teams() {
         const isSilver = rank === 2
         const isBronze = rank === 3
         const rankBorder = isGold ? '#d4af37' : isSilver ? '#c0c0c0' : isBronze ? '#cd7f32' : '#ddd'
-        const rankBackground = isGold ? '#fff9e6' : isSilver ? '#f8f8f8' : isBronze ? '#fff4ec' : 'white'
+        const rankBackground = isGold ? 'rgba(255,249,230,0.88)' : isSilver ? 'rgba(248,248,248,0.88)' : isBronze ? 'rgba(255,244,236,0.88)' : 'rgba(255,255,255,0.84)'
         const rankLabel = isGold ? '1st Place' : isSilver ? '2nd Place' : isBronze ? '3rd Place' : null
 
         return (
@@ -60,7 +60,8 @@ export default function Teams() {
             border: `2px solid ${rankBorder}`,
             padding: '0.75rem',
             borderRadius: '8px',
-            background: rankBackground
+            background: rankBackground,
+            backdropFilter: 'blur(2px)'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>

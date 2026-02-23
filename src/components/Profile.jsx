@@ -93,7 +93,7 @@ export default function Profile({ session }) {
 
   return (
     <div style={{ padding: '1rem', minHeight: '100dvh', backgroundImage: `url(${profileBg})`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
-      <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: '12px', padding: '1rem' }}>
+      <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.86)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)' }}>
       <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
       <h1>My Profile</h1>
 

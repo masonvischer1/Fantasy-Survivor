@@ -147,7 +147,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
 
       <div style={{ width: "100%", maxWidth: "980px", margin: "0 auto" }}>
         {hasOwnPickThisWeek && (
-          <div style={{ marginBottom: "20px", padding: "14px", backgroundColor: "white", borderRadius: "10px", border: "1px solid #d1d5db" }}>
+          <div style={{ marginBottom: "20px", padding: "14px", backgroundColor: "rgba(255,255,255,0.86)", borderRadius: "10px", border: "1px solid rgba(209,213,219,0.9)", backdropFilter: "blur(2px)" }}>
             <p style={{ margin: 0, textAlign: "center", color: "#4b5563" }}>
               Your Week {selectedWeek} pick is locked in.
             </p>
@@ -159,9 +159,10 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
             style={{
               marginBottom: "14px",
               padding: "14px",
-              backgroundColor: "white",
+              backgroundColor: "rgba(255,255,255,0.86)",
               borderRadius: "10px",
-              border: "1px solid #d1d5db",
+              border: "1px solid rgba(209,213,219,0.9)",
+              backdropFilter: "blur(2px)",
             }}
           >
             <p style={{ margin: "0 0 12px 0", fontWeight: "bold" }}>Week {selectedWeek}</p>
@@ -175,7 +176,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                     style={{
                       border: "1px solid #d1d5db",
                       borderRadius: "10px",
-                      background: "white",
+                      background: "rgba(255,255,255,0.86)",
                       cursor: "pointer",
                       padding: "8px",
                     }}
@@ -236,7 +237,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
           )}
 
           {leagueProfiles.map((p) => (
-            <div key={p.id} style={{ marginBottom: "20px", padding: "12px", border: "1px solid #d1d5db", borderRadius: "8px", backgroundColor: "white" }}>
+            <div key={p.id} style={{ marginBottom: "20px", padding: "12px", border: "1px solid rgba(209,213,219,0.9)", borderRadius: "8px", backgroundColor: "rgba(255,255,255,0.86)", backdropFilter: "blur(2px)" }}>
               <p style={{ margin: "0 0 10px 0", fontWeight: "bold" }}>
                 {p.team_name || "Unnamed Team"}
                 {p.player_name ? ` (${p.player_name})` : ""}
