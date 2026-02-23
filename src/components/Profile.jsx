@@ -166,11 +166,14 @@ export default function Profile({ session, setProfile }) {
           onChange={e => setPlayerName(e.target.value)}
           placeholder="Your Name"
           style={{
+            display: 'block',
             width: '100%',
+            maxWidth: '100%',
+            margin: '0 auto 1rem auto',
+            boxSizing: 'border-box',
             padding: '0.5rem',
             borderRadius: '5px',
-            border: '1px solid #ccc',
-            marginBottom: '1rem'
+            border: '1px solid #ccc'
           }}
         />
 
@@ -180,7 +183,11 @@ export default function Profile({ session, setProfile }) {
           onChange={e => setTeamName(e.target.value)}
           placeholder="Team Name"
           style={{
+            display: 'block',
             width: '100%',
+            maxWidth: '100%',
+            margin: '0 auto',
+            boxSizing: 'border-box',
             padding: '0.5rem',
             borderRadius: '5px',
             border: '1px solid #ccc'
