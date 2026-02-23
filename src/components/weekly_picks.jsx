@@ -1,22 +1,25 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
+import kaloBuff from "../assets/Survivor_50_Kalo_Buff.png";
+import cilaBuff from "../assets/Survivor_50_Cila_Buff.png";
+import vatuBuff from "../assets/Survivor_50_Vatu_Buff.png";
 
 const TEAMS = [
-  { name: "Kalo", color: "#3B82F6", flagSrc: "/assets/Survivor_50_Kalo_Buff.png" },
-  { name: "Cila", color: "#F97316", flagSrc: "/assets/Survivor_50_Cila_Buff.png" },
-  { name: "Vatu", color: "#A855F7", flagSrc: "/assets/Survivor_50_Vatu_Buff.png" },
+  { name: "Kalo", color: "#3B82F6", flagSrc: kaloBuff },
+  { name: "Cila", color: "#F97316", flagSrc: cilaBuff },
+  { name: "Vatu", color: "#A855F7", flagSrc: vatuBuff },
 ];
 
 const TOTAL_EPISODES = 14;
 
-export default function WeeklyPicks({ currentWeek = 5 }) {
+export default function WeeklyPicks({ currentWeek = 1 }) {
   const [profile, setProfile] = useState(null);
   const [otherProfiles, setOtherProfiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [imageErrors, setImageErrors] = useState({});
 
-  const fetchOtherProfiles = async (userId) => {
+  const fetchOtherProfiles = useCallback(async (userId) => {
     const { data, error } = await supabase
       .from("profiles")
       .select("id, team_name, player_name, weekly_picks");
@@ -28,12 +31,11 @@ export default function WeeklyPicks({ currentWeek = 5 }) {
 
     const othersWithPicks = (data || []).filter((p) => {
       if (p.id === userId) return false;
-      const picks = p.weekly_picks || {};
-      return Object.keys(picks).length > 0;
+      return !!p.weekly_picks?.[currentWeek];
     });
 
     setOtherProfiles(othersWithPicks);
-  };
+  }, [currentWeek]);
 
   useEffect(() => {
     const load = async () => {
@@ -65,7 +67,7 @@ export default function WeeklyPicks({ currentWeek = 5 }) {
     Promise.resolve().then(() => {
       load();
     });
-  }, []);
+  }, [fetchOtherProfiles]);
 
   const handlePick = async (weekNum, teamName) => {
     if (!profile) return;
@@ -110,10 +112,9 @@ export default function WeeklyPicks({ currentWeek = 5 }) {
   };
 
   const getTeam = (teamName) => TEAMS.find((team) => team.name === teamName);
-  const hasOwnPicks = Object.keys(profile?.weekly_picks || {}).length > 0;
-  const openWeeks = Array.from({ length: Math.min(currentWeek, TOTAL_EPISODES) }, (_, i) => i + 1).filter(
-    (weekNum) => !profile?.weekly_picks?.[weekNum]
-  );
+  const weekNum = Math.min(currentWeek, TOTAL_EPISODES);
+  const currentWeekPick = profile?.weekly_picks?.[weekNum];
+  const hasOwnPickThisWeek = !!currentWeekPick;
 
   return (
     <div
@@ -131,17 +132,16 @@ export default function WeeklyPicks({ currentWeek = 5 }) {
       </p>
 
       <div style={{ width: "100%", maxWidth: "980px", margin: "0 auto" }}>
-        {openWeeks.length === 0 && (
+        {hasOwnPickThisWeek && (
           <div style={{ marginBottom: "20px", padding: "14px", backgroundColor: "white", borderRadius: "10px", border: "1px solid #d1d5db" }}>
             <p style={{ margin: 0, textAlign: "center", color: "#4b5563" }}>
-              You are up to date. No unpicked weeks through Week {currentWeek}.
+              Your Week {weekNum} pick is locked in.
             </p>
           </div>
         )}
 
-        {openWeeks.map((weekNum) => (
+        {!hasOwnPickThisWeek && (
           <div
-            key={weekNum}
             style={{
               marginBottom: "14px",
               padding: "14px",
@@ -156,7 +156,7 @@ export default function WeeklyPicks({ currentWeek = 5 }) {
                 const imageFailed = imageErrors[team.name];
                 return (
                   <button
-                    key={`${weekNum}-${team.name}`}
+                    key={`${weekNum}-select-${team.name}`}
                     onClick={() => handlePick(weekNum, team.name)}
                     style={{
                       border: "1px solid #d1d5db",
@@ -196,7 +196,7 @@ export default function WeeklyPicks({ currentWeek = 5 }) {
               })}
             </div>
           </div>
-        ))}
+        )}
       </div>
 
       <div style={{ textAlign: "center", marginTop: "6px" }}>
@@ -204,41 +204,27 @@ export default function WeeklyPicks({ currentWeek = 5 }) {
         {loading && <p style={{ color: "#6b7280", fontSize: "16px" }}>Saving...</p>}
       </div>
 
-      {hasOwnPicks && (
+      {hasOwnPickThisWeek && (
         <div style={{ width: "100%", maxWidth: "980px", margin: "24px auto 0 auto" }}>
-          <h2 style={{ textAlign: "center", marginBottom: "12px" }}>Your Picks So Far</h2>
+          <h2 style={{ textAlign: "center", marginBottom: "12px" }}>Your Week {weekNum} Pick</h2>
           <div style={{ marginBottom: "20px", padding: "12px", border: "1px solid #d1d5db", borderRadius: "8px", backgroundColor: "white" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "10px" }}>
-              {Array.from({ length: Math.min(currentWeek, TOTAL_EPISODES) }, (_, i) => i + 1).map((weekNum) => {
-                const pickedTeamName = profile?.weekly_picks?.[weekNum];
-                const team = getTeam(pickedTeamName);
-                return (
-                  <div key={`mine-${weekNum}`} style={{ border: "1px solid #e5e7eb", borderRadius: "8px", padding: "8px" }}>
-                    <p style={{ margin: "0 0 6px 0", fontSize: "12px", fontWeight: "bold", color: "#6b7280" }}>Week {weekNum}</p>
-                    {team ? (
-                      <>
-                        <img
-                          src={team.flagSrc}
-                          alt={`${team.name} flag`}
-                          style={{ width: "100%", height: "72px", objectFit: "cover", borderRadius: "6px", backgroundColor: "#f3f4f6" }}
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                          }}
-                        />
-                        <p style={{ margin: "6px 0 0 0", fontWeight: "bold" }}>{team.name}</p>
-                      </>
-                    ) : (
-                      <p style={{ margin: 0, color: "#9ca3af" }}>No pick</p>
-                    )}
-                  </div>
-                );
-              })}
+            <div style={{ border: "1px solid #e5e7eb", borderRadius: "8px", padding: "8px", maxWidth: "260px", margin: "0 auto" }}>
+              <p style={{ margin: "0 0 6px 0", fontSize: "12px", fontWeight: "bold", color: "#6b7280" }}>Week {weekNum}</p>
+              <img
+                src={getTeam(currentWeekPick)?.flagSrc}
+                alt={`${currentWeekPick} flag`}
+                style={{ width: "100%", height: "110px", objectFit: "cover", borderRadius: "6px", backgroundColor: "#f3f4f6" }}
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+              <p style={{ margin: "6px 0 0 0", fontWeight: "bold" }}>{currentWeekPick}</p>
             </div>
           </div>
 
-          <h2 style={{ textAlign: "center", marginBottom: "12px" }}>League Weekly Picks</h2>
+          <h2 style={{ textAlign: "center", marginBottom: "12px" }}>League Week {weekNum} Picks</h2>
           {otherProfiles.length === 0 && (
-            <p style={{ textAlign: "center", color: "#6b7280" }}>No other players have submitted picks yet.</p>
+            <p style={{ textAlign: "center", color: "#6b7280" }}>No other players have submitted Week {weekNum} picks yet.</p>
           )}
 
           {otherProfiles.map((p) => (
@@ -247,27 +233,17 @@ export default function WeeklyPicks({ currentWeek = 5 }) {
                 {p.team_name || "Unnamed Team"}
                 {p.player_name ? ` (${p.player_name})` : ""}
               </p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "8px" }}>
-                {Array.from({ length: TOTAL_EPISODES }, (_, i) => i + 1).map((weekNum) => {
-                  const pickedTeamName = p.weekly_picks?.[weekNum];
-                  const pickedTeam = getTeam(pickedTeamName);
-                  if (!pickedTeam) return null;
-
-                  return (
-                    <div key={`${p.id}-${weekNum}`} style={{ border: "1px solid #9ca3af", borderRadius: "6px", padding: "8px" }}>
-                      <p style={{ margin: "0 0 6px 0", fontSize: "12px", fontWeight: "bold", color: "#6b7280" }}>Week {weekNum}</p>
-                      <img
-                        src={pickedTeam.flagSrc}
-                        alt={`${pickedTeam.name} flag`}
-                        style={{ width: "100%", height: "72px", objectFit: "cover", borderRadius: "6px", backgroundColor: "#f3f4f6" }}
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                      <p style={{ margin: "6px 0 0 0", fontWeight: "bold" }}>{pickedTeam.name}</p>
-                    </div>
-                  );
-                })}
+              <div style={{ border: "1px solid #9ca3af", borderRadius: "6px", padding: "8px", maxWidth: "260px" }}>
+                <p style={{ margin: "0 0 6px 0", fontSize: "12px", fontWeight: "bold", color: "#6b7280" }}>Week {weekNum}</p>
+                <img
+                  src={getTeam(p.weekly_picks?.[weekNum])?.flagSrc}
+                  alt={`${p.weekly_picks?.[weekNum]} flag`}
+                  style={{ width: "100%", height: "110px", objectFit: "cover", borderRadius: "6px", backgroundColor: "#f3f4f6" }}
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+                <p style={{ margin: "6px 0 0 0", fontWeight: "bold" }}>{p.weekly_picks?.[weekNum]}</p>
               </div>
             </div>
           ))}
