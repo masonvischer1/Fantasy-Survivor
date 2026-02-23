@@ -21,6 +21,8 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   const [loading, setLoading] = useState(false);
   const [weekSaving, setWeekSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [weekMessage, setWeekMessage] = useState("");
+  const [weekError, setWeekError] = useState("");
   const [imageErrors, setImageErrors] = useState({});
 
   const fetchOtherProfiles = useCallback(async (userId) => {
@@ -46,15 +48,15 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
       .from("app_settings")
       .select("current_week")
       .eq("id", 1)
-      .single();
+      .maybeSingle();
 
     if (error) {
-      // Fallback to prop value if settings row/table is not available yet.
+      console.error(error);
       setActiveWeek(currentWeek);
       return;
     }
 
-    setActiveWeek(data?.current_week || currentWeek);
+    setActiveWeek(data?.current_week ?? currentWeek);
   }, [currentWeek]);
 
   useEffect(() => {
@@ -102,20 +104,32 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   const handleWeekChange = async (newWeek) => {
     if (!isAdmin) return;
     setWeekSaving(true);
+    setWeekMessage("");
+    setWeekError("");
 
-    const { error } = await supabase
+    const { data: updatedRows, error } = await supabase
       .from("app_settings")
-      .upsert({ id: 1, current_week: newWeek }, { onConflict: "id" });
-
-    setWeekSaving(false);
+      .update({ current_week: newWeek })
+      .eq("id", 1)
+      .select("id");
 
     if (error) {
       console.error(error);
+      setWeekError(`Could not update current week: ${error.message}`);
+      setWeekSaving(false);
+      return;
+    }
+
+    if (!updatedRows || updatedRows.length === 0) {
+      setWeekError("No app_settings row found with id=1. Create that row first.");
+      setWeekSaving(false);
       return;
     }
 
     setActiveWeek(newWeek);
+    setWeekMessage(`Current week updated to Week ${newWeek}.`);
     if (currentUserId) await fetchOtherProfiles(currentUserId);
+    setWeekSaving(false);
   };
 
   const handlePick = async (weekNum, teamName) => {
@@ -199,6 +213,8 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
             ))}
           </select>
           {weekSaving && <p style={{ margin: "8px 0 0 0", color: "#6b7280" }}>Updating week...</p>}
+          {!!weekMessage && <p style={{ margin: "8px 0 0 0", color: "#0b7d2b" }}>{weekMessage}</p>}
+          {!!weekError && <p style={{ margin: "8px 0 0 0", color: "#b91c1c" }}>{weekError}</p>}
         </div>
       )}
 
