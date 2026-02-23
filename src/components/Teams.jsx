@@ -15,7 +15,7 @@ export default function Teams() {
         .order('total_score', { ascending: false }),
       supabase
         .from('contestants')
-        .select('id, name, picture_url, elimPhoto_url, elim_photo_url, is_eliminated, tribe, season')
+        .select('*')
     ])
 
     if (profileError) {

@@ -18,7 +18,7 @@ export default function Profile({ session, setProfile }) {
   async function fetchContestants() {
     const { data, error } = await supabase
       .from('contestants')
-      .select('id, name, picture_url, elimPhoto_url, elim_photo_url, is_eliminated, tribe, season')
+      .select('*')
 
     if (error) {
       console.error(error)
