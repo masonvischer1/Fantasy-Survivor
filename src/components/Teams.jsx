@@ -7,8 +7,8 @@ export default function Teams() {
   const fetchAllTeams = async () => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, team_name, player_name, avatar_url, team, team_points, bonus_points') // 'team' is JSONB array of picks
-      .order('team_points', { ascending: false })
+      .select('id, team_name, player_name, avatar_url, team, team_points, bonus_points, manual_points, total_score') // 'team' is JSONB array of picks
+      .order('total_score', { ascending: false })
 
     if (error) {
       console.error('Error fetching teams:', error)
@@ -25,8 +25,10 @@ export default function Teams() {
   }, [])
 
   const sortedTeams = [...teams].sort((a, b) => {
-    const pointsDiff = (b.team_points || 0) - (a.team_points || 0)
-    if (pointsDiff !== 0) return pointsDiff
+    const aTotal = a.total_score ?? ((a.team_points || 0) + (a.bonus_points || 0) + (a.manual_points || 0))
+    const bTotal = b.total_score ?? ((b.team_points || 0) + (b.bonus_points || 0) + (b.manual_points || 0))
+    const totalDiff = bTotal - aTotal
+    if (totalDiff !== 0) return totalDiff
     return (a.team_name || '').localeCompare(b.team_name || '')
   })
 
