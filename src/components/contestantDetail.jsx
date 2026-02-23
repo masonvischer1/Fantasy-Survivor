@@ -14,7 +14,7 @@ export default function ContestantDetail() {
   const [draftedIds, setDraftedIds] = useState([])
   const [isAdmin, setIsAdmin] = useState(false)
   const cardWidth = 'min(580px, calc(100vw - 200px))'
-  const sideArrowOffset = '66px'
+  const sideArrowOffset = '90px'
 
   useEffect(() => {
     fetchAllContestants()
@@ -238,6 +238,8 @@ export default function ContestantDetail() {
             src={contestant.picture_url || '/fallback.png'}
             alt={contestant.name}
             style={{
+              display: 'block',
+              margin: '0 auto',
               width: 'min(220px, 64vw)',
               borderRadius: '10px',
               filter: contestant.is_eliminated ? 'grayscale(100%)' : 'none'
