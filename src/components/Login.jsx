@@ -66,8 +66,9 @@ function Login() {
     setError('')
 
     const normalizedUsername = getNormalizedUsername()
+    const internalEmail = usernameToEmail(normalizedUsername)
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: usernameToEmail(normalizedUsername),
+      email: internalEmail,
       password,
       options: { data: { username: normalizedUsername } }
     })
@@ -84,7 +85,21 @@ function Login() {
       return
     }
 
+    // Ensure we have an authenticated session before writing profile/storage data.
+    if (!signUpData?.session) {
+      const { error: signInAfterSignUpError } = await supabase.auth.signInWithPassword({
+        email: internalEmail,
+        password
+      })
+      if (signInAfterSignUpError) {
+        setLoading(false)
+        setError(`Account created, but automatic sign-in failed: ${signInAfterSignUpError.message}`)
+        return
+      }
+    }
+
     let avatarUrl = null
+    let avatarWarning = ''
     if (avatarFile) {
       const filePath = `${user.id}-${Date.now()}`
       const { error: uploadError } = await supabase.storage
@@ -92,16 +107,13 @@ function Login() {
         .upload(filePath, avatarFile)
 
       if (uploadError) {
-        setLoading(false)
-        setError(`Account created, but avatar upload failed: ${uploadError.message}`)
-        return
+        avatarWarning = ` Avatar upload failed: ${uploadError.message}`
+      } else {
+        const { data } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath)
+        avatarUrl = data.publicUrl
       }
-
-      const { data } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath)
-
-      avatarUrl = data.publicUrl
     }
 
     const { error: profileError } = await supabase
@@ -121,7 +133,7 @@ function Login() {
       return
     }
 
-    alert('Account created. You can now sign in with your username and password.')
+    alert(`Account and profile created successfully.${avatarWarning}`)
     setIsSignUp(false)
     setUsername('')
     setPlayerName('')
