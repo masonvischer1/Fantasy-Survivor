@@ -45,6 +45,22 @@ export default function ContestantsGrid() {
       fetchContestants()
       fetchDrafted()
     })
+
+    // Keep list in sync when contestant elimination status changes elsewhere.
+    const channel = supabase
+      .channel('contestants-grid-updates')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'contestants' },
+        () => {
+          fetchContestants()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   return (
@@ -54,7 +70,7 @@ export default function ContestantsGrid() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
       {contestants.map(c => {
         const isDrafted = draftedIds.includes(c.id)
-        const isEliminated = c.is_eliminated
+        const isEliminated = c.is_eliminated === true
 
         return (
           <div

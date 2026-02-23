@@ -2,28 +2,67 @@ import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import leaderboardBg from '../assets/Island Life - Leaderboard.png'
 import siteLogo from '../assets/Logo.png'
+import { buildContestantMap, hydrateTeamFromContestants } from '../utils/teamHydration'
 
 export default function Teams() {
   const [teams, setTeams] = useState([])
 
   const fetchAllTeams = async () => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, team_name, player_name, avatar_url, team, team_points, bonus_points, manual_points, total_score') // 'team' is JSONB array of picks
-      .order('total_score', { ascending: false })
+    const [{ data: profileData, error: profileError }, { data: contestantData, error: contestantError }] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('id, team_name, player_name, avatar_url, team, team_points, bonus_points, manual_points, total_score')
+        .order('total_score', { ascending: false }),
+      supabase
+        .from('contestants')
+        .select('id, name, picture_url, elimPhoto_url, elim_photo_url, is_eliminated, tribe, season')
+    ])
 
-    if (error) {
-      console.error('Error fetching teams:', error)
+    if (profileError) {
+      console.error('Error fetching teams:', profileError)
       return
     }
 
-    setTeams(data)
+    if (contestantError) {
+      console.error('Error fetching contestants:', contestantError)
+      return
+    }
+
+    const contestantMap = buildContestantMap(contestantData)
+    const hydratedProfiles = (profileData || []).map(profile => ({
+      ...profile,
+      team: hydrateTeamFromContestants(profile.team, contestantMap)
+    }))
+
+    setTeams(hydratedProfiles)
   }
 
   useEffect(() => {
     Promise.resolve().then(() => {
       fetchAllTeams()
     })
+
+    const channel = supabase
+      .channel('leaderboard-live-updates')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'contestants' },
+        () => {
+          fetchAllTeams()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          fetchAllTeams()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   const sortedTeams = [...teams].sort((a, b) => {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import profileBg from '../assets/sand - profile.png'
 import siteLogo from '../assets/Logo.png'
+import { buildContestantMap, hydrateTeamFromContestants } from '../utils/teamHydration'
 
 export default function Profile({ session, setProfile }) {
   const [playerName, setPlayerName] = useState('')
@@ -11,32 +12,65 @@ export default function Profile({ session, setProfile }) {
   const [avatarUrl, setAvatarUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [contestantMap, setContestantMap] = useState(new Map())
   const userId = session?.user?.id
+
+  async function fetchContestants() {
+    const { data, error } = await supabase
+      .from('contestants')
+      .select('id, name, picture_url, elimPhoto_url, elim_photo_url, is_eliminated, tribe, season')
+
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    setContestantMap(buildContestantMap(data))
+  }
+
+  async function fetchProfile() {
+    if (!userId) {
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('player_name, team_name, avatar_url, team')
+      .eq('id', userId)
+      .single()
+
+    if (error) {
+      console.error(error)
+    } else {
+      setPlayerName(data.player_name || '')
+      setTeamName(data.team_name || '')
+      setAvatarUrl(data.avatar_url || '')
+      setTeam(Array.isArray(data.team) ? data.team : [])
+    }
+    setLoading(false)
+  }
 
   useEffect(() => {
     Promise.resolve().then(async () => {
-      if (!userId) {
-        setLoading(false)
-        return
-      }
-
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('player_name, team_name, avatar_url, team')
-        .eq('id', userId)
-        .single()
-
-      if (error) {
-        console.error(error)
-      } else {
-        setPlayerName(data.player_name || '')
-        setTeamName(data.team_name || '')
-        setAvatarUrl(data.avatar_url || '')
-        setTeam(Array.isArray(data.team) ? data.team : [])
-      }
-      setLoading(false)
+      await Promise.all([fetchProfile(), fetchContestants()])
     })
+
+    const channel = supabase
+      .channel('profile-contestant-updates')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'contestants' },
+        () => {
+          fetchContestants()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [userId])
 
   // Handle avatar file selection
@@ -103,6 +137,7 @@ export default function Profile({ session, setProfile }) {
   }
 
   if (loading) return <div style={{ padding: '1rem' }}>Loading profile...</div>
+  const hydratedTeam = hydrateTeamFromContestants(team, contestantMap)
 
   return (
     <div style={{ padding: '1rem', minHeight: '100dvh', backgroundImage: `url(${profileBg})`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
@@ -175,7 +210,7 @@ export default function Profile({ session, setProfile }) {
           marginTop: '1rem'
         }}
       >
-        {team.map(c => (
+        {hydratedTeam.map(c => (
           <div
             key={c.id}
             style={{
