@@ -91,7 +91,7 @@ export default function Profile({ session }) {
   if (loading) return <div style={{ padding: '1rem' }}>Loading profile...</div>
 
   return (
-    <div style={{ padding: '1rem', minHeight: '100dvh', backgroundImage: `url(${profileBg})`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
+    <div style={{ padding: '1rem', minHeight: '100dvh', backgroundImage: `url(${profileBg})`, backgroundSize: '100% auto', backgroundPosition: 'center center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
       <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: '12px', padding: '1rem' }}>
       <h1>My Profile</h1>
 
@@ -152,3 +152,4 @@ export default function Profile({ session }) {
     </div>
   )
 }
+

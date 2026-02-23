@@ -60,7 +60,7 @@ export default function CreateTeam({ onTeamCreated }) {
   }
 
   return (
-    <div style={{ padding: '1rem', minHeight: '100dvh', backgroundImage: `url(${createTeamBg})`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
+    <div style={{ padding: '1rem', minHeight: '100dvh', backgroundImage: `url(${createTeamBg})`, backgroundSize: '100% auto', backgroundPosition: 'center center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
       <div style={{ width: '100%', maxWidth: '430px', margin: '0 auto', background: 'rgba(255,255,255,0.92)', borderRadius: '12px', padding: '1rem' }}>
       <h1 style={{ color: '#111827', marginTop: 0 }}>Create Your Team</h1>
 
@@ -95,3 +95,4 @@ export default function CreateTeam({ onTeamCreated }) {
     </div>
   )
 }
+
