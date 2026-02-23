@@ -7,7 +7,6 @@ import Navbar from "./components/Navbar";
 import Login from "./components/Login";
 import Contestants from "./components/contestantsGrid";
 import ContestantDetail from "./components/contestantDetail";
-import MyTeam from "./components/MyTeam";
 import Teams from "./components/Teams";
 import CreateTeam from "./components/CreateTeam";
 import Profile from "./components/Profile";
@@ -114,7 +113,7 @@ function App() {
           path="/profile"
           element={
             session && !needsTeamSetup ? (
-              <Profile session={session} profile={profile} setProfile={setProfile} />
+              <Profile session={session} setProfile={setProfile} />
             ) : (
               <Navigate to={session ? "/create-team" : "/login"} />
             )
@@ -131,16 +130,6 @@ function App() {
         <Route
           path="/contestant/:id"
           element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <ContestantDetail />) : <Navigate to="/login" />}
-        />
-
-        {/* My Team */}
-        <Route
-          path="/my-team"
-          element={
-            session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <MyTeam profile={profile} />) : (
-              <Navigate to="/login" />
-            )
-          }
         />
 
         {/* League Teams */}

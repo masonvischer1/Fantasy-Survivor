@@ -3,9 +3,10 @@ import { supabase } from '../supabaseClient'
 import profileBg from '../assets/sand - profile.png'
 import siteLogo from '../assets/Logo.png'
 
-export default function Profile({ session }) {
+export default function Profile({ session, setProfile }) {
   const [playerName, setPlayerName] = useState('')
   const [teamName, setTeamName] = useState('')
+  const [team, setTeam] = useState([])
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarUrl, setAvatarUrl] = useState('')
   const [loading, setLoading] = useState(true)
@@ -22,7 +23,7 @@ export default function Profile({ session }) {
       setLoading(true)
       const { data, error } = await supabase
         .from('profiles')
-        .select('player_name, team_name, avatar_url')
+        .select('player_name, team_name, avatar_url, team')
         .eq('id', userId)
         .single()
 
@@ -32,6 +33,7 @@ export default function Profile({ session }) {
         setPlayerName(data.player_name || '')
         setTeamName(data.team_name || '')
         setAvatarUrl(data.avatar_url || '')
+        setTeam(Array.isArray(data.team) ? data.team : [])
       }
       setLoading(false)
     })
@@ -78,13 +80,24 @@ export default function Profile({ session }) {
         id: session.user.id,
         player_name: playerName,
         team_name: teamName,
-        avatar_url: url
+        avatar_url: url,
+        team
       }, { onConflict: 'id' })
 
     if (error) console.error('Update error:', error)
     else {
       alert('Profile updated successfully!')
       setAvatarUrl(url)
+      if (typeof setProfile === 'function') {
+        setProfile(prev => ({
+          ...(prev || {}),
+          id: session.user.id,
+          player_name: playerName,
+          team_name: teamName,
+          avatar_url: url,
+          team
+        }))
+      }
     }
     setSaving(false)
   }
@@ -93,7 +106,7 @@ export default function Profile({ session }) {
 
   return (
     <div style={{ padding: '1rem', minHeight: '100dvh', backgroundImage: `url(${profileBg})`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
-      <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.86)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)' }}>
+      <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.86)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)' }}>
       <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
       <h1>My Profile</h1>
 
@@ -150,6 +163,39 @@ export default function Profile({ session }) {
       >
         {saving ? 'Saving...' : 'Save Profile'}
       </button>
+
+      <h2 style={{ marginTop: '1.25rem' }}>Your Drafted Contestants</h2>
+      {team.length === 0 && <p>You haven't drafted any players yet.</p>}
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+          gap: '0.75rem',
+          marginTop: '1rem'
+        }}
+      >
+        {team.map(c => (
+          <div
+            key={c.id}
+            style={{
+              border: '2px solid gray',
+              borderRadius: '8px',
+              padding: '0.5rem',
+              opacity: c.is_eliminated ? 0.5 : 1
+            }}
+          >
+            <img
+              src={c.is_eliminated ? c.elimPhoto_url : c.picture_url}
+              alt={c.name}
+              style={{ width: '100%', borderRadius: '5px' }}
+            />
+            <p><b>{c.name}</b></p>
+            <p>{c.tribe}</p>
+            <p>{c.season}</p>
+          </div>
+        ))}
+      </div>
       </div>
     </div>
   )

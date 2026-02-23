@@ -64,7 +64,7 @@ export default function Navbar({ session, profile }) {
             bottom: 0,
             zIndex: 110,
             display: 'grid',
-            gridTemplateColumns: hasCompletedInitialDraft ? 'repeat(5, 1fr)' : 'repeat(4, 1fr)',
+            gridTemplateColumns: hasCompletedInitialDraft ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)',
             gap: '0.3rem',
             padding: '0.55rem 0.55rem calc(0.55rem + env(safe-area-inset-bottom))',
             backgroundColor: 'rgba(255,255,255,0.96)',
@@ -73,7 +73,6 @@ export default function Navbar({ session, profile }) {
           }}
         >
           <Link to="/" style={{ textAlign: 'center', fontSize: '0.78rem', color: '#0f172a', fontWeight: 600 }}>Castaways</Link>
-          <Link to="/my-team" style={{ textAlign: 'center', fontSize: '0.78rem', color: '#0f172a', fontWeight: 600 }}>My Team</Link>
           {hasCompletedInitialDraft && (
             <Link to="/teams" style={{ textAlign: 'center', fontSize: '0.78rem', color: '#0f172a', fontWeight: 600 }}>Leaderboard</Link>
           )}
