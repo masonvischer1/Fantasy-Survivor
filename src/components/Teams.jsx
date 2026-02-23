@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import siteLogo from '../assets/Logo.png'
+import idolImg from '../assets/idol.png'
 import { buildContestantMap, hydrateTeamFromContestants } from '../utils/teamHydration'
 
 export default function Teams() {
@@ -73,7 +74,22 @@ export default function Teams() {
   })
 
   return (
-    <div style={{ padding: '1rem' }}>
+    <div style={{ padding: '1rem', position: 'relative' }}>
+      <img
+        src={idolImg}
+        alt=""
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          top: 'calc(var(--top-nav-height, 56px) + 8px)',
+          right: 'max(8px, env(safe-area-inset-right))',
+          width: 'clamp(82px, 18vw, 138px)',
+          height: 'auto',
+          zIndex: 2,
+          pointerEvents: 'none',
+          filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.35))'
+        }}
+      />
       <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
       <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Leaderboard</h1>
 
