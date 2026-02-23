@@ -264,7 +264,8 @@ export default function Profile({ session, setProfile }) {
           padding: '0.55rem 1rem',
           border: 'none',
           borderRadius: '8px',
-          cursor: 'pointer'
+          cursor: 'pointer',
+          fontFamily: 'Survivant, system-ui, sans-serif'
         }}
       >
         Logout
