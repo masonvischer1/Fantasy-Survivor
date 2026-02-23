@@ -41,15 +41,14 @@ export default function Rules() {
         <h2>FINAL WAGERS</h2>
         <p>
           Before the season finale airs, you will be allowed to wager any amount of BONUS POINTS
-          that you currently have (not total score) to guess the season Winner. To get your wager
-          correct, you must have the exact players that end up in the Final 3, AND which of them
-          is the winner of the season. A correct choice will add the amount that you wagered to
-          your score... BUT, an incorrect choice will deduct the amount that you wagered from your score.
+          that you currently have (not total score) to guess the season Winner. A correct choice
+          will add the amount that you wagered to your score... BUT, an incorrect choice will
+          deduct the amount that you wagered from your score.
         </p>
 
         <h2>TIEBREAKERS</h2>
         <p>
-          The player with the most points at the end of the season finale will win our Survivor 49
+          The player with the most points at the end of the season finale will win our Survivor 50
           FANTASY DRAFT! In the event of a tie score, the tiebreaker will go to the person who had
           the player that lasted the longest in the game. If the tie still cannot be broken, the
           tiebreaker will go to the person with the player that lasted the second longest in the game,
