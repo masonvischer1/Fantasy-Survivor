@@ -202,7 +202,13 @@ export default function ContestantDetail() {
           cursor: 'pointer'
         }}
       >
-        <img src={closeIcon} alt="Back" width={isMobile ? 42 : 46} height={isMobile ? 42 : 46} style={{ display: 'block' }} />
+        <img
+          src={closeIcon}
+          alt="Back"
+          width={isMobile ? 42 : 46}
+          height={isMobile ? 42 : 46}
+          style={{ display: 'block', filter: 'brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.5))' }}
+        />
       </button>
 
       <button
