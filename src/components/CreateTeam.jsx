@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 
-export default function CreateTeam() {
+export default function CreateTeam({ onTeamCreated }) {
   const [teamName, setTeamName] = useState('')
   const [file, setFile] = useState(null)
   const navigate = useNavigate()
@@ -34,15 +34,22 @@ export default function CreateTeam() {
       avatarUrl = data.publicUrl
     }
 
-    const { error } = await supabase.from('profiles').insert({
+    const profilePayload = {
       id: user.id,
       team_name: teamName,
       avatar_url: avatarUrl
-    })
+    }
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .upsert(profilePayload, { onConflict: 'id' })
+      .select('*')
+      .single()
 
     if (error) {
       alert(error.message)
     } else {
+      if (onTeamCreated) onTeamCreated(data)
       navigate('/')
     }
   }

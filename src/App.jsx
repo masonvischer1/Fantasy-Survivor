@@ -31,29 +31,34 @@ function App() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // Fetch profile once session exists
-  useEffect(() => {
-    if (!session) {
+  async function fetchProfile(userId) {
+    if (!userId) {
       setProfile(null);
       setLoadingProfile(false);
       return;
     }
 
-    fetchProfile();
-  }, [session]);
-
-  async function fetchProfile() {
     setLoadingProfile(true);
+    setProfile(null);
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", session.user.id)
+      .eq("id", userId)
       .single();
 
-    if (error) console.error(error);
-    else setProfile(data);
+    if (error) {
+      setProfile(null);
+      console.error(error);
+    } else {
+      setProfile(data);
+    }
     setLoadingProfile(false);
   }
+
+  // Fetch profile once session exists
+  useEffect(() => {
+    fetchProfile(session?.user?.id);
+  }, [session]);
 
   if (loadingProfile) {
     return <div style={{ padding: "2rem" }}>Loading...</div>;
@@ -82,7 +87,17 @@ function App() {
         {/* Create team required after signup */}
         <Route
           path="/create-team"
-          element={session ? <CreateTeam /> : <Navigate to="/login" />}
+          element={
+            session ? (
+              <CreateTeam
+                onTeamCreated={(createdProfile) => {
+                  setProfile(createdProfile);
+                }}
+              />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
         />
 
         {/* Contestants */}
