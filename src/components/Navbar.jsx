@@ -14,25 +14,22 @@ export function TopNav({ session }) {
     navigate('/login')
   }
 
+  if (!session) return null
+
   return (
-    <nav
+    <button
+      onClick={signOut}
       style={{
-        height: 'var(--top-nav-height)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        padding: '0 0.9rem',
-        boxSizing: 'border-box',
-        backgroundColor: 'rgba(255,255,255,0.94)',
-        backdropFilter: 'blur(8px)'
+        position: 'fixed',
+        top: 'max(8px, env(safe-area-inset-top))',
+        right: 'max(10px, env(safe-area-inset-right))',
+        zIndex: 140,
+        padding: '0.4rem 0.7rem',
+        fontSize: '0.85rem'
       }}
     >
-      {session ? (
-        <button onClick={signOut} style={{ padding: '0.4rem 0.7rem', fontSize: '0.85rem' }}>Logout</button>
-      ) : (
-        <Link to="/login" style={{ color: '#0f172a', fontWeight: 600 }}>Login</Link>
-      )}
-    </nav>
+      Logout
+    </button>
   )
 }
 
@@ -47,9 +44,11 @@ export function BottomNav({ session, profile }) {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
     gap: '0.12rem',
     color: '#0f172a',
-    opacity: isActive ? 1 : 0.78
+    opacity: isActive ? 1 : 0.78,
+    textAlign: 'center'
   })
 
   const labelStyle = {
@@ -93,7 +92,7 @@ export function BottomNav({ session, profile }) {
         </Link>
       )}
       <Link to="/weekly-picks" style={tabStyle(location.pathname === '/weekly-picks')}>
-        <img src={weeklyIcon} alt="" aria-hidden="true" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
+        <img src={weeklyIcon} alt="" aria-hidden="true" style={{ width: '18px', height: '18px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
         <span style={labelStyle}>Weekly Picks</span>
       </Link>
       <Link to="/rules" style={tabStyle(location.pathname === '/rules')}>

@@ -40,7 +40,7 @@ function AppLayout({ session, profile, setProfile, needsTeamSetup, hasCompletedI
     <div
       className="app-shell"
       style={{
-        "--top-nav-height": "56px",
+        "--top-nav-height": "0px",
         "--bottom-nav-height": "0px",
       }}
     >
