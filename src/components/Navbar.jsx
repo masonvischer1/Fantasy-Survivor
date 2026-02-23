@@ -1,5 +1,4 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { supabase } from '../supabaseClient'
+import { Link, useLocation } from 'react-router-dom'
 import castawaysIcon from '../assets/castaways_icon.webp'
 import leaderboardIcon from '../assets/leaderboard_icon.webp'
 import weeklyIcon from '../assets/weekly_icon.png'
@@ -7,30 +6,8 @@ import rulesIcon from '../assets/rules_icon.png'
 import accountIcon from '../assets/account-icon.webp'
 
 export function TopNav({ session }) {
-  const navigate = useNavigate()
-
-  async function signOut() {
-    await supabase.auth.signOut()
-    navigate('/login')
-  }
-
   if (!session) return null
-
-  return (
-    <button
-      onClick={signOut}
-      style={{
-        position: 'fixed',
-        top: 'max(8px, env(safe-area-inset-top))',
-        right: 'max(10px, env(safe-area-inset-right))',
-        zIndex: 140,
-        padding: '0.4rem 0.7rem',
-        fontSize: '0.85rem'
-      }}
-    >
-      Logout
-    </button>
-  )
+  return null
 }
 
 export function BottomNav({ session, profile }) {
@@ -85,16 +62,16 @@ export function BottomNav({ session, profile }) {
         <img src={castawaysIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain', filter: 'brightness(0)' }} />
         <span style={labelStyle}>Castaways</span>
       </Link>
+      <Link to="/weekly-picks" style={tabStyle(location.pathname === '/weekly-picks')}>
+        <img src={weeklyIcon} alt="" aria-hidden="true" style={{ width: '18px', height: '18px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
+        <span style={labelStyle}>Weekly Picks</span>
+      </Link>
       {hasCompletedInitialDraft && (
         <Link to="/teams" style={tabStyle(location.pathname === '/teams')}>
           <img src={leaderboardIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain', filter: 'brightness(0)' }} />
           <span style={labelStyle}>Leaderboard</span>
         </Link>
       )}
-      <Link to="/weekly-picks" style={tabStyle(location.pathname === '/weekly-picks')}>
-        <img src={weeklyIcon} alt="" aria-hidden="true" style={{ width: '18px', height: '18px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
-        <span style={labelStyle}>Weekly Picks</span>
-      </Link>
       <Link to="/rules" style={tabStyle(location.pathname === '/rules')}>
         <img src={rulesIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
         <span style={labelStyle}>Rules</span>

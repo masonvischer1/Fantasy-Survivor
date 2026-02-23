@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import siteLogo from '../assets/Logo.png'
 import { buildContestantMap, hydrateTeamFromContestants } from '../utils/teamHydration'
 
 export default function Profile({ session, setProfile }) {
+  const navigate = useNavigate()
   const [playerName, setPlayerName] = useState('')
   const [teamName, setTeamName] = useState('')
   const [team, setTeam] = useState([])
@@ -135,13 +136,17 @@ export default function Profile({ session, setProfile }) {
     setSaving(false)
   }
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    navigate('/login')
+  }
+
   if (loading) return <div style={{ padding: '1rem' }}>Loading profile...</div>
   const hydratedTeam = hydrateTeamFromContestants(team, contestantMap)
 
   return (
     <div style={{ padding: '1rem' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.86)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)' }}>
-      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(180px, 46vw)', margin: '0 auto 0.75rem auto' }} />
       <h1>My Profile</h1>
 
       <div style={{ margin: '1rem 0' }}>
@@ -242,6 +247,21 @@ export default function Profile({ session, setProfile }) {
           </div>
         ))}
       </div>
+
+      <button
+        onClick={handleLogout}
+        style={{
+          marginTop: '1.25rem',
+          backgroundColor: '#111827',
+          color: 'white',
+          padding: '0.55rem 1rem',
+          border: 'none',
+          borderRadius: '8px',
+          cursor: 'pointer'
+        }}
+      >
+        Logout
+      </button>
       </div>
     </div>
   )
