@@ -65,6 +65,7 @@ function App() {
   }, [session]);
 
   const needsTeamSetup = !!session && (!profile?.player_name || !profile?.team_name);
+  const hasCompletedInitialDraft = Array.isArray(profile?.team) && profile.team.length >= 5;
 
   if (loadingProfile) {
     return <div style={{ padding: "2rem" }}>Loading...</div>;
@@ -145,7 +146,13 @@ function App() {
         {/* League Teams */}
         <Route
           path="/teams"
-          element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <Teams />) : <Navigate to="/login" />}
+          element={
+            session
+              ? (needsTeamSetup
+                ? <Navigate to="/create-team" />
+                : (hasCompletedInitialDraft ? <Teams /> : <Navigate to="/" />))
+              : <Navigate to="/login" />
+          }
         />
 
         {/* Weekly Picks Page */}
