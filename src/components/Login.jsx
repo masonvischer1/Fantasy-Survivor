@@ -1,8 +1,14 @@
 import React, { useState } from 'react'
 import { supabase } from '../supabaseClient.js'
 
+const USERNAME_DOMAIN = 'survivor.local'
+
+function usernameToEmail(username) {
+  return `${username.trim().toLowerCase()}@${USERNAME_DOMAIN}`
+}
+
 function Login() {
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [playerName, setPlayerName] = useState('')
   const [teamName, setTeamName] = useState('')
@@ -11,15 +17,41 @@ function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const getNormalizedUsername = () => username.trim().toLowerCase()
+
+  const validateUsername = () => {
+    const normalized = getNormalizedUsername()
+    if (!normalized) return 'Username is required.'
+    if (!/^[a-z0-9_]{3,20}$/.test(normalized)) {
+      return 'Username must be 3-20 chars and use only letters, numbers, or underscores.'
+    }
+    return ''
+  }
+
   const handleSignIn = async () => {
+    const usernameError = validateUsername()
+    if (usernameError) {
+      setError(usernameError)
+      return
+    }
+
     setLoading(true)
     setError('')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await supabase.auth.signInWithPassword({
+      email: usernameToEmail(getNormalizedUsername()),
+      password
+    })
     setLoading(false)
     if (error) setError(error.message)
   }
 
   const handleSignUp = async () => {
+    const usernameError = validateUsername()
+    if (usernameError) {
+      setError(usernameError)
+      return
+    }
+
     if (!playerName.trim()) {
       setError('Your name is required.')
       return
@@ -33,7 +65,12 @@ function Login() {
     setLoading(true)
     setError('')
 
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password })
+    const normalizedUsername = getNormalizedUsername()
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email: usernameToEmail(normalizedUsername),
+      password,
+      options: { data: { username: normalizedUsername } }
+    })
     if (signUpError) {
       setLoading(false)
       setError(signUpError.message)
@@ -84,8 +121,9 @@ function Login() {
       return
     }
 
-    alert('Sign up complete. If email confirmation is enabled, confirm your email before signing in.')
+    alert('Account created. You can now sign in with your username and password.')
     setIsSignUp(false)
+    setUsername('')
     setPlayerName('')
     setTeamName('')
     setAvatarFile(null)
@@ -97,10 +135,10 @@ function Login() {
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        type="text"
+        placeholder="Username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
         style={{ display: 'block', width: '100%', marginBottom: '1rem' }}
       />
 
