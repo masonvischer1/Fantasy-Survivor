@@ -131,10 +131,10 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
       }}
     >
       <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: "block", width: "min(220px, 55vw)", margin: "0 auto 0.75rem auto" }} />
-      <h1 style={{ fontSize: "clamp(1.6rem, 7vw, 2.1rem)", fontWeight: "bold", marginBottom: "10px", textAlign: "center" }}>
+      <h1 style={{ fontSize: "clamp(1.6rem, 7vw, 2.1rem)", fontWeight: "bold", marginBottom: "10px", textAlign: "center", color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
         Survivor Picks
       </h1>
-      <p style={{ textAlign: "center", marginBottom: "20px", color: "#4b5563" }}>
+      <p style={{ textAlign: "center", marginBottom: "20px", color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
         Use Back/Forward to make picks for each week or review history.
       </p>
 
@@ -210,7 +210,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
           <button onClick={goBackWeek} disabled={selectedWeek === 1}>
             Back
           </button>
-          <span style={{ alignSelf: "center", fontWeight: "bold" }}>Week {selectedWeek}</span>
+          <span style={{ alignSelf: "center", fontWeight: "bold", color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>Week {selectedWeek}</span>
           <button onClick={goForwardWeek} disabled={selectedWeek === TOTAL_EPISODES}>
             Forward
           </button>
@@ -218,15 +218,15 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
       </div>
 
       <div style={{ textAlign: "center", marginTop: "6px" }}>
-        {saved && <p style={{ color: "#16a34a", fontWeight: "bold", fontSize: "18px" }}>Pick saved!</p>}
-        {loading && <p style={{ color: "#6b7280", fontSize: "16px" }}>Saving...</p>}
+        {saved && <p style={{ color: "#bbf7d0", textShadow: "0 2px 8px rgba(0,0,0,0.6)", fontWeight: "bold", fontSize: "18px" }}>Pick saved!</p>}
+        {loading && <p style={{ color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)", fontSize: "16px" }}>Saving...</p>}
       </div>
 
       {hasOwnPickThisWeek && (
         <div style={{ width: "100%", maxWidth: "980px", margin: "24px auto 0 auto" }}>
-          <h2 style={{ textAlign: "center", marginBottom: "12px" }}>Week {selectedWeek} Picks</h2>
+          <h2 style={{ textAlign: "center", marginBottom: "12px", color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>Week {selectedWeek} Picks</h2>
           {leagueProfiles.length === 0 && (
-            <p style={{ textAlign: "center", color: "#6b7280" }}>No teams have submitted Week {selectedWeek} picks yet.</p>
+            <p style={{ textAlign: "center", color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>No teams have submitted Week {selectedWeek} picks yet.</p>
           )}
 
           {leagueProfiles.map((p) => (

@@ -81,7 +81,7 @@ export default function ContestantDetail() {
     if (!contestant || contestant.is_eliminated) return
 
     if (draftedIds.includes(contestant.id)) {
-      alert("Player already drafted!")
+      alert('Player already drafted!')
       return
     }
 
@@ -113,7 +113,7 @@ export default function ContestantDetail() {
     }
 
     if (currentTeam.length >= 5) {
-      alert("You have already drafted 5 players!")
+      alert('You have already drafted 5 players!')
       return
     }
 
@@ -133,7 +133,7 @@ export default function ContestantDetail() {
   }
 
   const eliminatePlayer = async () => {
-    const dayElim = prompt("Enter the day this player was eliminated (Cancel to abort)")
+    const dayElim = prompt('Enter the day this player was eliminated (Cancel to abort)')
     if (!dayElim) return
     const parsedDay = Number.parseInt(dayElim, 10)
     if (Number.isNaN(parsedDay)) {
@@ -171,65 +171,67 @@ export default function ContestantDetail() {
 
   return (
     <div style={{ padding: '1rem', textAlign: 'center', position: 'relative' }}>
-      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
-      <button onClick={() => navigate(-1)}>← Back</button>
+      <div style={{ maxWidth: '760px', margin: '0 auto', backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid rgba(209,213,219,0.9)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)' }}>
+        <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
+        <button onClick={() => navigate(-1)}>Back</button>
 
-      {isAdmin && !contestant.is_eliminated && (
-        <button
-          onClick={eliminatePlayer}
-          style={{
-            position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            backgroundColor: 'red',
-            color: 'white',
-            padding: '0.5rem 1rem',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}
-        >
-          Eliminate Player
-        </button>
-      )}
+        {isAdmin && !contestant.is_eliminated && (
+          <button
+            onClick={eliminatePlayer}
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
+              backgroundColor: 'red',
+              color: 'white',
+              padding: '0.5rem 1rem',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer'
+            }}
+          >
+            Eliminate Player
+          </button>
+        )}
 
-      <p>Picks remaining: {Math.max(0, 5 - draftedIds.length)}</p>
-
-      <div style={{ marginTop: '1rem' }}>
-        <img
-          src={contestant.picture_url || '/fallback.png'}
-          alt={contestant.name}
-          style={{
-            width: 'min(250px, 72vw)',
-            borderRadius: '10px',
-            filter: contestant.is_eliminated ? 'grayscale(100%)' : 'none' // Grey out eliminated
-          }}
-        />
-        <h2>{contestant.name}</h2>
-        <p><b>Season:</b> {contestant.season}</p>
-        <p><b>Tribe:</b> {contestant.tribe}</p>
-        <p><b>Score:</b> {contestant.score}</p>
-        <p style={{ maxWidth: '600px', margin: '0.75rem auto' }}>{contestant.bio}</p>
-
-        <button
-          onClick={draftPlayer}
-          disabled={draftedIds.includes(contestant.id) || contestant.is_eliminated}
-          style={{
-            backgroundColor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'gray' : 'green',
-            color: 'white',
-            padding: '0.5rem 1rem',
-            marginTop: '1rem',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {contestant.is_eliminated ? 'Eliminated' : draftedIds.includes(contestant.id) ? 'Drafted' : 'Draft Player'}
-        </button>
+        <p>Picks remaining: {Math.max(0, 5 - draftedIds.length)}</p>
 
         <div style={{ marginTop: '1rem' }}>
-          <button onClick={prev}>← Prev</button>
-          <button onClick={next} style={{ marginLeft: '1rem' }}>Next →</button>
+          <img
+            src={contestant.picture_url || '/fallback.png'}
+            alt={contestant.name}
+            style={{
+              width: 'min(250px, 72vw)',
+              borderRadius: '10px',
+              filter: contestant.is_eliminated ? 'grayscale(100%)' : 'none'
+            }}
+          />
+          <h2>{contestant.name}</h2>
+          <p><b>Season:</b> {contestant.season}</p>
+          <p><b>Tribe:</b> {contestant.tribe}</p>
+          <p><b>Score:</b> {contestant.score}</p>
+          <p style={{ maxWidth: '600px', margin: '0.75rem auto' }}>{contestant.bio}</p>
+
+          <button
+            onClick={draftPlayer}
+            disabled={draftedIds.includes(contestant.id) || contestant.is_eliminated}
+            style={{
+              backgroundColor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'gray' : 'green',
+              color: 'white',
+              padding: '0.5rem 1rem',
+              marginTop: '1rem',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {contestant.is_eliminated ? 'Eliminated' : draftedIds.includes(contestant.id) ? 'Drafted' : 'Draft Player'}
+          </button>
+
+          <div style={{ marginTop: '1rem' }}>
+            <button onClick={prev}>Prev</button>
+            <button onClick={next} style={{ marginLeft: '1rem' }}>Next</button>
+          </div>
         </div>
       </div>
     </div>
