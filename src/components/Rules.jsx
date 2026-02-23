@@ -1,8 +1,9 @@
 import siteLogo from '../assets/Logo.png'
+import rulesBg from '../assets/Jungle to Beach - Rules.png'
 
 export default function Rules() {
   return (
-    <div style={{ padding: '1rem', minHeight: '100dvh' }}>
+    <div style={{ padding: '1rem', minHeight: '100dvh', backgroundImage: `url(${rulesBg})`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
       <div style={{ maxWidth: '820px', margin: '0 auto', background: 'rgba(255,255,255,0.86)', border: '1px solid rgba(229,231,235,0.9)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)' }}>
         <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
         <h1>Rules</h1>

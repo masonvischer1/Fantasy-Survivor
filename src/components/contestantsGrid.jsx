@@ -79,7 +79,7 @@ export default function ContestantsGrid() {
               style={{
                 width: '80px',
                 height: '80px',
-                borderRadius: '50%',
+                borderRadius: '10px',
                 objectFit: 'cover',
                 border: isDrafted ? '3px solid #00FF00' : '2px solid #fff'
               }}
