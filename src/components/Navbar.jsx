@@ -4,10 +4,10 @@ import castawaysIcon from '../assets/castaways_icon.webp'
 import leaderboardIcon from '../assets/leaderboard_icon.webp'
 import weeklyIcon from '../assets/weekly_icon.png'
 import rulesIcon from '../assets/rules_icon.png'
+import accountIcon from '../assets/account-icon.webp'
 
-export function TopNav({ session, profile }) {
+export function TopNav({ session }) {
   const navigate = useNavigate()
-  const needsTeamSetup = session && (!profile?.player_name || !profile?.team_name)
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -18,42 +18,20 @@ export function TopNav({ session, profile }) {
     <nav
       style={{
         height: 'var(--top-nav-height)',
-        borderBottom: '1px solid rgba(15,23,42,0.12)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end',
         padding: '0 0.9rem',
         boxSizing: 'border-box',
         backgroundColor: 'rgba(255,255,255,0.94)',
         backdropFilter: 'blur(8px)'
       }}
     >
-      <span style={{ fontWeight: 700, color: '#0f172a' }}>Survivor Draft</span>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-        {session && !needsTeamSetup ? (
-          <>
-            <Link to="/profile" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: '#0f172a' }}>
-              {profile?.avatar_url && (
-                <img
-                  src={profile.avatar_url}
-                  alt="Profile"
-                  style={{ width: '34px', height: '34px', borderRadius: '50%', objectFit: 'cover' }}
-                />
-              )}
-              <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{profile?.team_name || 'Profile'}</span>
-            </Link>
-            <button onClick={signOut} style={{ padding: '0.4rem 0.7rem', fontSize: '0.85rem' }}>Logout</button>
-          </>
-        ) : session ? (
-          <>
-            <Link to="/create-team" style={{ color: '#0f172a', fontWeight: 600, fontSize: '0.9rem' }}>Create Team</Link>
-            <button onClick={signOut} style={{ padding: '0.4rem 0.7rem', fontSize: '0.85rem' }}>Logout</button>
-          </>
-        ) : (
-          <Link to="/login" style={{ color: '#0f172a', fontWeight: 600 }}>Login</Link>
-        )}
-      </div>
+      {session ? (
+        <button onClick={signOut} style={{ padding: '0.4rem 0.7rem', fontSize: '0.85rem' }}>Logout</button>
+      ) : (
+        <Link to="/login" style={{ color: '#0f172a', fontWeight: 600 }}>Login</Link>
+      )}
     </nav>
   )
 }
@@ -90,7 +68,7 @@ export function BottomNav({ session, profile }) {
         zIndex: 120,
         height: '64px',
         display: 'grid',
-        gridTemplateColumns: hasCompletedInitialDraft ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)',
+        gridTemplateColumns: hasCompletedInitialDraft ? 'repeat(5, 1fr)' : 'repeat(4, 1fr)',
         gap: '0.2rem',
         alignItems: 'center',
         padding: '0.2rem 0.55rem',
@@ -122,6 +100,10 @@ export function BottomNav({ session, profile }) {
         <img src={rulesIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
         <span style={labelStyle}>Rules</span>
       </Link>
+      <Link to="/profile" style={tabStyle(location.pathname === '/profile')}>
+        <img src={accountIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain', filter: 'brightness(0)' }} />
+        <span style={labelStyle}>My Tribe</span>
+      </Link>
     </nav>
   )
 }
@@ -129,7 +111,7 @@ export function BottomNav({ session, profile }) {
 export default function Navbar({ session, profile }) {
   return (
     <>
-      <TopNav session={session} profile={profile} />
+      <TopNav session={session} />
       <BottomNav session={session} profile={profile} />
     </>
   )

@@ -19,9 +19,11 @@ import leaderboardBg from "./assets/Island Life - Leaderboard.png";
 import weeklyPicksBg from "./assets/Challenge - Weekly Picks.png";
 import profileBg from "./assets/sand - profile.png";
 import createTeamBg from "./assets/Logo - Create Team.png";
+import loginBg from "./assets/New Login Background.png";
 
 function getRouteBackground(pathname) {
-  if (pathname === "/login" || pathname === "/create-team") return createTeamBg;
+  if (pathname === "/login") return loginBg;
+  if (pathname === "/create-team") return createTeamBg;
   if (pathname === "/profile") return profileBg;
   if (pathname === "/teams") return leaderboardBg;
   if (pathname === "/weekly-picks") return weeklyPicksBg;
@@ -45,7 +47,7 @@ function AppLayout({ session, profile, setProfile, needsTeamSetup, hasCompletedI
       <div className="app-fixed-band-bg" style={{ backgroundImage: pageBackground ? `url(${pageBackground})` : "none" }} />
 
       <div className="app-shell-top">
-        <TopNav session={session} profile={profile} />
+        <TopNav session={session} />
       </div>
 
       <main className="app-shell-main">

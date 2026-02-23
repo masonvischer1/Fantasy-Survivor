@@ -223,7 +223,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
               opacity: selectedWeek === 1 ? 0.5 : 1
             }}
           >
-            <img src={leftArrowIcon} alt="Previous" width="48" height="48" style={{ display: "block" }} />
+            <img src={leftArrowIcon} alt="Previous" width="48" height="48" style={{ display: "block", filter: "brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.5))" }} />
           </button>
           <div style={{ textAlign: "center", padding: "0.55rem 0.75rem", borderRadius: "12px", border: "1px solid rgba(209,213,219,0.9)", backgroundColor: "rgba(255,255,255,0.86)", backdropFilter: "blur(2px)" }}>
             <span style={{ fontWeight: "bold", color: "#111827" }}>Week {selectedWeek}</span>
@@ -242,7 +242,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
               opacity: selectedWeek === TOTAL_EPISODES ? 0.5 : 1
             }}
           >
-            <img src={rightArrowIcon} alt="Next" width="48" height="48" style={{ display: "block" }} />
+            <img src={rightArrowIcon} alt="Next" width="48" height="48" style={{ display: "block", filter: "brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.5))" }} />
           </button>
         </div>
       </div>
