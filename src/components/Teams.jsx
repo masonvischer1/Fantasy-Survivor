@@ -8,7 +8,7 @@ export default function Teams() {
     const { data, error } = await supabase
       .from('profiles')
       .select('id, team_name, player_name, avatar_url, team, team_points, bonus_points') // 'team' is JSONB array of picks
-      .order('team_name', { ascending: true })  // optional, alphabetical
+      .order('team_points', { ascending: false })
 
     if (error) {
       console.error('Error fetching teams:', error)
@@ -24,11 +24,11 @@ export default function Teams() {
     })
   }, [])
 
-  const scores = teams.map(profile => ({
-    id: profile.id,
-    total: (profile.team_points || 0) + (profile.bonus_points || 0)
-  }))
-  const topScore = scores.length > 0 ? Math.max(...scores.map(s => s.total)) : null
+  const sortedTeams = [...teams].sort((a, b) => {
+    const pointsDiff = (b.team_points || 0) - (a.team_points || 0)
+    if (pointsDiff !== 0) return pointsDiff
+    return (a.team_name || '').localeCompare(b.team_name || '')
+  })
 
   return (
     <div style={{ padding: '2rem' }}>
@@ -36,21 +36,25 @@ export default function Teams() {
 
       {teams.length === 0 && <p>No teams yet</p>}
 
-      {teams.map((profile) => {
+      {sortedTeams.map((profile, index) => {
         const teamPoints = profile.team_points || 0
-        const bonusPoints = profile.bonus_points || 0
-        const totalPoints = teamPoints + bonusPoints
-        const isLeader = topScore !== null && totalPoints === topScore
+        const rank = index + 1
+        const isGold = rank === 1
+        const isSilver = rank === 2
+        const isBronze = rank === 3
+        const rankBorder = isGold ? '#d4af37' : isSilver ? '#c0c0c0' : isBronze ? '#cd7f32' : '#ddd'
+        const rankBackground = isGold ? '#fff9e6' : isSilver ? '#f8f8f8' : isBronze ? '#fff4ec' : 'white'
+        const rankLabel = isGold ? '1st Place' : isSilver ? '2nd Place' : isBronze ? '3rd Place' : null
 
         return (
         <div
           key={profile.id}
           style={{
             marginBottom: '2rem',
-            border: isLeader ? '2px solid #1e8e3e' : '1px solid #ddd',
+            border: `2px solid ${rankBorder}`,
             padding: '1rem',
             borderRadius: '8px',
-            background: isLeader ? '#f3fff6' : 'white'
+            background: rankBackground
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -75,14 +79,11 @@ export default function Teams() {
 
             <div style={{ textAlign: 'right' }}>
               <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>
-                Points: {totalPoints}
+                Points: {teamPoints}
               </p>
-              <p style={{ margin: '0.25rem 0 0 0', color: '#0b7d2b' }}>
-                +{bonusPoints} bonus points
-              </p>
-              {isLeader && (
-                <p style={{ margin: '0.25rem 0 0 0', fontWeight: 'bold', color: '#0b7d2b' }}>
-                  Leading Team
+              {rankLabel && (
+                <p style={{ margin: '0.25rem 0 0 0', fontWeight: 'bold', color: '#555' }}>
+                  {rankLabel}
                 </p>
               )}
             </div>
