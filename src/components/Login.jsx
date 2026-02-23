@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient.js'
 function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [playerName, setPlayerName] = useState('')
   const [teamName, setTeamName] = useState('')
   const [avatarFile, setAvatarFile] = useState(null)
   const [isSignUp, setIsSignUp] = useState(false)
@@ -19,6 +20,11 @@ function Login() {
   }
 
   const handleSignUp = async () => {
+    if (!playerName.trim()) {
+      setError('Your name is required.')
+      return
+    }
+
     if (!teamName.trim()) {
       setError('Team name is required.')
       return
@@ -65,6 +71,7 @@ function Login() {
       .from('profiles')
       .upsert({
         id: user.id,
+        player_name: playerName.trim(),
         team_name: teamName.trim(),
         avatar_url: avatarUrl,
         team: []
@@ -79,6 +86,7 @@ function Login() {
 
     alert('Sign up complete. If email confirmation is enabled, confirm your email before signing in.')
     setIsSignUp(false)
+    setPlayerName('')
     setTeamName('')
     setAvatarFile(null)
   }
@@ -108,6 +116,14 @@ function Login() {
         <>
           <input
             type="text"
+            placeholder="Your Name"
+            value={playerName}
+            onChange={(e) => setPlayerName(e.target.value)}
+            style={{ display: 'block', width: '100%', marginBottom: '1rem' }}
+          />
+
+          <input
+            type="text"
             placeholder="Team Name"
             value={teamName}
             onChange={(e) => setTeamName(e.target.value)}
@@ -118,8 +134,11 @@ function Login() {
             type="file"
             accept="image/*"
             onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
-            style={{ display: 'block', width: '100%', marginBottom: '1rem' }}
+            style={{ display: 'block', width: '100%', marginBottom: '0.25rem' }}
           />
+          <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: '#666' }}>
+            Upload a profile picture so your team is recognizable in the league.
+          </p>
         </>
       )}
 
@@ -128,7 +147,7 @@ function Login() {
         disabled={loading}
         style={{ marginRight: '1rem' }}
       >
-        {loading ? (isSignUp ? 'Signing up...' : 'Signing in...') : (isSignUp ? 'Sign Up' : 'Sign In')}
+        {loading ? (isSignUp ? 'Creating account...' : 'Signing in...') : (isSignUp ? 'Create Account' : 'Sign In')}
       </button>
 
       <button
@@ -138,7 +157,7 @@ function Login() {
         }}
         disabled={loading}
       >
-        {isSignUp ? 'Use Sign In' : 'Use Sign Up'}
+        {isSignUp ? 'Sign In' : 'Create Account'}
       </button>
     </div>
   )
