@@ -105,12 +105,12 @@ export function BottomNav({ session, profile }) {
       }}
     >
       <Link to="/" style={tabStyle(location.pathname === '/' || location.pathname.startsWith('/contestant/'))}>
-        <img src={castawaysIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
+        <img src={castawaysIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain', filter: 'brightness(0)' }} />
         <span style={labelStyle}>Castaways</span>
       </Link>
       {hasCompletedInitialDraft && (
         <Link to="/teams" style={tabStyle(location.pathname === '/teams')}>
-          <img src={leaderboardIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
+          <img src={leaderboardIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain', filter: 'brightness(0)' }} />
           <span style={labelStyle}>Leaderboard</span>
         </Link>
       )}
