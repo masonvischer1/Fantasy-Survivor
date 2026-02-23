@@ -259,26 +259,75 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
             <p style={{ textAlign: "center", color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>No teams have submitted Week {selectedWeek} picks yet.</p>
           )}
 
-          {leagueProfiles.map((p) => (
-            <div key={p.id} style={{ marginBottom: "20px", padding: "12px", border: "1px solid rgba(209,213,219,0.9)", borderRadius: "8px", backgroundColor: "rgba(255,255,255,0.86)", backdropFilter: "blur(2px)" }}>
-              <p style={{ margin: "0 0 10px 0", fontWeight: "bold" }}>
-                {p.team_name || "Unnamed Team"}
-                {p.player_name ? ` (${p.player_name})` : ""}
-              </p>
-              <div style={{ border: "1px solid #9ca3af", borderRadius: "6px", padding: "8px", maxWidth: "260px" }}>
-                <p style={{ margin: "0 0 6px 0", fontSize: "12px", fontWeight: "bold", color: "#6b7280" }}>Week {selectedWeek}</p>
-                <img
-                  src={getTeam(p.weekly_picks?.[selectedWeek])?.flagSrc}
-                  alt={`${p.weekly_picks?.[selectedWeek]} flag`}
-                  style={{ width: "100%", height: "96px", objectFit: "cover", borderRadius: "6px", backgroundColor: "#f3f4f6" }}
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
-                <p style={{ margin: "6px 0 0 0", fontWeight: "bold" }}>{p.weekly_picks?.[selectedWeek]}</p>
-              </div>
+          {leagueProfiles.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                overflowX: "auto",
+                padding: "4px 2px 8px 2px",
+                scrollSnapType: "x mandatory"
+              }}
+            >
+              {leagueProfiles.map((p) => {
+                const pickName = p.weekly_picks?.[selectedWeek];
+                const pickTeam = getTeam(pickName);
+
+                return (
+                  <div
+                    key={p.id}
+                    style={{
+                      flex: "0 0 clamp(190px, 56vw, 260px)",
+                      scrollSnapAlign: "start",
+                      border: "1px solid rgba(209,213,219,0.9)",
+                      borderRadius: "12px",
+                      backgroundColor: "rgba(255,255,255,0.9)",
+                      backdropFilter: "blur(2px)",
+                      padding: "10px"
+                    }}
+                  >
+                    <p style={{ margin: "0 0 8px 0", fontWeight: "bold", textAlign: "center" }}>
+                      {p.team_name || "Unnamed Team"}
+                    </p>
+
+                    {pickTeam ? (
+                      <img
+                        src={pickTeam.flagSrc}
+                        alt={`${pickName} flag`}
+                        style={{
+                          width: "100%",
+                          height: "clamp(180px, 46vw, 260px)",
+                          objectFit: "cover",
+                          borderRadius: "10px",
+                          backgroundColor: "#f3f4f6"
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: "100%",
+                          height: "clamp(180px, 46vw, 260px)",
+                          borderRadius: "10px",
+                          backgroundColor: "#e5e7eb",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#111827",
+                          fontWeight: "bold"
+                        }}
+                      >
+                        No Pick
+                      </div>
+                    )}
+
+                    <p style={{ margin: "9px 0 0 0", fontWeight: "bold", textAlign: "center" }}>
+                      {pickName || "No Pick"}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
-          ))}
+          )}
         </div>
       )}
     </div>
