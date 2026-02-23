@@ -34,7 +34,7 @@ export default function Teams() {
   })
 
   return (
-    <div style={{ padding: '1rem', minHeight: '100vh', backgroundImage: `url(${leaderboardBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+    <div style={{ padding: '1rem', minHeight: '100vh', backgroundImage: `url(${leaderboardBg})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
       <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Leaderboard</h1>
 
       {teams.length === 0 && <p style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>No teams yet</p>}
@@ -99,25 +99,25 @@ export default function Teams() {
           <div
             style={{
               display: 'flex',
-              gap: '0.75rem',
+              gap: '0.5rem',
               marginTop: '0.75rem',
               flexWrap: 'wrap'
             }}
           >
             {profile.team?.map((c) => (
-              <div key={c.id} style={{ textAlign: 'center' }}>
+              <div key={c.id} style={{ textAlign: 'center', width: '76px' }}>
                 <img
                   src={c.is_eliminated ? c.elimPhoto_url : c.picture_url}
                   alt={c.name}
                   style={{
-                    width: '100px',
-                    height: '100px',
+                    width: '64px',
+                    height: '64px',
                     objectFit: 'cover',
                     borderRadius: '8px',
                     filter: c.is_eliminated ? 'grayscale(100%)' : 'none'
                   }}
                 />
-                <p>{c.name}</p>
+                <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.75rem', lineHeight: '1.1', wordBreak: 'break-word' }}>{c.name}</p>
               </div>
             ))}
           </div>

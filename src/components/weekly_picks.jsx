@@ -131,6 +131,8 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
         backgroundImage: `url(${weeklyPicksBg})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+        backgroundRepeat: "no-repeat",
         padding: "12px",
       }}
     >
