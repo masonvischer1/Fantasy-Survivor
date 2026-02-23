@@ -14,8 +14,12 @@ const TOTAL_EPISODES = 14;
 
 export default function WeeklyPicks({ currentWeek = 1 }) {
   const [profile, setProfile] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [activeWeek, setActiveWeek] = useState(currentWeek);
   const [otherProfiles, setOtherProfiles] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [weekSaving, setWeekSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [imageErrors, setImageErrors] = useState({});
 
@@ -31,10 +35,26 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
 
     const othersWithPicks = (data || []).filter((p) => {
       if (p.id === userId) return false;
-      return !!p.weekly_picks?.[currentWeek];
+      return !!p.weekly_picks?.[activeWeek];
     });
 
     setOtherProfiles(othersWithPicks);
+  }, [activeWeek]);
+
+  const fetchCurrentWeek = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("app_settings")
+      .select("current_week")
+      .eq("id", 1)
+      .single();
+
+    if (error) {
+      // Fallback to prop value if settings row/table is not available yet.
+      setActiveWeek(currentWeek);
+      return;
+    }
+
+    setActiveWeek(data?.current_week || currentWeek);
   }, [currentWeek]);
 
   useEffect(() => {
@@ -48,10 +68,11 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
         return;
       }
       if (!user) return;
+      setCurrentUserId(user.id);
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("weekly_picks")
+        .select("weekly_picks, is_admin")
         .eq("id", user.id)
         .single();
 
@@ -59,19 +80,47 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
         console.error(error);
       } else {
         setProfile(data);
+        setIsAdmin(!!data?.is_admin);
       }
 
+      await fetchCurrentWeek();
       await fetchOtherProfiles(user.id);
     };
 
     Promise.resolve().then(() => {
       load();
     });
-  }, [fetchOtherProfiles]);
+  }, [fetchCurrentWeek, fetchOtherProfiles]);
+
+  useEffect(() => {
+    if (!currentUserId) return;
+    Promise.resolve().then(() => {
+      fetchOtherProfiles(currentUserId);
+    });
+  }, [activeWeek, currentUserId, fetchOtherProfiles]);
+
+  const handleWeekChange = async (newWeek) => {
+    if (!isAdmin) return;
+    setWeekSaving(true);
+
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert({ id: 1, current_week: newWeek }, { onConflict: "id" });
+
+    setWeekSaving(false);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setActiveWeek(newWeek);
+    if (currentUserId) await fetchOtherProfiles(currentUserId);
+  };
 
   const handlePick = async (weekNum, teamName) => {
     if (!profile) return;
-    if (weekNum > currentWeek) return;
+    if (weekNum > activeWeek) return;
 
     const confirmed = window.confirm(`Are you sure you want to select ${teamName} Tribe for Week ${weekNum}?`);
     if (!confirmed) return;
@@ -112,7 +161,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   };
 
   const getTeam = (teamName) => TEAMS.find((team) => team.name === teamName);
-  const weekNum = Math.min(currentWeek, TOTAL_EPISODES);
+  const weekNum = Math.min(activeWeek, TOTAL_EPISODES);
   const currentWeekPick = profile?.weekly_picks?.[weekNum];
   const hasOwnPickThisWeek = !!currentWeekPick;
 
@@ -128,8 +177,30 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
         Survivor Picks
       </h1>
       <p style={{ textAlign: "center", marginBottom: "20px", color: "#4b5563" }}>
-        Make your tribe pick each week. Current week: {currentWeek}
+        Make your tribe pick each week. Current week: {activeWeek}
       </p>
+
+      {isAdmin && (
+        <div style={{ width: "100%", maxWidth: "980px", margin: "0 auto 16px auto", textAlign: "center" }}>
+          <label htmlFor="week-select" style={{ fontWeight: "bold", marginRight: "10px" }}>
+            Admin: Set Current Week
+          </label>
+          <select
+            id="week-select"
+            value={activeWeek}
+            disabled={weekSaving}
+            onChange={(e) => handleWeekChange(Number(e.target.value))}
+            style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #9ca3af" }}
+          >
+            {Array.from({ length: TOTAL_EPISODES }, (_, i) => i + 1).map((week) => (
+              <option key={week} value={week}>
+                Week {week}
+              </option>
+            ))}
+          </select>
+          {weekSaving && <p style={{ margin: "8px 0 0 0", color: "#6b7280" }}>Updating week...</p>}
+        </div>
+      )}
 
       <div style={{ width: "100%", maxWidth: "980px", margin: "0 auto" }}>
         {hasOwnPickThisWeek && (
