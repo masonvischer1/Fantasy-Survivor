@@ -73,6 +73,7 @@ function App() {
     <Router>
       <Navbar session={session} profile={profile} />
 
+      <div style={{ paddingBottom: session ? '74px' : 0 }}>
       <Routes>
         {/* Login */}
         <Route
@@ -152,6 +153,7 @@ function App() {
           element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <WeeklyPicksPage />) : <Navigate to="/login" />}
         />
       </Routes>
+      </div>
     </Router>
   );
 }
