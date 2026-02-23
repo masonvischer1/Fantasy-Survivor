@@ -28,12 +28,19 @@ export default function ContestantsGrid() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const { data } = await supabase
-      .from('fantasy_teams')
-      .select('contestant_id')
-      .eq('user_id', user.id)
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('team')
+      .eq('id', user.id)
+      .single()
 
-    if (data) setDraftedIds(data.map(d => d.contestant_id))
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    const team = data?.team || []
+    setDraftedIds(team.map(c => c.id))
   }
 
   return (

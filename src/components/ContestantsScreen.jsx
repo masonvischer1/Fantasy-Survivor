@@ -27,11 +27,16 @@ function ContestantsScreen({ user, onPick }) {
     }
 
     const { data, error } = await supabase
-      .from('fantasy_teams')
-      .select('contestant_id, pick_type')
-      .eq('user_id', user.id)
+      .from('profiles')
+      .select('team')
+      .eq('id', user.id)
+      .single()
+
     if (error) console.error(error)
-    else setUserPicks(data.map(p => ({ id: p.contestant_id, type: p.pick_type })))
+    else {
+      const team = data?.team || []
+      setUserPicks(team.map(c => ({ id: c.id, type: 'initial' })))
+    }
     setLoading(false)
   }
 
@@ -39,26 +44,35 @@ function ContestantsScreen({ user, onPick }) {
     if (!user?.id) return
     if (userPicks.some(p => p.id === contestant.id)) return
 
-    // Determine pick type
-    const initialPicksCount = userPicks.filter(p => p.type === 'initial').length
-    const mergePickExists = userPicks.some(p => p.type === 'merge')
-    let pick_type = 'initial'
+    const { data, error: profileError } = await supabase
+      .from('profiles')
+      .select('team')
+      .eq('id', user.id)
+      .single()
 
-    if (initialPicksCount >= 5 && !mergePickExists) {
-      pick_type = 'merge'
-    } else if (initialPicksCount >= 5) {
-      alert('You already drafted 5 contestants and your merge pick.')
+    if (profileError) {
+      console.error(profileError)
       return
     }
 
-    // Insert pick into fantasy_teams table
-    const { data, error } = await supabase.from('fantasy_teams').insert([
-      { user_id: user.id, contestant_id: contestant.id, pick_type }
-    ])
+    const currentTeam = data?.team || []
+    if (!Array.isArray(currentTeam)) return
+
+    if (currentTeam.length >= 5) {
+      alert('You already drafted 5 contestants.')
+      return
+    }
+
+    const updatedTeam = [...currentTeam, contestant]
+    const { error } = await supabase
+      .from('profiles')
+      .update({ team: updatedTeam })
+      .eq('id', user.id)
+
     if (error) console.error(error)
     else {
-      setUserPicks([...userPicks, { id: contestant.id, type: pick_type }])
-      if (onPick) onPick(contestant, pick_type)
+      setUserPicks(updatedTeam.map(c => ({ id: c.id, type: 'initial' })))
+      if (onPick) onPick(contestant, 'initial')
     }
   }
 
@@ -78,7 +92,7 @@ function ContestantsScreen({ user, onPick }) {
               <p>{c.bio}</p>
               <p><strong>Score:</strong> {c.score}</p>
               <button onClick={() => handlePick(c)} disabled={!!alreadyPicked}>
-                {alreadyPicked ? (alreadyPicked.type === 'merge' ? 'Merge Pick' : 'Drafted') : 'Draft'}
+                {alreadyPicked ? 'Drafted' : 'Draft'}
               </button>
             </div>
           )

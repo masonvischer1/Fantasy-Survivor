@@ -48,12 +48,19 @@ export default function ContestantDetail() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const { data } = await supabase
-      .from('fantasy_teams')
-      .select('contestant_id')
-      .eq('user_id', user.id)
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('team')
+      .eq('id', user.id)
+      .single()
 
-    if (data) setDraftedIds(data.map(d => d.contestant_id))
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    const team = data?.team || []
+    setDraftedIds(team.map(c => c.id))
   }
 
   async function checkAdmin() {
@@ -80,27 +87,48 @@ export default function ContestantDetail() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const { data: currentPicks } = await supabase
-      .from('fantasy_teams')
-      .select('*')
-      .eq('user_id', user.id)
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('team')
+      .eq('id', user.id)
+      .single()
 
-    if (!Array.isArray(currentPicks)) {
+    if (profileError) {
+      console.error(profileError)
       alert("Couldn't verify your existing picks. Please try again.")
       return
     }
 
-    if (currentPicks.length >= 5) {
+    const currentTeam = profileData?.team || []
+
+    if (!Array.isArray(currentTeam)) {
+      alert("Couldn't verify your existing picks. Please try again.")
+      return
+    }
+
+    if (currentTeam.some(c => c.id === contestant.id)) {
+      alert('Player already drafted!')
+      return
+    }
+
+    if (currentTeam.length >= 5) {
       alert("You have already drafted 5 players!")
       return
     }
 
+    const updatedTeam = [...currentTeam, contestant]
     const { error } = await supabase
-      .from('fantasy_teams')
-      .insert([{ user_id: user.id, contestant_id: contestant.id, pick_type: 'initial' }])
+      .from('profiles')
+      .update({ team: updatedTeam })
+      .eq('id', user.id)
 
-    if (error) console.error(error)
-    else setDraftedIds([...draftedIds, contestant.id])
+    if (error) {
+      console.error(error)
+      alert(`Draft failed: ${error.message}`)
+      return
+    }
+
+    setDraftedIds(updatedTeam.map(c => c.id))
   }
 
   const eliminatePlayer = async () => {
