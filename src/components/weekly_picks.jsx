@@ -127,10 +127,10 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        minHeight: "100dvh",
         backgroundImage: `url(${weeklyPicksBg})`,
         backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundPosition: "center center",
         backgroundAttachment: "fixed",
         backgroundRepeat: "no-repeat",
         padding: "12px",

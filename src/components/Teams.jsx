@@ -34,7 +34,7 @@ export default function Teams() {
   })
 
   return (
-    <div style={{ padding: '1rem', minHeight: '100vh', backgroundImage: `url(${leaderboardBg})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
+    <div style={{ padding: '1rem', minHeight: '100dvh', backgroundImage: `url(${leaderboardBg})`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
       <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Leaderboard</h1>
 
       {teams.length === 0 && <p style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>No teams yet</p>}
@@ -99,25 +99,27 @@ export default function Teams() {
           <div
             style={{
               display: 'flex',
-              gap: '0.5rem',
+              gap: '0.35rem',
               marginTop: '0.75rem',
-              flexWrap: 'wrap'
+              flexWrap: 'nowrap',
+              overflowX: 'auto',
+              paddingBottom: '0.25rem'
             }}
           >
             {profile.team?.map((c) => (
-              <div key={c.id} style={{ textAlign: 'center', width: '76px' }}>
+              <div key={c.id} style={{ textAlign: 'center', width: '54px', flex: '0 0 auto' }}>
                 <img
                   src={c.is_eliminated ? c.elimPhoto_url : c.picture_url}
                   alt={c.name}
                   style={{
-                    width: '64px',
-                    height: '64px',
+                    width: '46px',
+                    height: '46px',
                     objectFit: 'cover',
-                    borderRadius: '8px',
+                    borderRadius: '6px',
                     filter: c.is_eliminated ? 'grayscale(100%)' : 'none'
                   }}
                 />
-                <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.75rem', lineHeight: '1.1', wordBreak: 'break-word' }}>{c.name}</p>
+                <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.62rem', lineHeight: '1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</p>
               </div>
             ))}
           </div>
