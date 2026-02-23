@@ -34,6 +34,21 @@ export function BottomNav({ session, profile }) {
     fontWeight: 600
   }
 
+  const iconWrapStyle = {
+    width: '22px',
+    height: '22px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  }
+
+  const iconStyle = {
+    width: '22px',
+    height: '22px',
+    objectFit: 'contain',
+    display: 'block'
+  }
+
   return (
     <nav
       style={{
@@ -59,25 +74,35 @@ export function BottomNav({ session, profile }) {
       }}
     >
       <Link to="/" style={tabStyle(location.pathname === '/' || location.pathname.startsWith('/contestant/'))}>
-        <img src={castawaysIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain', filter: 'brightness(0)' }} />
+        <span style={iconWrapStyle}>
+          <img src={castawaysIcon} alt="" aria-hidden="true" style={{ ...iconStyle, filter: 'brightness(0)' }} />
+        </span>
         <span style={labelStyle}>Castaways</span>
       </Link>
       <Link to="/weekly-picks" style={tabStyle(location.pathname === '/weekly-picks')}>
-        <img src={weeklyIcon} alt="" aria-hidden="true" style={{ width: '18px', height: '18px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
+        <span style={iconWrapStyle}>
+          <img src={weeklyIcon} alt="" aria-hidden="true" style={{ ...iconStyle, width: '18px', height: '18px' }} />
+        </span>
         <span style={labelStyle}>Picks</span>
       </Link>
       {hasCompletedInitialDraft && (
         <Link to="/teams" style={tabStyle(location.pathname === '/teams')}>
-          <img src={leaderboardIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain', filter: 'brightness(0)' }} />
+          <span style={iconWrapStyle}>
+            <img src={leaderboardIcon} alt="" aria-hidden="true" style={{ ...iconStyle, filter: 'brightness(0)' }} />
+          </span>
           <span style={labelStyle}>Leaderboard</span>
         </Link>
       )}
       <Link to="/rules" style={tabStyle(location.pathname === '/rules')}>
-        <img src={rulesIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
+        <span style={iconWrapStyle}>
+          <img src={rulesIcon} alt="" aria-hidden="true" style={iconStyle} />
+        </span>
         <span style={labelStyle}>Rules</span>
       </Link>
       <Link to="/profile" style={tabStyle(location.pathname === '/profile')}>
-        <img src={accountIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain', filter: 'brightness(0)' }} />
+        <span style={iconWrapStyle}>
+          <img src={accountIcon} alt="" aria-hidden="true" style={{ ...iconStyle, filter: 'brightness(0)' }} />
+        </span>
         <span style={labelStyle}>My Tribe</span>
       </Link>
     </nav>
