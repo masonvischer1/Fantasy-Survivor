@@ -8,24 +8,27 @@ export default function CreateTeam() {
   const navigate = useNavigate()
 
   async function handleSave() {
-    console.log('User UUID:', (await supabase.auth.getUser()).data.user.id)
-
     if (!teamName) return alert('Team name required')
 
-    const user = (await supabase.auth.getUser()).data.user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      alert('You must be logged in to create a team')
+      return
+    }
+
     let avatarUrl = null
 
     // upload avatar
     if (file) {
       const filePath = `${user.id}-${Date.now()}`
       const { error } = await supabase.storage
-        .from('Avatars')
+        .from('avatars')
         .upload(filePath, file)
 
       if (error) return alert(error.message)
 
       const { data } = supabase.storage
-        .from('Avatars')
+        .from('avatars')
         .getPublicUrl(filePath)
 
       avatarUrl = data.publicUrl

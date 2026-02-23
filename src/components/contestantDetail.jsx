@@ -85,6 +85,11 @@ export default function ContestantDetail() {
       .select('*')
       .eq('user_id', user.id)
 
+    if (!Array.isArray(currentPicks)) {
+      alert("Couldn't verify your existing picks. Please try again.")
+      return
+    }
+
     if (currentPicks.length >= 5) {
       alert("You have already drafted 5 players!")
       return
@@ -101,10 +106,15 @@ export default function ContestantDetail() {
   const eliminatePlayer = async () => {
     const dayElim = prompt("Enter the day this player was eliminated (Cancel to abort)")
     if (!dayElim) return
+    const parsedDay = Number.parseInt(dayElim, 10)
+    if (Number.isNaN(parsedDay)) {
+      alert('Please enter a valid number for elimination day.')
+      return
+    }
 
     const { error } = await supabase
       .from('contestants')
-      .update({ is_eliminated: true, elim_day: parseInt(dayElim) })
+      .update({ is_eliminated: true, elim_day: parsedDay })
       .eq('id', contestant.id)
 
     if (error) console.error(error)
@@ -115,12 +125,14 @@ export default function ContestantDetail() {
   }
 
   const next = () => {
+    if (allContestants.length === 0) return
     const newIndex = (currentIndex + 1) % allContestants.length
     setCurrentIndex(newIndex)
     setContestant(allContestants[newIndex])
   }
 
   const prev = () => {
+    if (allContestants.length === 0) return
     const newIndex = (currentIndex - 1 + allContestants.length) % allContestants.length
     setCurrentIndex(newIndex)
     setContestant(allContestants[newIndex])

@@ -15,7 +15,10 @@ export default function Profile({ session }) {
 
   // Fetch current user's profile
   async function fetchProfile() {
-    if (!session?.user) return
+    if (!session?.user) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     const { data, error } = await supabase
       .from('profiles')

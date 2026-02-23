@@ -10,13 +10,12 @@ const TEAMS = [
 
 const TOTAL_EPISODES = 14;
 
-export default function WeeklyPicks({ currentWeek }) {
+export default function WeeklyPicks({ currentWeek = 5 }) {
   const [profile, setProfile] = useState(null);
-  const [selectedEpisode, setSelectedEpisode] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Fetch profile once
+  // Fetch profile
   useEffect(() => {
     const fetchProfile = async () => {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -32,18 +31,21 @@ export default function WeeklyPicks({ currentWeek }) {
       if (error) console.error(error);
       else setProfile(data);
     };
+
     fetchProfile();
   }, []);
 
-  const handleTeamPick = async (teamName) => {
-    if (!profile || selectedEpisode === null) return;
+  // Pick a team for an episode
+  const handlePick = async (episodeNum, teamName) => {
+    if (!profile) return;
+    if (episodeNum > currentWeek) return;
 
     setLoading(true);
     setSaved(false);
 
     const updatedPicks = {
       ...profile.weekly_picks,
-      [selectedEpisode]: teamName,
+      [episodeNum]: teamName,
     };
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -61,7 +63,6 @@ export default function WeeklyPicks({ currentWeek }) {
     if (!error) {
       setProfile((prev) => ({ ...prev, weekly_picks: updatedPicks }));
       setSaved(true);
-      setSelectedEpisode(null);
     } else {
       console.error(error);
     }
@@ -70,69 +71,94 @@ export default function WeeklyPicks({ currentWeek }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-6">
-      <h1 className="text-4xl font-bold mb-6 text-center">Survivor Picks</h1>
-      <p className="text-center mb-6">
-        Click an episode to pick a team (up to episode {currentWeek})
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#f3f4f6",
+      padding: "20px"
+    }}>
+      <h1 style={{ fontSize: "32px", fontWeight: "bold", marginBottom: "20px", textAlign: "center" }}>
+        Survivor Picks
+      </h1>
+      <p style={{ textAlign: "center", marginBottom: "20px" }}>
+        Click a color in each episode to select your team (up to episode {currentWeek})
       </p>
 
       {/* Game Board */}
-      <div className="flex justify-center w-full mb-8">
-        <div className="grid grid-cols-7 gap-3 border-4 border-gray-700 rounded-lg p-3 bg-gray-200">
-          {Array.from({ length: TOTAL_EPISODES }, (_, i) => {
-            const episodeNum = i + 1;
-            const pickedTeam = profile?.weekly_picks?.[episodeNum];
-            const isDisabled = episodeNum > currentWeek;
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))",
+        gap: "10px",
+        justifyContent: "center",
+        marginBottom: "20px",
+        width: "100%",
+        maxWidth: "880px"
+      }}>
+        {Array.from({ length: TOTAL_EPISODES }, (_, i) => {
+          const episodeNum = i + 1;
+          const pickedTeam = profile?.weekly_picks?.[episodeNum];
+          const pickedTeamColor = TEAMS.find(t => t.name === pickedTeam)?.color;
+          const isDisabled = episodeNum > currentWeek;
 
-            return (
-              <div
-                key={episodeNum}
-                onClick={() => !isDisabled && setSelectedEpisode(episodeNum)}
-                style={{
-                  backgroundColor: pickedTeam
-                    ? TEAMS.find((t) => t.name === pickedTeam)?.color
-                    : isDisabled
-                    ? "#E5E7EB"
-                    : "#FFFFFF",
-                  border: "2px solid #6B7280",
-                  width: "70px",
-                  height: "70px",
-                }}
-                className={`flex items-center justify-center font-extrabold text-2xl rounded-md cursor-pointer transition-all ${
-                  isDisabled ? "cursor-not-allowed" : "hover:scale-105"
-                }`}
-              >
+          return (
+            <div
+              key={episodeNum}
+              style={{
+                width: "120px",
+                height: "120px",
+                display: "flex",
+                flexDirection: "column",
+                border: "2px solid #6b7280",
+                borderRadius: "8px",
+                overflow: "hidden",
+                cursor: isDisabled ? "not-allowed" : "pointer",
+                backgroundColor: pickedTeamColor || "#fff",
+              }}
+            >
+              {/* Episode number */}
+              <div style={{
+                flex: 1,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                borderBottom: "1px solid #9ca3af",
+                fontWeight: "bold",
+                fontSize: "18px"
+              }}>
                 {episodeNum}
               </div>
-            );
-          })}
-        </div>
+
+              {/* Color buttons */}
+              {!pickedTeam && !isDisabled && (
+                <div style={{ flex: 1, display: "flex" }}>
+                  {TEAMS.map(team => (
+                    <div
+                      key={team.name}
+                      onClick={() => handlePick(episodeNum, team.name)}
+                      style={{
+                        flex: 1,
+                        backgroundColor: team.color,
+                        cursor: "pointer",
+                        transition: "opacity 0.2s",
+                      }}
+                      onMouseOver={e => e.currentTarget.style.opacity = "0.8"}
+                      onMouseOut={e => e.currentTarget.style.opacity = "1"}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
 
-      {/* Team Selection Panel */}
-      {selectedEpisode !== null && (
-        <div className="flex flex-wrap gap-6 justify-center w-full max-w-3xl mt-6 mb-8">
-          <p className="w-full text-center mb-2 text-lg font-semibold">
-            Select a team for Episode {selectedEpisode}
-          </p>
-          {TEAMS.map((team) => (
-            <button
-              key={team.name}
-              onClick={() => handleTeamPick(team.name)}
-              disabled={loading}
-              style={{ backgroundColor: team.color, color: "#ffffff" }}
-              className="flex-1 min-w-[140px] sm:min-w-[180px] px-6 py-6 text-xl font-extrabold rounded-2xl shadow-lg hover:scale-105 transform transition-all text-center"
-            >
-              {team.name}
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Status */}
-      <div className="text-center">
-        {saved && <p className="text-green-600 text-xl font-semibold">Pick saved!</p>}
-        {loading && <p className="text-gray-500 text-lg">Saving...</p>}
+      <div style={{ textAlign: "center" }}>
+        {saved && <p style={{ color: "#16a34a", fontWeight: "bold", fontSize: "18px" }}>Pick saved!</p>}
+        {loading && <p style={{ color: "#6b7280", fontSize: "16px" }}>Saving...</p>}
       </div>
     </div>
   );
