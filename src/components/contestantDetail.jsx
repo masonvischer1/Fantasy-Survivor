@@ -13,6 +13,8 @@ export default function ContestantDetail() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [draftedIds, setDraftedIds] = useState([])
   const [isAdmin, setIsAdmin] = useState(false)
+  const cardWidth = 'min(580px, calc(100vw - 200px))'
+  const sideArrowOffset = '66px'
 
   useEffect(() => {
     fetchAllContestants()
@@ -194,7 +196,7 @@ export default function ContestantDetail() {
         style={{
           position: 'fixed',
           top: '50%',
-          left: 'max(10px, env(safe-area-inset-left))',
+          left: `max(10px, calc(50vw - (${cardWidth}) / 2 - ${sideArrowOffset}))`,
           transform: 'translateY(-50%)',
           width: 'clamp(42px, 10vw, 56px)',
           height: 'clamp(42px, 10vw, 56px)',
@@ -214,7 +216,7 @@ export default function ContestantDetail() {
         style={{
           position: 'fixed',
           top: '50%',
-          right: 'max(10px, env(safe-area-inset-right))',
+          right: `max(10px, calc(50vw - (${cardWidth}) / 2 - ${sideArrowOffset}))`,
           transform: 'translateY(-50%)',
           width: 'clamp(42px, 10vw, 56px)',
           height: 'clamp(42px, 10vw, 56px)',
@@ -228,7 +230,7 @@ export default function ContestantDetail() {
         <img src={rightArrowIcon} alt="Next" width="48" height="48" style={{ display: 'block', filter: 'brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.5))' }} />
       </button>
 
-      <div style={{ width: 'clamp(260px, calc(100vw - 180px), 620px)', margin: '0 auto', backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid rgba(209,213,219,0.9)', borderRadius: '12px', padding: '0.85rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
+      <div style={{ width: cardWidth, margin: '0 auto', backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid rgba(209,213,219,0.9)', borderRadius: '12px', padding: '0.85rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
         <p>Picks remaining: {Math.max(0, 5 - draftedIds.length)}</p>
 
         <div style={{ marginTop: '1rem' }}>
