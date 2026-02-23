@@ -228,26 +228,7 @@ export default function ContestantDetail() {
         <img src={rightArrowIcon} alt="Next" width="48" height="48" style={{ display: 'block', filter: 'brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.5))' }} />
       </button>
 
-      <div style={{ width: 'min(640px, calc(100vw - 140px))', margin: '0 auto', backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid rgba(209,213,219,0.9)', borderRadius: '12px', padding: '0.85rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
-        {isAdmin && !contestant.is_eliminated && (
-          <button
-            onClick={eliminatePlayer}
-            style={{
-              position: 'absolute',
-              top: '1rem',
-              right: '1rem',
-              backgroundColor: 'red',
-              color: 'white',
-              padding: '0.5rem 1rem',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer'
-            }}
-          >
-            Eliminate Player
-          </button>
-        )}
-
+      <div style={{ width: 'clamp(260px, calc(100vw - 180px), 620px)', margin: '0 auto', backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid rgba(209,213,219,0.9)', borderRadius: '12px', padding: '0.85rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
         <p>Picks remaining: {Math.max(0, 5 - draftedIds.length)}</p>
 
         <div style={{ marginTop: '1rem' }}>
@@ -282,6 +263,24 @@ export default function ContestantDetail() {
           >
             {contestant.is_eliminated ? 'Eliminated' : draftedIds.includes(contestant.id) ? 'Drafted' : 'Draft Player'}
           </button>
+
+          {isAdmin && !contestant.is_eliminated && (
+            <button
+              onClick={eliminatePlayer}
+              style={{
+                marginTop: '0.7rem',
+                backgroundColor: 'red',
+                color: 'white',
+                padding: '0.5rem 1rem',
+                border: 'none',
+                borderRadius: '999px',
+                cursor: 'pointer',
+                fontFamily: 'Survivant, system-ui, sans-serif'
+              }}
+            >
+              Eliminate Player
+            </button>
+          )}
         </div>
       </div>
     </div>
