@@ -147,7 +147,7 @@ export default function Profile({ session, setProfile }) {
   return (
     <div style={{ padding: '1rem' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.86)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)' }}>
-      <h1>My Profile</h1>
+      <h1>My Tribe</h1>
 
       <div style={{ margin: '1rem 0' }}>
         <img
