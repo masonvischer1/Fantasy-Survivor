@@ -11,7 +11,7 @@
   height: 100dvh;
   overflow: hidden;
   display: grid;
-  grid-template-rows: var(--top-nav-height) minmax(0, 1fr) var(--bottom-nav-height);
+  grid-template-rows: var(--top-nav-height) minmax(0, 1fr);
 }
 
 .app-fixed-band-bg {
@@ -28,8 +28,7 @@
 }
 
 .app-shell-top,
-.app-shell-main,
-.app-shell-bottom {
+.app-shell-main {
   position: relative;
   z-index: 1;
 }

@@ -83,6 +83,11 @@ export function BottomNav({ session, profile }) {
   return (
     <nav
       style={{
+        position: 'fixed',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 120,
         height: '64px',
         display: 'grid',
         gridTemplateColumns: hasCompletedInitialDraft ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)',
