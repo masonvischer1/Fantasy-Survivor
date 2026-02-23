@@ -7,16 +7,6 @@ import { buildContestantMap, hydrateTeamFromContestants } from '../utils/teamHyd
 export default function Teams() {
   const [teams, setTeams] = useState([])
 
-  const formatOrdinal = (num) => {
-    const mod100 = num % 100
-    if (mod100 >= 11 && mod100 <= 13) return `${num}th`
-    const mod10 = num % 10
-    if (mod10 === 1) return `${num}st`
-    if (mod10 === 2) return `${num}nd`
-    if (mod10 === 3) return `${num}rd`
-    return `${num}th`
-  }
-
   const fetchAllTeams = async () => {
     const [{ data: profileData, error: profileError }, { data: contestantData, error: contestantError }] = await Promise.all([
       supabase
@@ -90,19 +80,19 @@ export default function Teams() {
         alt=""
         aria-hidden="true"
         style={{
-          position: 'absolute',
-          top: '-56px',
-          right: '-96px',
-          width: 'clamp(210px, 46vw, 360px)',
+          position: 'fixed',
+          top: 'calc(var(--top-nav-height, 56px) - 34px)',
+          right: 'calc(-56px + env(safe-area-inset-right))',
+          width: 'clamp(160px, 38vw, 280px)',
           height: 'auto',
           zIndex: 2,
           pointerEvents: 'none',
-          transform: 'rotate(18deg)',
+          transform: 'rotate(15deg)',
           transformOrigin: 'top right',
           filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))'
         }}
       />
-      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(180px, 46vw)', margin: '0 auto 0.75rem auto' }} />
+      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
       <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Leaderboard</h1>
 
       {teams.length === 0 && <p style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>No teams yet</p>}
@@ -116,7 +106,7 @@ export default function Teams() {
         const isBronze = rank === 3
         const rankBorder = isGold ? '#d4af37' : isSilver ? '#c0c0c0' : isBronze ? '#cd7f32' : '#ddd'
         const rankBackground = isGold ? 'rgba(255,249,230,0.88)' : isSilver ? 'rgba(248,248,248,0.88)' : isBronze ? 'rgba(255,244,236,0.88)' : 'rgba(255,255,255,0.84)'
-        const rankLabel = `${formatOrdinal(rank)} Place`
+        const rankLabel = isGold ? '1st Place' : isSilver ? '2nd Place' : isBronze ? '3rd Place' : null
 
         return (
         <div
@@ -144,21 +134,21 @@ export default function Teams() {
               />
             )}
             <div style={{ flex: 1 }}>
-              <h2 style={{ margin: 0, fontSize: '1.08rem' }}>{profile.team_name || 'Unnamed Team'}</h2>
-              <p style={{ margin: '0.25rem 0 0 0', color: '#666', fontSize: '0.88rem' }}>
+              <h2 style={{ margin: 0 }}>{profile.team_name || 'Unnamed Team'}</h2>
+              <p style={{ margin: '0.25rem 0 0 0', color: '#666' }}>
                 {profile.player_name || 'Unknown Player'}
               </p>
             </div>
 
             <div style={{ textAlign: 'right', marginLeft: 'auto' }}>
-              <p style={{ margin: 0, fontWeight: 'bold', fontSize: '0.98rem' }}>
+              <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>
                 Points: {teamPoints}
               </p>
-              <p style={{ margin: '0.25rem 0 0 0', color: '#0b7d2b', fontSize: '0.84rem' }}>
+              <p style={{ margin: '0.25rem 0 0 0', color: '#0b7d2b' }}>
                 +{bonusPoints} bonus points
               </p>
               {rankLabel && (
-                <p style={{ margin: '0.25rem 0 0 0', fontWeight: 'bold', color: '#555', fontSize: '0.82rem' }}>
+                <p style={{ margin: '0.25rem 0 0 0', fontWeight: 'bold', color: '#555' }}>
                   {rankLabel}
                 </p>
               )}
