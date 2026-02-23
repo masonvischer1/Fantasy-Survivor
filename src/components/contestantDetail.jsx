@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import leftArrowIcon from '../assets/arrow-left-circle.svg'
 import rightArrowIcon from '../assets/arrow-right-circle.svg'
+import closeIcon from '../assets/x-circle.svg'
 
 export default function ContestantDetail() {
   const { id } = useParams()
@@ -187,19 +188,21 @@ export default function ContestantDetail() {
     <div style={{ padding: isMobile ? '0.45rem' : '0.7rem', paddingTop: isMobile ? '3.4rem' : '3rem', textAlign: 'center', position: 'relative' }}>
       <button
         onClick={() => navigate(-1)}
+        aria-label="Back"
         style={{
           position: 'fixed',
           top: 'calc(var(--top-nav-height, 56px) + 8px)',
           left: isMobile ? 'max(8px, env(safe-area-inset-left))' : 'max(10px, env(safe-area-inset-left))',
           zIndex: 30,
-          borderRadius: '12px',
-          padding: isMobile ? '0.4rem 0.75rem' : '0.45rem 0.9rem',
-          border: '1px solid rgba(209,213,219,0.9)',
-          backgroundColor: 'rgba(255,255,255,0.92)',
-          fontSize: isMobile ? '1.15rem' : '1.2rem'
+          width: isMobile ? '42px' : '46px',
+          height: isMobile ? '42px' : '46px',
+          border: 'none',
+          background: 'transparent',
+          padding: 0,
+          cursor: 'pointer'
         }}
       >
-        Back
+        <img src={closeIcon} alt="Back" width={isMobile ? 42 : 46} height={isMobile ? 42 : 46} style={{ display: 'block' }} />
       </button>
 
       <button
