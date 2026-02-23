@@ -53,24 +53,23 @@ export function BottomNav({ session, profile }) {
     <nav
       style={{
         position: 'fixed',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 120,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 'min(960px, calc(100% - 1.2rem))',
+        bottom: 'calc(0.5rem + env(safe-area-inset-bottom))',
+        zIndex: 160,
         height: '64px',
         display: 'grid',
         gridTemplateColumns: hasCompletedInitialDraft ? 'repeat(5, 1fr)' : 'repeat(4, 1fr)',
         gap: '0.2rem',
         alignItems: 'center',
         padding: '0.2rem 0.55rem',
-        margin: '0 0.6rem calc(0.5rem + env(safe-area-inset-bottom))',
         boxSizing: 'border-box',
         backgroundColor: 'rgba(255,255,255,0.78)',
         border: '1px solid rgba(15,23,42,0.16)',
         borderRadius: '16px',
         backdropFilter: 'blur(12px)',
-        boxShadow: '0 8px 22px rgba(2,6,23,0.22)',
-        alignSelf: 'end'
+        boxShadow: '0 8px 22px rgba(2,6,23,0.22)'
       }}
     >
       <Link to="/" style={tabStyle(location.pathname === '/' || location.pathname.startsWith('/contestant/'))}>
