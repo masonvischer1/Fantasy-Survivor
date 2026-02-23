@@ -157,7 +157,28 @@ export default function Profile({ session, setProfile }) {
         />
       </div>
 
-      <input type="file" accept="image/*" onChange={handleFileChange} />
+      <div style={{ margin: '0.75rem auto 0.25rem auto', maxWidth: '340px', width: '100%' }}>
+        <input id="avatar-upload" type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+        <label
+          htmlFor="avatar-upload"
+          style={{
+            display: 'block',
+            width: '100%',
+            boxSizing: 'border-box',
+            padding: '0.65rem 0.9rem',
+            border: '1px dashed #9ca3af',
+            borderRadius: '10px',
+            backgroundColor: 'rgba(255,255,255,0.86)',
+            textAlign: 'center',
+            cursor: 'pointer'
+          }}
+        >
+          Choose Profile Photo
+        </label>
+        <p style={{ margin: '0.45rem 0 0 0', fontSize: '0.85rem', color: '#4b5563', textAlign: 'center' }}>
+          {avatarFile ? avatarFile.name : 'No file selected'}
+        </p>
+      </div>
 
       <div style={{ margin: '1rem 0' }}>
         <input
@@ -204,7 +225,8 @@ export default function Profile({ session, setProfile }) {
           padding: '0.5rem 1rem',
           border: 'none',
           borderRadius: '5px',
-          cursor: saving ? 'not-allowed' : 'pointer'
+          cursor: saving ? 'not-allowed' : 'pointer',
+          fontFamily: 'Survivant, system-ui, sans-serif'
         }}
       >
         {saving ? 'Saving...' : 'Save Profile'}
