@@ -1,5 +1,9 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import castawaysIcon from '../assets/castaways_icon.webp'
+import leaderboardIcon from '../assets/leaderboard_icon.webp'
+import weeklyIcon from '../assets/weekly_icon.png'
+import rulesIcon from '../assets/rules_icon.png'
 
 export function TopNav({ session, profile }) {
   const navigate = useNavigate()
@@ -55,9 +59,27 @@ export function TopNav({ session, profile }) {
 }
 
 export function BottomNav({ session, profile }) {
+  const location = useLocation()
   const hasCompletedInitialDraft = Array.isArray(profile?.team) && profile.team.length >= 5
 
   if (!session) return null
+
+  const tabStyle = (isActive) => ({
+    display: 'inline-flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.12rem',
+    color: '#f8fafc',
+    opacity: isActive ? 1 : 0.82,
+    textShadow: isActive ? '0 0 10px rgba(255,255,255,0.35)' : 'none'
+  })
+
+  const labelStyle = {
+    fontSize: '0.68rem',
+    lineHeight: 1,
+    fontWeight: 600
+  }
 
   return (
     <nav
@@ -65,21 +87,33 @@ export function BottomNav({ session, profile }) {
         height: 'var(--bottom-nav-height)',
         display: 'grid',
         gridTemplateColumns: hasCompletedInitialDraft ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)',
-        gap: '0.3rem',
+        gap: '0.2rem',
         alignItems: 'center',
-        padding: '0 0.55rem',
+        padding: '0.2rem 0.5rem',
         boxSizing: 'border-box',
-        backgroundColor: 'rgba(255,255,255,0.96)',
-        borderTop: '1px solid rgba(15,23,42,0.14)',
-        backdropFilter: 'blur(8px)'
+        backgroundColor: 'rgba(0,0,0,0.72)',
+        borderTop: '1px solid rgba(255,255,255,0.22)',
+        backdropFilter: 'blur(10px)'
       }}
     >
-      <Link to="/" style={{ textAlign: 'center', fontSize: '0.78rem', color: '#0f172a', fontWeight: 600 }}>Castaways</Link>
+      <Link to="/" style={tabStyle(location.pathname === '/' || location.pathname.startsWith('/contestant/'))}>
+        <img src={castawaysIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+        <span style={labelStyle}>Castaways</span>
+      </Link>
       {hasCompletedInitialDraft && (
-        <Link to="/teams" style={{ textAlign: 'center', fontSize: '0.78rem', color: '#0f172a', fontWeight: 600 }}>Leaderboard</Link>
+        <Link to="/teams" style={tabStyle(location.pathname === '/teams')}>
+          <img src={leaderboardIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+          <span style={labelStyle}>Leaderboard</span>
+        </Link>
       )}
-      <Link to="/weekly-picks" style={{ textAlign: 'center', fontSize: '0.78rem', color: '#0f172a', fontWeight: 600 }}>Weekly Picks</Link>
-      <Link to="/rules" style={{ textAlign: 'center', fontSize: '0.78rem', color: '#0f172a', fontWeight: 600 }}>Rules</Link>
+      <Link to="/weekly-picks" style={tabStyle(location.pathname === '/weekly-picks')}>
+        <img src={weeklyIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+        <span style={labelStyle}>Weekly Picks</span>
+      </Link>
+      <Link to="/rules" style={tabStyle(location.pathname === '/rules')}>
+        <img src={rulesIcon} alt="" aria-hidden="true" style={{ width: '22px', height: '22px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+        <span style={labelStyle}>Rules</span>
+      </Link>
     </nav>
   )
 }
