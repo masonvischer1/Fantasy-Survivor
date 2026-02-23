@@ -12,6 +12,7 @@ import Teams from "./components/Teams";
 import CreateTeam from "./components/CreateTeam";
 import Profile from "./components/Profile";
 import WeeklyPicksPage from "./components/weekly_picks"; // <- new page import
+import Rules from "./components/Rules";
 
 function App() {
   const [session, setSession] = useState(null);
@@ -151,6 +152,12 @@ function App() {
         <Route
           path="/weekly-picks"
           element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <WeeklyPicksPage />) : <Navigate to="/login" />}
+        />
+
+        {/* Rules */}
+        <Route
+          path="/rules"
+          element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <Rules />) : <Navigate to="/login" />}
         />
       </Routes>
       </div>
