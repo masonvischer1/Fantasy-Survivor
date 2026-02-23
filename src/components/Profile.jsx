@@ -9,8 +9,6 @@ export default function Profile({ session }) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const userId = session?.user?.id
-  const metaPlayerName = session?.user?.user_metadata?.player_name || ''
-  const metaTeamName = session?.user?.user_metadata?.team_name || ''
 
   useEffect(() => {
     Promise.resolve().then(async () => {
@@ -27,26 +25,7 @@ export default function Profile({ session }) {
         .single()
 
       if (error) {
-        const fallbackProfile = {
-          id: userId,
-          player_name: metaPlayerName,
-          team_name: metaTeamName,
-          avatar_url: '',
-          team: []
-        }
-        const { data: created, error: createError } = await supabase
-          .from('profiles')
-          .upsert(fallbackProfile, { onConflict: 'id' })
-          .select('player_name, team_name, avatar_url')
-          .single()
-
-        if (createError) {
-          console.error(createError)
-        } else {
-          setPlayerName(created.player_name || '')
-          setTeamName(created.team_name || '')
-          setAvatarUrl(created.avatar_url || '')
-        }
+        console.error(error)
       } else {
         setPlayerName(data.player_name || '')
         setTeamName(data.team_name || '')
@@ -54,7 +33,7 @@ export default function Profile({ session }) {
       }
       setLoading(false)
     })
-  }, [userId, metaPlayerName, metaTeamName])
+  }, [userId])
 
   // Handle avatar file selection
   const handleFileChange = e => {

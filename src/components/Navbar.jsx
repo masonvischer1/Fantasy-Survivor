@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 
 export default function Navbar({ session, profile }) {
   const navigate = useNavigate();
+  const needsTeamSetup = session && (!profile?.player_name || !profile?.team_name);
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -34,7 +35,7 @@ export default function Navbar({ session, profile }) {
           gap: '1rem',
         }}
       >
-        {session && profile ? (
+        {session && !needsTeamSetup ? (
           <>
             {/* Profile Avatar */}
             {profile?.avatar_url && (
@@ -60,7 +61,7 @@ export default function Navbar({ session, profile }) {
           </>
         ) : session ? (
           <>
-            <Link to="/profile">Profile</Link>
+            <Link to="/create-team">Create Team</Link>
             <button onClick={signOut}>Logout</button>
           </>
         ) : (

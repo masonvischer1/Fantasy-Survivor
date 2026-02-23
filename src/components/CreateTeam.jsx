@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 
 export default function CreateTeam({ onTeamCreated }) {
+  const [playerName, setPlayerName] = useState('')
   const [teamName, setTeamName] = useState('')
   const [file, setFile] = useState(null)
   const navigate = useNavigate()
 
   async function handleSave() {
+    if (!playerName.trim()) return alert('Your name is required')
     if (!teamName) return alert('Team name required')
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -36,8 +38,10 @@ export default function CreateTeam({ onTeamCreated }) {
 
     const profilePayload = {
       id: user.id,
-      team_name: teamName,
-      avatar_url: avatarUrl
+      player_name: playerName.trim(),
+      team_name: teamName.trim(),
+      avatar_url: avatarUrl,
+      team: []
     }
 
     const { data, error } = await supabase
@@ -59,6 +63,12 @@ export default function CreateTeam({ onTeamCreated }) {
       <h1>Create Your Team</h1>
 
       <input
+        placeholder="Your Name"
+        value={playerName}
+        onChange={e => setPlayerName(e.target.value)}
+      />
+
+      <input
         placeholder="Team Name"
         value={teamName}
         onChange={e => setTeamName(e.target.value)}
@@ -69,6 +79,9 @@ export default function CreateTeam({ onTeamCreated }) {
         accept="image/*"
         onChange={e => setFile(e.target.files[0])}
       />
+      <p style={{ marginTop: '0.5rem', color: '#666', fontSize: '0.85rem' }}>
+        Upload a profile picture so your team is recognizable in the league.
+      </p>
 
       <button onClick={handleSave}>
         Save Team

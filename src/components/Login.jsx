@@ -7,12 +7,9 @@ function usernameToEmail(username) {
   return `${username.trim().toLowerCase()}@${USERNAME_DOMAIN}`
 }
 
-function Login({ onProfileCreated }) {
+function Login() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [playerName, setPlayerName] = useState('')
-  const [teamName, setTeamName] = useState('')
-  const [avatarFile, setAvatarFile] = useState(null)
   const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -52,102 +49,25 @@ function Login({ onProfileCreated }) {
       return
     }
 
-    if (!playerName.trim()) {
-      setError('Your name is required.')
-      return
-    }
-
-    if (!teamName.trim()) {
-      setError('Team name is required.')
-      return
-    }
-
     setLoading(true)
     setError('')
 
     const normalizedUsername = getNormalizedUsername()
-    const internalEmail = usernameToEmail(normalizedUsername)
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: internalEmail,
+    const { error } = await supabase.auth.signUp({
+      email: usernameToEmail(normalizedUsername),
       password,
-      options: {
-        data: {
-          username: normalizedUsername,
-          player_name: playerName.trim(),
-          team_name: teamName.trim()
-        }
-      }
+      options: { data: { username: normalizedUsername } }
     })
-    if (signUpError) {
-      setLoading(false)
-      setError(signUpError.message)
-      return
-    }
-
-    const user = signUpData?.user
-    if (!user) {
-      setLoading(false)
-      setError('Sign up succeeded, but no user was returned. Please try signing in.')
-      return
-    }
-
-    // Ensure we have an authenticated session before writing profile/storage data.
-    if (!signUpData?.session) {
-      const { error: signInAfterSignUpError } = await supabase.auth.signInWithPassword({
-        email: internalEmail,
-        password
-      })
-      if (signInAfterSignUpError) {
-        setLoading(false)
-        setError(`Account created, but automatic sign-in failed: ${signInAfterSignUpError.message}`)
-        return
-      }
-    }
-
-    let avatarUrl = null
-    let avatarWarning = ''
-    if (avatarFile) {
-      const filePath = `${user.id}-${Date.now()}`
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, avatarFile)
-
-      if (uploadError) {
-        avatarWarning = ` Avatar upload failed: ${uploadError.message}`
-      } else {
-        const { data } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(filePath)
-        avatarUrl = data.publicUrl
-      }
-    }
-
-    const profilePayload = {
-      id: user.id,
-      player_name: playerName.trim(),
-      team_name: teamName.trim(),
-      avatar_url: avatarUrl,
-      team: []
-    }
-
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert(profilePayload, { onConflict: 'id' })
 
     setLoading(false)
 
-    if (profileError) {
-      setError(`Account created, but team profile setup failed: ${profileError.message}`)
+    if (error) {
+      setError(error.message)
       return
     }
 
-    if (onProfileCreated) onProfileCreated(profilePayload)
-    alert(`Account and profile created successfully.${avatarWarning}`)
+    alert('Account created. Sign in with your username and password.')
     setIsSignUp(false)
-    setUsername('')
-    setPlayerName('')
-    setTeamName('')
-    setAvatarFile(null)
   }
 
   return (
@@ -170,36 +90,6 @@ function Login({ onProfileCreated }) {
         onChange={(e) => setPassword(e.target.value)}
         style={{ display: 'block', width: '100%', marginBottom: '1rem' }}
       />
-
-      {isSignUp && (
-        <>
-          <input
-            type="text"
-            placeholder="Your Name"
-            value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
-            style={{ display: 'block', width: '100%', marginBottom: '1rem' }}
-          />
-
-          <input
-            type="text"
-            placeholder="Team Name"
-            value={teamName}
-            onChange={(e) => setTeamName(e.target.value)}
-            style={{ display: 'block', width: '100%', marginBottom: '1rem' }}
-          />
-
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
-            style={{ display: 'block', width: '100%', marginBottom: '0.25rem' }}
-          />
-          <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: '#666' }}>
-            Upload a profile picture so your team is recognizable in the league.
-          </p>
-        </>
-      )}
 
       <button
         onClick={isSignUp ? handleSignUp : handleSignIn}
