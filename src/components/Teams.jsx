@@ -81,13 +81,15 @@ export default function Teams() {
         aria-hidden="true"
         style={{
           position: 'fixed',
-          top: 'calc(var(--top-nav-height, 56px) + 8px)',
-          right: 'max(8px, env(safe-area-inset-right))',
-          width: 'clamp(82px, 18vw, 138px)',
+          top: 'calc(var(--top-nav-height, 56px) - 34px)',
+          right: 'calc(-42px + env(safe-area-inset-right))',
+          width: 'clamp(160px, 38vw, 280px)',
           height: 'auto',
           zIndex: 2,
           pointerEvents: 'none',
-          filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.35))'
+          transform: 'rotate(12deg)',
+          transformOrigin: 'top right',
+          filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))'
         }}
       />
       <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
