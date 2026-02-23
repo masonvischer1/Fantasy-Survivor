@@ -4,14 +4,10 @@ import { supabase } from '../supabaseClient'
 export default function Teams() {
   const [teams, setTeams] = useState([])
 
-  useEffect(() => {
-    fetchAllTeams()
-  }, [])
-
   const fetchAllTeams = async () => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, team_name, avatar_url, team') // 'team' is JSONB array of picks
+      .select('id, team_name, player_name, avatar_url, team, team_points, bonus_points') // 'team' is JSONB array of picks
       .order('team_name', { ascending: true })  // optional, alphabetical
 
     if (error) {
@@ -22,20 +18,39 @@ export default function Teams() {
     setTeams(data)
   }
 
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      fetchAllTeams()
+    })
+  }, [])
+
+  const scores = teams.map(profile => ({
+    id: profile.id,
+    total: (profile.team_points || 0) + (profile.bonus_points || 0)
+  }))
+  const topScore = scores.length > 0 ? Math.max(...scores.map(s => s.total)) : null
+
   return (
     <div style={{ padding: '2rem' }}>
       <h1>League Teams</h1>
 
       {teams.length === 0 && <p>No teams yet</p>}
 
-      {teams.map((profile) => (
+      {teams.map((profile) => {
+        const teamPoints = profile.team_points || 0
+        const bonusPoints = profile.bonus_points || 0
+        const totalPoints = teamPoints + bonusPoints
+        const isLeader = topScore !== null && totalPoints === topScore
+
+        return (
         <div
           key={profile.id}
           style={{
             marginBottom: '2rem',
-            border: '1px solid #ddd',
+            border: isLeader ? '2px solid #1e8e3e' : '1px solid #ddd',
             padding: '1rem',
-            borderRadius: '8px'
+            borderRadius: '8px',
+            background: isLeader ? '#f3fff6' : 'white'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -51,7 +66,26 @@ export default function Teams() {
                 }}
               />
             )}
-            <h2>{profile.team_name || 'Unnamed Team'}</h2>
+            <div style={{ flex: 1 }}>
+              <h2 style={{ margin: 0 }}>{profile.team_name || 'Unnamed Team'}</h2>
+              <p style={{ margin: '0.25rem 0 0 0', color: '#666' }}>
+                {profile.player_name || 'Unknown Player'}
+              </p>
+            </div>
+
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>
+                Points: {totalPoints}
+              </p>
+              <p style={{ margin: '0.25rem 0 0 0', color: '#0b7d2b' }}>
+                +{bonusPoints} bonus points
+              </p>
+              {isLeader && (
+                <p style={{ margin: '0.25rem 0 0 0', fontWeight: 'bold', color: '#0b7d2b' }}>
+                  Leading Team
+                </p>
+              )}
+            </div>
           </div>
 
           <div
@@ -80,7 +114,8 @@ export default function Teams() {
             ))}
           </div>
         </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
