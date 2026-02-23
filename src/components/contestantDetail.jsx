@@ -170,10 +170,30 @@ export default function ContestantDetail() {
   if (!contestant) return <div>Loading contestant...</div>
 
   return (
-    <div style={{ padding: '1rem', textAlign: 'center', position: 'relative' }}>
-      <div style={{ maxWidth: '760px', margin: '0 auto', backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid rgba(209,213,219,0.9)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)' }}>
+    <div style={{ padding: '1rem', textAlign: 'center' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(42px,56px) minmax(0,760px) minmax(42px,56px)', gap: '0.8rem', alignItems: 'center', maxWidth: '980px', margin: '0 auto' }}>
+        <button
+          onClick={prev}
+          aria-label="Previous contestant"
+          style={{
+            width: 'clamp(42px, 10vw, 56px)',
+            height: 'clamp(42px, 10vw, 56px)',
+            borderRadius: '999px',
+            border: '2px solid rgba(255,255,255,0.85)',
+            backgroundColor: 'rgba(0,0,0,0.35)',
+            color: 'white',
+            fontSize: '1.4rem',
+            lineHeight: 1,
+            cursor: 'pointer',
+            padding: 0
+          }}
+        >
+          &#8592;
+        </button>
+
+        <div style={{ maxWidth: '760px', margin: '0 auto', backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid rgba(209,213,219,0.9)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
         <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
-        <button onClick={() => navigate(-1)}>Back</button>
+        <button onClick={() => navigate(-1)} style={{ borderRadius: '12px', padding: '0.45rem 0.9rem', border: '1px solid rgba(209,213,219,0.9)', backgroundColor: 'rgba(255,255,255,0.86)' }}>Back</button>
 
         {isAdmin && !contestant.is_eliminated && (
           <button
@@ -227,12 +247,27 @@ export default function ContestantDetail() {
           >
             {contestant.is_eliminated ? 'Eliminated' : draftedIds.includes(contestant.id) ? 'Drafted' : 'Draft Player'}
           </button>
-
-          <div style={{ marginTop: '1rem' }}>
-            <button onClick={prev}>Prev</button>
-            <button onClick={next} style={{ marginLeft: '1rem' }}>Next</button>
-          </div>
         </div>
+        </div>
+
+        <button
+          onClick={next}
+          aria-label="Next contestant"
+          style={{
+            width: 'clamp(42px, 10vw, 56px)',
+            height: 'clamp(42px, 10vw, 56px)',
+            borderRadius: '999px',
+            border: '2px solid rgba(255,255,255,0.85)',
+            backgroundColor: 'rgba(0,0,0,0.35)',
+            color: 'white',
+            fontSize: '1.4rem',
+            lineHeight: 1,
+            cursor: 'pointer',
+            padding: 0
+          }}
+        >
+          &#8594;
+        </button>
       </div>
     </div>
   )

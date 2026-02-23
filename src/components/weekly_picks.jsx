@@ -206,13 +206,49 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
           </div>
         )}
 
-        <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "8px", flexWrap: "wrap" }}>
-          <button onClick={goBackWeek} disabled={selectedWeek === 1}>
-            Back
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(42px,56px) minmax(140px, 220px) minmax(42px,56px)", gap: "0.65rem", alignItems: "center", justifyContent: "center", marginTop: "8px" }}>
+          <button
+            onClick={goBackWeek}
+            disabled={selectedWeek === 1}
+            aria-label="Previous week"
+            style={{
+              width: "clamp(42px, 10vw, 56px)",
+              height: "clamp(42px, 10vw, 56px)",
+              borderRadius: "999px",
+              border: "2px solid rgba(255,255,255,0.85)",
+              backgroundColor: "rgba(0,0,0,0.35)",
+              color: "white",
+              fontSize: "1.4rem",
+              lineHeight: 1,
+              padding: 0,
+              cursor: selectedWeek === 1 ? "not-allowed" : "pointer",
+              opacity: selectedWeek === 1 ? 0.5 : 1
+            }}
+          >
+            &#8592;
           </button>
-          <span style={{ alignSelf: "center", fontWeight: "bold", color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>Week {selectedWeek}</span>
-          <button onClick={goForwardWeek} disabled={selectedWeek === TOTAL_EPISODES}>
-            Forward
+          <div style={{ textAlign: "center", padding: "0.55rem 0.75rem", borderRadius: "12px", border: "1px solid rgba(209,213,219,0.9)", backgroundColor: "rgba(255,255,255,0.86)", backdropFilter: "blur(2px)" }}>
+            <span style={{ fontWeight: "bold", color: "#111827" }}>Week {selectedWeek}</span>
+          </div>
+          <button
+            onClick={goForwardWeek}
+            disabled={selectedWeek === TOTAL_EPISODES}
+            aria-label="Next week"
+            style={{
+              width: "clamp(42px, 10vw, 56px)",
+              height: "clamp(42px, 10vw, 56px)",
+              borderRadius: "999px",
+              border: "2px solid rgba(255,255,255,0.85)",
+              backgroundColor: "rgba(0,0,0,0.35)",
+              color: "white",
+              fontSize: "1.4rem",
+              lineHeight: 1,
+              padding: 0,
+              cursor: selectedWeek === TOTAL_EPISODES ? "not-allowed" : "pointer",
+              opacity: selectedWeek === TOTAL_EPISODES ? 0.5 : 1
+            }}
+          >
+            &#8594;
           </button>
         </div>
       </div>
