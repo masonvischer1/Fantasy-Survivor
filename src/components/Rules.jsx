@@ -3,7 +3,7 @@ import siteLogo from '../assets/Logo.png'
 export default function Rules() {
   return (
     <div style={{ padding: '1rem' }}>
-      <div style={{ maxWidth: '820px', margin: '0 auto', background: 'rgba(255,255,255,0.78)', border: '1px solid rgba(229,231,235,0.9)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)' }}>
+      <div style={{ width: 'min(820px, 100%)', maxWidth: '820px', margin: '0 auto', boxSizing: 'border-box', background: 'rgba(255,255,255,0.78)', border: '1px solid rgba(229,231,235,0.9)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)' }}>
         <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(180px, 46vw)', margin: '0 auto 0.75rem auto' }} />
         <h1 style={{ textAlign: 'center', fontSize: 'clamp(2.1rem, 7vw, 2.8rem)', marginTop: '0.25rem' }}>The Rules</h1>
 
