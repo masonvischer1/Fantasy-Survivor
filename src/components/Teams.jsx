@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import leaderboardBg from '../assets/Island Life - Leaderboard.png'
 
 export default function Teams() {
   const [teams, setTeams] = useState([])
@@ -33,10 +34,10 @@ export default function Teams() {
   })
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>League Teams</h1>
+    <div style={{ padding: '2rem', minHeight: '100vh', backgroundImage: `url(${leaderboardBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Leaderboard</h1>
 
-      {teams.length === 0 && <p>No teams yet</p>}
+      {teams.length === 0 && <p style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>No teams yet</p>}
 
       {sortedTeams.map((profile, index) => {
         const teamPoints = profile.team_points || 0

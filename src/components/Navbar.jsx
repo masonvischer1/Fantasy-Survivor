@@ -21,9 +21,9 @@ export default function Navbar({ session, profile }) {
       }}
     >
       {/* Navigation Links */}
-      <Link to="/">Contestants</Link>
+      <Link to="/">Castaways</Link>
       <Link to="/my-team">My Team</Link>
-      <Link to="/teams">League Teams</Link>
+      <Link to="/teams">Leaderboard</Link>
       <Link to="/weekly-picks">Weekly Picks</Link> {/* <-- Added Weekly Picks link */}
 
       {/* Right Side */}

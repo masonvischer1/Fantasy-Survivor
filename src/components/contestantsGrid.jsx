@@ -1,16 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import castawaysBg from '../assets/Tribe Flags - Castaways.png'
 
 export default function ContestantsGrid() {
   const navigate = useNavigate()
   const [contestants, setContestants] = useState([])
   const [draftedIds, setDraftedIds] = useState([])
-
-  useEffect(() => {
-    fetchContestants()
-    fetchDrafted()
-  }, [])
 
   // Fetch all contestants
   async function fetchContestants() {
@@ -43,8 +39,17 @@ export default function ContestantsGrid() {
     setDraftedIds(team.map(c => c.id))
   }
 
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      fetchContestants()
+      fetchDrafted()
+    })
+  }, [])
+
   return (
-    <div style={{ padding: '2rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+    <div style={{ padding: '2rem', minHeight: '100vh', backgroundImage: `url(${castawaysBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)', marginBottom: '1rem' }}>Castaways</h1>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
       {contestants.map(c => {
         const isDrafted = draftedIds.includes(c.id)
         const isEliminated = c.is_eliminated
@@ -97,6 +102,7 @@ export default function ContestantsGrid() {
           </div>
         )
       })}
+      </div>
     </div>
   )
 }

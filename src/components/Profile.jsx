@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
+import profileBg from '../assets/sand - profile.png'
 
 export default function Profile({ session }) {
   const [playerName, setPlayerName] = useState('')
@@ -90,7 +91,8 @@ export default function Profile({ session }) {
   if (loading) return <div style={{ padding: '2rem' }}>Loading profile...</div>
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '400px', margin: '0 auto', textAlign: 'center' }}>
+    <div style={{ padding: '2rem', minHeight: '100vh', backgroundImage: `url(${profileBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: '12px', padding: '1rem' }}>
       <h1>My Profile</h1>
 
       <div style={{ margin: '1rem 0' }}>
@@ -146,6 +148,7 @@ export default function Profile({ session }) {
       >
         {saving ? 'Saving...' : 'Save Profile'}
       </button>
+      </div>
     </div>
   )
 }

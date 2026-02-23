@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import createTeamBg from '../assets/Logo - Create Team.png'
 
 export default function CreateTeam({ onTeamCreated }) {
   const [playerName, setPlayerName] = useState('')
@@ -59,8 +60,8 @@ export default function CreateTeam({ onTeamCreated }) {
   }
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Create Your Team</h1>
+    <div style={{ padding: '2rem', minHeight: '100vh', backgroundImage: `url(${createTeamBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Create Your Team</h1>
 
       <input
         placeholder="Your Name"
