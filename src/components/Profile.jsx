@@ -186,7 +186,15 @@ export default function Profile({ session, setProfile }) {
             }}
           >
             <img
-              src={c.is_eliminated ? c.elimPhoto_url : c.picture_url}
+              src={
+                (c.is_eliminated
+                  ? (c.elimPhoto_url || c.elim_photo_url)
+                  : c.picture_url) ||
+                c.picture_url ||
+                c.elimPhoto_url ||
+                c.elim_photo_url ||
+                '/fallback.png'
+              }
               alt={c.name}
               style={{ width: '100%', borderRadius: '5px' }}
             />

@@ -112,7 +112,15 @@ export default function Teams() {
             {profile.team?.map((c) => (
               <div key={c.id} style={{ textAlign: 'center', width: '54px', flex: '0 0 auto' }}>
                 <img
-                  src={c.is_eliminated ? c.elimPhoto_url : c.picture_url}
+                  src={
+                    (c.is_eliminated
+                      ? (c.elimPhoto_url || c.elim_photo_url)
+                      : c.picture_url) ||
+                    c.picture_url ||
+                    c.elimPhoto_url ||
+                    c.elim_photo_url ||
+                    '/fallback.png'
+                  }
                   alt={c.name}
                   style={{
                     width: '46px',
