@@ -82,6 +82,13 @@ export default function Teams() {
     if (lastDigit === 3) return `${value}rd`
     return `${value}th`
   }
+  const getTeamNameFontSize = (teamName) => {
+    const length = (teamName || '').trim().length
+    if (length <= 11) return '1.1rem'
+    if (length <= 16) return '1.02rem'
+    if (length <= 22) return '0.95rem'
+    return '0.88rem'
+  }
 
   return (
     <div style={{ padding: '1rem', position: 'relative' }}>
@@ -144,7 +151,20 @@ export default function Teams() {
               />
             )}
             <div style={{ flex: 1 }}>
-              <h2 style={{ margin: 0 }}>{profile.team_name || 'Unnamed Team'}</h2>
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: getTeamNameFontSize(profile.team_name),
+                  lineHeight: 1.2,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '100%'
+                }}
+                title={profile.team_name || 'Unnamed Team'}
+              >
+                {profile.team_name || 'Unnamed Team'}
+              </h2>
               <p style={{ margin: '0.25rem 0 0 0', color: '#666' }}>
                 {profile.player_name || 'Unknown Player'}
               </p>
