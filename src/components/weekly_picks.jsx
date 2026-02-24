@@ -18,11 +18,13 @@ const TOTAL_EPISODES = 14;
 export default function WeeklyPicks({ currentWeek = 1 }) {
   const [profile, setProfile] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(currentWeek);
   const [leagueProfiles, setLeagueProfiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [imageErrors, setImageErrors] = useState({});
+  const [adminWinnersByWeek, setAdminWinnersByWeek] = useState({});
 
   const fetchLeagueProfiles = useCallback(async (weekNum) => {
     const { data, error } = await supabase
@@ -37,6 +39,18 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
 
     const submittedForWeek = (data || []).filter((p) => !!p.weekly_picks?.[weekNum]);
     setLeagueProfiles(submittedForWeek);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem("weekly_immunity_winners");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed === "object") setAdminWinnersByWeek(parsed);
+      }
+    } catch (error) {
+      console.error("Failed to load admin immunity winners from local storage:", error);
+    }
   }, []);
 
   useEffect(() => {
@@ -56,7 +70,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("weekly_picks")
+        .select("weekly_picks, is_admin")
         .eq("id", user.id)
         .single();
 
@@ -64,6 +78,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
         console.error(error);
       } else {
         setProfile(data);
+        setIsAdmin(!!data?.is_admin);
         if (data?.weekly_picks?.[selectedWeek]) {
           await fetchLeagueProfiles(selectedWeek);
         } else {
@@ -125,6 +140,20 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   const getTeam = (teamName) => TEAMS.find((team) => team.name === teamName);
   const currentWeekPick = profile?.weekly_picks?.[selectedWeek];
   const hasOwnPickThisWeek = !!currentWeekPick;
+  const selectedImmunityWinner = adminWinnersByWeek?.[selectedWeek] || "";
+
+  const handleAdminWinnerChange = (event) => {
+    const winner = event.target.value;
+    setAdminWinnersByWeek((prev) => {
+      const next = { ...prev, [selectedWeek]: winner };
+      try {
+        window.localStorage.setItem("weekly_immunity_winners", JSON.stringify(next));
+      } catch (error) {
+        console.error("Failed to save admin immunity winner to local storage:", error);
+      }
+      return next;
+    });
+  };
 
   const pickBreakdown = useMemo(() => {
     if (!hasOwnPickThisWeek || leagueProfiles.length === 0) return null;
@@ -471,6 +500,50 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {isAdmin && leagueProfiles.length > 0 && (
+            <div
+              style={{
+                marginTop: "16px",
+                border: "1px solid rgba(209,213,219,0.9)",
+                borderRadius: "14px",
+                background: "rgba(255,255,255,0.9)",
+                backdropFilter: "blur(2px)",
+                padding: "12px",
+              }}
+            >
+              <p style={{ margin: "0 0 10px 0", fontWeight: "bold", textAlign: "center", color: "#111827" }}>
+                Admin: Immunity Winner
+              </p>
+              <label
+                htmlFor="admin-immunity-winner"
+                style={{ display: "block", marginBottom: "8px", color: "#374151", fontWeight: "bold", fontSize: "0.9rem" }}
+              >
+                Week {selectedWeek} winner
+              </label>
+              <select
+                id="admin-immunity-winner"
+                value={selectedImmunityWinner}
+                onChange={handleAdminWinnerChange}
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                  border: "1px solid rgba(156,163,175,0.9)",
+                  background: "rgba(255,255,255,0.98)",
+                  color: "#111827",
+                  fontWeight: "bold",
+                  padding: "10px 12px",
+                }}
+              >
+                <option value="">Select immunity winner</option>
+                {TEAMS.map((team) => (
+                  <option key={`admin-winner-${team.name}`} value={team.name}>
+                    {team.name}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
         </div>
