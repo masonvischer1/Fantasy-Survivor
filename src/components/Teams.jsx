@@ -73,6 +73,16 @@ export default function Teams() {
     return (a.team_name || '').localeCompare(b.team_name || '')
   })
 
+  const getOrdinal = (value) => {
+    const teenCheck = value % 100
+    if (teenCheck >= 11 && teenCheck <= 13) return `${value}th`
+    const lastDigit = value % 10
+    if (lastDigit === 1) return `${value}st`
+    if (lastDigit === 2) return `${value}nd`
+    if (lastDigit === 3) return `${value}rd`
+    return `${value}th`
+  }
+
   return (
     <div style={{ padding: '1rem', position: 'relative' }}>
       <img
@@ -81,13 +91,13 @@ export default function Teams() {
         aria-hidden="true"
         style={{
           position: 'absolute',
-          top: '-40px',
-          right: 'calc(-56px + env(safe-area-inset-right))',
-          width: 'clamp(160px, 38vw, 280px)',
+          top: '-48px',
+          right: 'calc(-82px + env(safe-area-inset-right))',
+          width: 'clamp(200px, 46vw, 340px)',
           height: 'auto',
           zIndex: 2,
           pointerEvents: 'none',
-          transform: 'rotate(15deg)',
+          transform: 'rotate(22deg)',
           transformOrigin: 'top right',
           filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))'
         }}
@@ -106,7 +116,7 @@ export default function Teams() {
         const isBronze = rank === 3
         const rankBorder = isGold ? '#d4af37' : isSilver ? '#c0c0c0' : isBronze ? '#cd7f32' : '#ddd'
         const rankBackground = isGold ? 'rgba(255,249,230,0.88)' : isSilver ? 'rgba(248,248,248,0.88)' : isBronze ? 'rgba(255,244,236,0.88)' : 'rgba(255,255,255,0.84)'
-        const rankLabel = isGold ? '1st Place' : isSilver ? '2nd Place' : isBronze ? '3rd Place' : null
+        const rankLabel = `${getOrdinal(rank)} Place`
 
         return (
         <div
@@ -147,11 +157,9 @@ export default function Teams() {
               <p style={{ margin: '0.25rem 0 0 0', color: '#0b7d2b' }}>
                 +{bonusPoints} bonus points
               </p>
-              {rankLabel && (
-                <p style={{ margin: '0.25rem 0 0 0', fontWeight: 'bold', color: '#555' }}>
-                  {rankLabel}
-                </p>
-              )}
+              <p style={{ margin: '0.25rem 0 0 0', fontWeight: 'bold', color: '#555' }}>
+                {rankLabel}
+              </p>
             </div>
           </div>
 
