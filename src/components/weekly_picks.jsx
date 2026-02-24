@@ -8,7 +8,7 @@ import leftArrowIcon from "../assets/arrow-left-circle.svg";
 import rightArrowIcon from "../assets/arrow-right-circle.svg";
 
 const TEAMS = [
-  { name: "Kalo", color: "#3B82F6", flagSrc: kaloBuff },
+  { name: "Kalo", color: "#95ECF0", flagSrc: kaloBuff },
   { name: "Cila", color: "#F97316", flagSrc: cilaBuff },
   { name: "Vatu", color: "#A855F7", flagSrc: vatuBuff },
 ];
