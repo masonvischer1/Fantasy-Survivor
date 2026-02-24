@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
 import kaloBuff from "../assets/Survivor_50_Kalo_Buff.png";
 import cilaBuff from "../assets/Survivor_50_Cila_Buff.png";
@@ -125,6 +125,51 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   const getTeam = (teamName) => TEAMS.find((team) => team.name === teamName);
   const currentWeekPick = profile?.weekly_picks?.[selectedWeek];
   const hasOwnPickThisWeek = !!currentWeekPick;
+
+  const pickBreakdown = useMemo(() => {
+    if (!hasOwnPickThisWeek || leagueProfiles.length === 0) return null;
+
+    const counts = TEAMS.reduce((acc, team) => {
+      acc[team.name] = 0;
+      return acc;
+    }, {});
+
+    leagueProfiles.forEach((profileItem) => {
+      const teamName = profileItem.weekly_picks?.[selectedWeek];
+      if (teamName && counts[teamName] !== undefined) counts[teamName] += 1;
+    });
+
+    const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    if (total === 0) return null;
+
+    const rows = TEAMS.map((team) => {
+      const count = counts[team.name] || 0;
+      const percentage = (count / total) * 100;
+      return {
+        ...team,
+        count,
+        percentage,
+        percentageLabel: `${Math.round(percentage)}%`,
+      };
+    })
+      .filter((team) => team.count > 0)
+      .sort((a, b) => b.count - a.count);
+
+    let running = 0;
+    const gradientStops = rows
+      .map((team) => {
+        const start = running;
+        running += (team.count / total) * 100;
+        return `${team.color} ${start.toFixed(2)}% ${running.toFixed(2)}%`;
+      })
+      .join(", ");
+
+    return {
+      total,
+      rows,
+      gradientStops,
+    };
+  }, [hasOwnPickThisWeek, leagueProfiles, selectedWeek]);
 
   return (
     <div
@@ -350,6 +395,82 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {pickBreakdown && (
+            <div
+              style={{
+                marginTop: "16px",
+                border: "1px solid rgba(209,213,219,0.9)",
+                borderRadius: "14px",
+                background: "rgba(255,255,255,0.9)",
+                backdropFilter: "blur(2px)",
+                padding: "12px",
+              }}
+            >
+              <p style={{ margin: "0 0 10px 0", fontWeight: "bold", textAlign: "center", color: "#111827" }}>
+                Pick Breakdown ({pickBreakdown.total} teams)
+              </p>
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "12px" }}>
+                <div
+                  aria-hidden="true"
+                  style={{
+                    width: "min(48vw, 180px)",
+                    height: "min(48vw, 180px)",
+                    borderRadius: "50%",
+                    background: `conic-gradient(${pickBreakdown.gradientStops})`,
+                    position: "relative",
+                    boxShadow: "0 6px 20px rgba(17,24,39,0.18)",
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: "22%",
+                      borderRadius: "50%",
+                      background: "rgba(255,255,255,0.94)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      textAlign: "center",
+                      fontWeight: "bold",
+                      color: "#111827",
+                      fontSize: "0.86rem",
+                      lineHeight: 1.15,
+                      padding: "6px",
+                    }}
+                  >
+                    Week {selectedWeek}
+                    <br />
+                    Picks
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "8px" }}>
+                {pickBreakdown.rows.map((row) => (
+                  <div
+                    key={`${selectedWeek}-breakdown-${row.name}`}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "14px 1fr auto auto",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "8px 10px",
+                      borderRadius: "10px",
+                      background: "rgba(248,250,252,0.95)",
+                      border: "1px solid rgba(209,213,219,0.9)",
+                    }}
+                  >
+                    <span style={{ width: "14px", height: "14px", borderRadius: "999px", backgroundColor: row.color, display: "inline-block" }} />
+                    <span style={{ fontWeight: "bold", color: "#111827" }}>{row.name}</span>
+                    <span style={{ color: "#374151", fontWeight: "bold" }}>{row.percentageLabel}</span>
+                    <span style={{ color: "#6b7280" }}>({row.count})</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
