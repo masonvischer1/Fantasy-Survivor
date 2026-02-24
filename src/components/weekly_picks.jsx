@@ -10,7 +10,7 @@ import rightArrowIcon from "../assets/arrow-right-circle.svg";
 const TEAMS = [
   { name: "Kalo", color: "#95ECF0", flagSrc: kaloBuff },
   { name: "Cila", color: "#F97316", flagSrc: cilaBuff },
-  { name: "Vatu", color: "#A855F7", flagSrc: vatuBuff },
+  { name: "Vatu", color: "#EE0372", flagSrc: vatuBuff },
 ];
 
 const TOTAL_EPISODES = 14;
