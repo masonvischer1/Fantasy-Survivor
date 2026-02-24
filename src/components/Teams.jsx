@@ -84,10 +84,9 @@ export default function Teams() {
   }
   const getTeamNameFontSize = (teamName) => {
     const length = (teamName || '').trim().length
-    if (length <= 11) return '1.1rem'
-    if (length <= 16) return '1.02rem'
-    if (length <= 22) return '0.95rem'
-    return '0.88rem'
+    const calculatedSize = 1.12 - (Math.max(0, length - 10) * 0.018)
+    const boundedSize = Math.min(1.12, Math.max(0.8, calculatedSize))
+    return `${boundedSize.toFixed(2)}rem`
   }
 
   return (
@@ -137,7 +136,7 @@ export default function Teams() {
             backdropFilter: 'blur(2px)'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'stretch', gap: '0.75rem', flexWrap: 'nowrap', minHeight: '78px' }}>
             {profile.avatar_url && (
               <img
                 src={profile.avatar_url}
@@ -150,34 +149,31 @@ export default function Teams() {
                 }}
               />
             )}
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '60px' }}>
               <h2
                 style={{
                   margin: 0,
                   fontSize: getTeamNameFontSize(profile.team_name),
-                  lineHeight: 1.2,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxWidth: '100%'
+                  lineHeight: 1.15,
+                  overflowWrap: 'anywhere'
                 }}
                 title={profile.team_name || 'Unnamed Team'}
               >
                 {profile.team_name || 'Unnamed Team'}
               </h2>
-              <p style={{ margin: '0.25rem 0 0 0', color: '#666' }}>
+              <p style={{ margin: '0.2rem 0 0 0', color: '#666', fontSize: '0.9rem', lineHeight: 1.2 }}>
                 {profile.player_name || 'Unknown Player'}
               </p>
             </div>
 
-            <div style={{ textAlign: 'right', marginLeft: 'auto' }}>
-              <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>
+            <div style={{ textAlign: 'right', marginLeft: 'auto', minWidth: '118px', flex: '0 0 118px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.15rem' }}>
+              <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.02rem', lineHeight: 1.15 }}>
                 Points: {teamPoints}
               </p>
-              <p style={{ margin: '0.25rem 0 0 0', color: '#0b7d2b' }}>
+              <p style={{ margin: 0, color: '#0b7d2b', fontSize: '0.86rem', lineHeight: 1.15 }}>
                 +{bonusPoints} bonus points
               </p>
-              <p style={{ margin: '0.25rem 0 0 0', fontWeight: 'bold', color: '#555' }}>
+              <p style={{ margin: 0, fontWeight: 'bold', color: '#555', fontSize: '0.86rem', lineHeight: 1.15 }}>
                 {rankLabel}
               </p>
             </div>
