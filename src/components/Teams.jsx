@@ -92,7 +92,7 @@ export default function Teams() {
         style={{
           position: 'absolute',
           top: '-48px',
-          right: 'calc(-82px + env(safe-area-inset-right))',
+          right: 'calc(-104px + env(safe-area-inset-right))',
           width: 'clamp(200px, 46vw, 340px)',
           height: 'auto',
           zIndex: 2,
