@@ -81,11 +81,11 @@ export default function Teams() {
         aria-hidden="true"
         style={{
           position: 'fixed',
-          top: 'calc(var(--top-nav-height, 56px) - 34px)',
+          top: 'max(-40px, calc(var(--top-nav-height, 0px) - 34px))',
           right: 'calc(-56px + env(safe-area-inset-right))',
           width: 'clamp(160px, 38vw, 280px)',
           height: 'auto',
-          zIndex: 2,
+          zIndex: 90,
           pointerEvents: 'none',
           transform: 'rotate(15deg)',
           transformOrigin: 'top right',
@@ -196,5 +196,4 @@ export default function Teams() {
     </div>
   )
 }
-
 
