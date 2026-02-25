@@ -157,12 +157,13 @@ export default function TeamProfileView() {
 
   return (
     <div style={{ padding: '1rem' }}>
-      <div style={{ maxWidth: '920px', margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.86)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)' }}>
+      <div style={{ maxWidth: '920px', margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.86)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
         <button
           onClick={() => navigate('/teams')}
           style={{
-            display: 'inline-block',
-            marginBottom: '0.55rem',
+            position: 'absolute',
+            top: '0.65rem',
+            left: '0.65rem',
             padding: 0,
             borderRadius: '999px',
             border: 'none',
