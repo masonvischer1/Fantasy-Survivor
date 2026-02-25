@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import siteLogo from '../assets/Logo.png'
 import idolImg from '../assets/idol.png'
 import { buildContestantMap, hydrateTeamFromContestants } from '../utils/teamHydration'
 
 export default function Teams() {
+  const navigate = useNavigate()
   const [teams, setTeams] = useState([])
 
   const fetchAllTeams = async () => {
@@ -127,13 +129,24 @@ export default function Teams() {
         return (
         <div
           key={profile.id}
+          onClick={() => navigate(`/teams/${profile.id}`)}
+          onKeyDown={event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              navigate(`/teams/${profile.id}`)
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label={`View ${profile.team_name || 'team'} profile`}
           style={{
             marginBottom: '1rem',
             border: `2px solid ${rankBorder}`,
             padding: '0.75rem',
             borderRadius: '8px',
             background: rankBackground,
-            backdropFilter: 'blur(2px)'
+            backdropFilter: 'blur(2px)',
+            cursor: 'pointer'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'stretch', gap: '0.75rem', flexWrap: 'nowrap', minHeight: '78px' }}>

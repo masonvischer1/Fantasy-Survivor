@@ -10,6 +10,7 @@ import ContestantDetail from "./components/contestantDetail";
 import Teams from "./components/Teams";
 import CreateTeam from "./components/CreateTeam";
 import Profile from "./components/Profile";
+import TeamProfileView from "./components/TeamProfileView";
 import WeeklyPicksPage from "./components/weekly_picks";
 import Rules from "./components/Rules";
 
@@ -25,6 +26,7 @@ function getRouteBackground(pathname) {
   if (pathname === "/login") return loginBg;
   if (pathname === "/create-team") return createTeamBg;
   if (pathname === "/profile") return profileBg;
+  if (pathname.startsWith("/teams/")) return profileBg;
   if (pathname === "/teams") return leaderboardBg;
   if (pathname === "/weekly-picks") return weeklyPicksBg;
   if (pathname === "/rules") return rulesBg;
@@ -112,6 +114,11 @@ function AppLayout({ session, profile, setProfile, needsTeamSetup, hasCompletedI
                   : (hasCompletedInitialDraft ? <Teams /> : <Navigate to="/" />))
                 : <Navigate to="/login" />
             }
+          />
+
+          <Route
+            path="/teams/:id"
+            element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <TeamProfileView />) : <Navigate to="/login" />}
           />
 
           <Route
