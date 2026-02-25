@@ -25,6 +25,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   const [saved, setSaved] = useState(false);
   const [imageErrors, setImageErrors] = useState({});
   const [adminWinnersByWeek, setAdminWinnersByWeek] = useState({});
+  const [adminWinnerSaving, setAdminWinnerSaving] = useState(false);
 
   const fetchLeagueProfiles = useCallback(async (weekNum) => {
     const { data, error } = await supabase
@@ -39,18 +40,6 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
 
     const submittedForWeek = (data || []).filter((p) => !!p.weekly_picks?.[weekNum]);
     setLeagueProfiles(submittedForWeek);
-  }, []);
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem("weekly_immunity_winners");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed && typeof parsed === "object") setAdminWinnersByWeek(parsed);
-      }
-    } catch (error) {
-      console.error("Failed to load admin immunity winners from local storage:", error);
-    }
   }, []);
 
   useEffect(() => {
@@ -104,6 +93,32 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
     });
   }, [selectedWeek, profile, fetchLeagueProfiles]);
 
+  useEffect(() => {
+    const loadWeeklyWinner = async () => {
+      if (!isAdmin) return;
+
+      const { data, error } = await supabase
+        .from("weekly_immunity_results")
+        .select("week, winner_team")
+        .eq("week", selectedWeek)
+        .maybeSingle();
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      setAdminWinnersByWeek((prev) => ({
+        ...prev,
+        [selectedWeek]: data?.winner_team || "",
+      }));
+    };
+
+    Promise.resolve().then(() => {
+      loadWeeklyWinner();
+    });
+  }, [isAdmin, selectedWeek]);
+
   const handlePick = async (weekNum, teamName) => {
     if (!profile || !currentUserId) return;
 
@@ -142,17 +157,30 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   const hasOwnPickThisWeek = !!currentWeekPick;
   const selectedImmunityWinner = adminWinnersByWeek?.[selectedWeek] || "";
 
-  const handleAdminWinnerChange = (event) => {
+  const handleAdminWinnerChange = async (event) => {
     const winner = event.target.value;
-    setAdminWinnersByWeek((prev) => {
-      const next = { ...prev, [selectedWeek]: winner };
-      try {
-        window.localStorage.setItem("weekly_immunity_winners", JSON.stringify(next));
-      } catch (error) {
-        console.error("Failed to save admin immunity winner to local storage:", error);
-      }
-      return next;
+    setAdminWinnerSaving(true);
+
+    const { error } = await supabase.rpc("admin_set_weekly_immunity_result", {
+      p_week: selectedWeek,
+      p_phase: "tribal",
+      p_winner_team: winner || null,
+      p_winner_contestant_id: null,
+      p_players_remaining: null,
     });
+
+    if (error) {
+      console.error(error);
+      setAdminWinnerSaving(false);
+      return;
+    }
+
+    setAdminWinnersByWeek((prev) => ({
+      ...prev,
+      [selectedWeek]: winner,
+    }));
+    await fetchLeagueProfiles(selectedWeek);
+    setAdminWinnerSaving(false);
   };
 
   const pickBreakdown = useMemo(() => {
@@ -527,6 +555,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                 id="admin-immunity-winner"
                 value={selectedImmunityWinner}
                 onChange={handleAdminWinnerChange}
+                disabled={adminWinnerSaving}
                 style={{
                   width: "100%",
                   borderRadius: "10px",
@@ -544,6 +573,9 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                   </option>
                 ))}
               </select>
+              {adminWinnerSaving && (
+                <p style={{ margin: "8px 0 0 0", color: "#374151", fontSize: "0.85rem" }}>Saving winner...</p>
+              )}
             </div>
           )}
         </div>
