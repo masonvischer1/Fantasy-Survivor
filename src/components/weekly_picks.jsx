@@ -26,6 +26,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   const [imageErrors, setImageErrors] = useState({});
   const [adminWinnersByWeek, setAdminWinnersByWeek] = useState({});
   const [adminWinnerSaving, setAdminWinnerSaving] = useState(false);
+  const [weeklyResultByWeek, setWeeklyResultByWeek] = useState({});
 
   const fetchLeagueProfiles = useCallback(async (weekNum) => {
     const { data, error } = await supabase
@@ -95,11 +96,9 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
 
   useEffect(() => {
     const loadWeeklyWinner = async () => {
-      if (!isAdmin) return;
-
       const { data, error } = await supabase
         .from("weekly_immunity_results")
-        .select("week, winner_team")
+        .select("week, phase, winner_team")
         .eq("week", selectedWeek)
         .maybeSingle();
 
@@ -108,10 +107,14 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
         return;
       }
 
-      setAdminWinnersByWeek((prev) => ({
+      setWeeklyResultByWeek((prev) => ({
         ...prev,
-        [selectedWeek]: data?.winner_team || "",
+        [selectedWeek]: data || null,
       }));
+
+      if (!isAdmin) return;
+
+      setAdminWinnersByWeek((prev) => ({ ...prev, [selectedWeek]: data?.winner_team || "" }));
     };
 
     Promise.resolve().then(() => {
@@ -156,6 +159,9 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   const currentWeekPick = profile?.weekly_picks?.[selectedWeek];
   const hasOwnPickThisWeek = !!currentWeekPick;
   const selectedImmunityWinner = adminWinnersByWeek?.[selectedWeek] || "";
+  const selectedWeeklyResult = weeklyResultByWeek?.[selectedWeek] || null;
+  const resolvedWinnerTeam = selectedWeeklyResult?.phase === "tribal" ? selectedWeeklyResult?.winner_team : null;
+  const hasResolvedWinner = !!resolvedWinnerTeam;
 
   const handleAdminWinnerChange = async (event) => {
     const winner = event.target.value;
@@ -178,6 +184,10 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
     setAdminWinnersByWeek((prev) => ({
       ...prev,
       [selectedWeek]: winner,
+    }));
+    setWeeklyResultByWeek((prev) => ({
+      ...prev,
+      [selectedWeek]: winner ? { week: selectedWeek, phase: "tribal", winner_team: winner } : null,
     }));
     await fetchLeagueProfiles(selectedWeek);
     setAdminWinnerSaving(false);
@@ -378,17 +388,31 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                 return (
                   <div
                     key={p.id}
+                    data-status={
+                      hasResolvedWinner && pickName
+                        ? (pickName === resolvedWinnerTeam ? "winner" : "loser")
+                        : "pending"
+                    }
                     style={{
                       flex: "0 0 calc((100% - 24px) / 3)",
                       minWidth: "112px",
                       scrollSnapAlign: "start",
                       border: "1px solid rgba(209,213,219,0.9)",
                       borderRadius: "12px",
-                      backgroundColor: "rgba(255,255,255,0.9)",
+                      backgroundColor:
+                        hasResolvedWinner && pickName && pickName !== resolvedWinnerTeam
+                          ? "rgba(229,231,235,0.72)"
+                          : "rgba(255,255,255,0.9)",
                       backdropFilter: "blur(2px)",
                       padding: "8px",
                       display: "flex",
-                      flexDirection: "column"
+                      flexDirection: "column",
+                      opacity:
+                        hasResolvedWinner && pickName && pickName !== resolvedWinnerTeam ? 0.62 : 1,
+                      filter:
+                        hasResolvedWinner && pickName && pickName !== resolvedWinnerTeam
+                          ? "grayscale(100%)"
+                          : "none",
                     }}
                   >
                     <p
@@ -449,6 +473,20 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                     >
                       {pickName || "No Pick"}
                     </p>
+
+                    {hasResolvedWinner && pickName === resolvedWinnerTeam && (
+                      <p
+                        style={{
+                          margin: "7px 0 0 0",
+                          fontWeight: "bold",
+                          textAlign: "center",
+                          color: "#166534",
+                          fontSize: "0.8rem",
+                        }}
+                      >
+                        +5 Points
+                      </p>
+                    )}
                   </div>
                 );
               })}
