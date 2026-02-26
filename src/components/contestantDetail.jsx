@@ -36,6 +36,14 @@ export default function ContestantDetail() {
     checkAdmin()
   }, [id])
 
+  useEffect(() => {
+    if (contestant?.id) {
+      fetchDraftedByTeams(contestant.id)
+    } else {
+      setDraftedByTeams([])
+    }
+  }, [contestant?.id])
+
   async function fetchAllContestants() {
     const { data, error } = await supabase
       .from('contestants')
@@ -73,10 +81,7 @@ export default function ContestantDetail() {
       .single()
 
     if (error) console.error(error)
-    else {
-      setContestant(data)
-      fetchDraftedByTeams(data?.id)
-    }
+    else setContestant(data)
   }
 
   async function fetchDraftedByTeams(contestantId) {
