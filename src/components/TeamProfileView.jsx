@@ -33,8 +33,7 @@ export default function TeamProfileView() {
     return () => mediaQuery.removeEventListener('change', update)
   }, [])
 
-  const cardWidth = isMobile ? 'min(620px, calc(100vw - 108px))' : 'min(860px, calc(100vw - 210px))'
-  const sideArrowOffset = isMobile ? '44px' : '86px'
+  const cardWidth = isMobile ? 'calc(100vw - 14px)' : 'min(860px, calc(100vw - 210px))'
   const arrowSize = isMobile ? 42 : 48
 
   const fetchAll = async () => {
@@ -200,14 +199,15 @@ export default function TeamProfileView() {
   if (!profile) return <div style={{ padding: '1rem' }}>Team not found.</div>
 
   return (
-    <div style={{ padding: '1rem', paddingTop: isMobile ? '2.9rem' : '2.5rem', textAlign: 'center', position: 'relative' }}>
+    <div style={{ padding: isMobile ? '0.4rem 0.35rem' : '1rem', paddingTop: isMobile ? '2.9rem' : '2.5rem', textAlign: 'center', position: 'relative' }}>
+      <div style={{ width: cardWidth, margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.86)', borderRadius: '12px', padding: isMobile ? '0.82rem' : '0.95rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
       <button
         onClick={prevTeam}
         aria-label="Previous team"
         style={{
-          position: 'fixed',
+          position: 'absolute',
           top: '50%',
-          left: `max(${isMobile ? '4px' : '10px'}, calc(50vw - (${cardWidth}) / 2 - ${sideArrowOffset}))`,
+          left: isMobile ? '2px' : '-58px',
           transform: 'translateY(-50%)',
           width: 'clamp(42px, 10vw, 56px)',
           height: 'clamp(42px, 10vw, 56px)',
@@ -218,16 +218,16 @@ export default function TeamProfileView() {
           zIndex: 20
         }}
       >
-        <img src={leftArrowIcon} alt="Previous" width={arrowSize} height={arrowSize} style={{ display: 'block', filter: 'brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.5))' }} />
+        <img src={leftArrowIcon} alt="Previous" width={arrowSize} height={arrowSize} style={{ display: 'block', filter: 'brightness(0)' }} />
       </button>
 
       <button
         onClick={nextTeam}
         aria-label="Next team"
         style={{
-          position: 'fixed',
+          position: 'absolute',
           top: '50%',
-          right: `max(${isMobile ? '4px' : '10px'}, calc(50vw - (${cardWidth}) / 2 - ${sideArrowOffset}))`,
+          right: isMobile ? '2px' : '-58px',
           transform: 'translateY(-50%)',
           width: 'clamp(42px, 10vw, 56px)',
           height: 'clamp(42px, 10vw, 56px)',
@@ -238,16 +238,15 @@ export default function TeamProfileView() {
           zIndex: 20
         }}
       >
-        <img src={rightArrowIcon} alt="Next" width={arrowSize} height={arrowSize} style={{ display: 'block', filter: 'brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.5))' }} />
+        <img src={rightArrowIcon} alt="Next" width={arrowSize} height={arrowSize} style={{ display: 'block', filter: 'brightness(0)' }} />
       </button>
 
-      <div style={{ width: cardWidth, margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.86)', borderRadius: '12px', padding: isMobile ? '0.82rem' : '0.95rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
         <button
           onClick={() => navigate('/teams')}
           style={{
             position: 'absolute',
-            top: '0.55rem',
-            left: '0.55rem',
+            top: '0.65rem',
+            left: '0.65rem',
             padding: 0,
             borderRadius: '999px',
             border: 'none',
