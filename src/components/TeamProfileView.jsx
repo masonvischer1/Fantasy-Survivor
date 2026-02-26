@@ -33,7 +33,7 @@ export default function TeamProfileView() {
     return () => mediaQuery.removeEventListener('change', update)
   }, [])
 
-  const cardWidth = isMobile ? 'calc(100vw - 14px)' : 'min(860px, calc(100vw - 210px))'
+  const cardWidth = isMobile ? 'calc(100vw - 30px)' : 'min(860px, calc(100vw - 190px))'
   const arrowSize = isMobile ? 42 : 48
 
   const fetchAll = async () => {
@@ -199,7 +199,7 @@ export default function TeamProfileView() {
   if (!profile) return <div style={{ padding: '1rem' }}>Team not found.</div>
 
   return (
-    <div style={{ padding: isMobile ? '0.4rem 0.35rem' : '1rem', paddingTop: isMobile ? '2.9rem' : '2.5rem', textAlign: 'center', position: 'relative' }}>
+    <div style={{ padding: isMobile ? '0.45rem 0.5rem' : '1rem', paddingTop: isMobile ? '2.9rem' : '2.5rem', textAlign: 'center', position: 'relative' }}>
       <div style={{ width: cardWidth, margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.86)', borderRadius: '12px', padding: isMobile ? '0.82rem' : '0.95rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
       <button
         onClick={prevTeam}
@@ -207,7 +207,7 @@ export default function TeamProfileView() {
         style={{
           position: 'absolute',
           top: '50%',
-          left: isMobile ? '2px' : '-58px',
+          left: isMobile ? '-14px' : '-58px',
           transform: 'translateY(-50%)',
           width: 'clamp(42px, 10vw, 56px)',
           height: 'clamp(42px, 10vw, 56px)',
@@ -227,7 +227,7 @@ export default function TeamProfileView() {
         style={{
           position: 'absolute',
           top: '50%',
-          right: isMobile ? '2px' : '-58px',
+          right: isMobile ? '-14px' : '-58px',
           transform: 'translateY(-50%)',
           width: 'clamp(42px, 10vw, 56px)',
           height: 'clamp(42px, 10vw, 56px)',
