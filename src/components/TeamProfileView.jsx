@@ -289,25 +289,30 @@ export default function TeamProfileView() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(112px, 1fr))',
-            gap: '0.52rem',
+            gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(auto-fit, minmax(112px, 1fr))',
+            gap: isMobile ? '0.48rem' : '0.52rem',
             marginTop: '0.75rem',
             paddingLeft: isMobile ? '34px' : 0,
             paddingRight: isMobile ? '34px' : 0
           }}
         >
-          {hydratedTeam.map(c => (
+          {hydratedTeam.map((c, index) => {
+            const isLastOddCard = isMobile && hydratedTeam.length % 2 === 1 && index === hydratedTeam.length - 1
+            return (
             <div
               key={c.id}
               style={{
                 border: '2px solid #9ca3af',
                 borderRadius: '8px',
-                padding: '0.36rem',
+                padding: isMobile ? '0.32rem' : '0.36rem',
                 background: 'rgba(255,255,255,0.88)',
                 opacity: c.is_eliminated ? 0.58 : 1,
                 display: 'grid',
-                gridTemplateRows: '112px auto auto auto',
-                alignContent: 'start'
+                gridTemplateRows: isMobile ? '96px auto auto auto' : '112px auto auto auto',
+                alignContent: 'start',
+                gridColumn: isLastOddCard ? '1 / -1' : 'auto',
+                width: isLastOddCard ? 'min(148px, 80%)' : 'auto',
+                justifySelf: isLastOddCard ? 'center' : 'stretch'
               }}
             >
               <img
@@ -323,17 +328,18 @@ export default function TeamProfileView() {
                 alt={c.name}
                 style={{
                   width: '100%',
-                  height: '112px',
+                  height: isMobile ? '96px' : '112px',
                   objectFit: 'cover',
                   borderRadius: '6px',
                   filter: c.is_eliminated ? 'grayscale(100%)' : 'none'
                 }}
               />
-              <p style={{ margin: '0.28rem 0 0 0', fontWeight: 700, fontSize: '0.79rem', minHeight: '2.05em', lineHeight: 1.08 }}>{c.name}</p>
-              <p style={{ margin: '0.12rem 0 0 0', color: '#4b5563', fontSize: '0.72rem', minHeight: '1.1em' }}>{c.tribe || c.starting_tribe || '-'}</p>
-              <p style={{ margin: '0.16rem 0 0 0', fontWeight: 700, fontSize: '0.74rem', minHeight: '1.1em' }}>Points: {getContestantPoints(c)}</p>
+              <p style={{ margin: '0.24rem 0 0 0', fontWeight: 700, fontSize: isMobile ? '0.74rem' : '0.79rem', minHeight: '2.05em', lineHeight: 1.08 }}>{c.name}</p>
+              <p style={{ margin: '0.1rem 0 0 0', color: '#4b5563', fontSize: isMobile ? '0.68rem' : '0.72rem', minHeight: '1.1em' }}>{c.tribe || c.starting_tribe || '-'}</p>
+              <p style={{ margin: '0.14rem 0 0 0', fontWeight: 700, fontSize: isMobile ? '0.7rem' : '0.74rem', minHeight: '1.1em' }}>Points: {getContestantPoints(c)}</p>
             </div>
-          ))}
+            )
+          })}
         </div>
 
         <h2 style={{ marginTop: '1.2rem' }}>Weekly Picks</h2>
