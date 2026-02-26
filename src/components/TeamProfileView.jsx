@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { buildContestantMap, hydrateTeamFromContestants } from '../utils/teamHydration'
 import leftArrowIcon from '../assets/arrow-left-circle.svg'
+import rightArrowIcon from '../assets/arrow-right-circle.svg'
 import kaloBuff from '../assets/Survivor_50_Kalo_Buff.png'
 import cilaBuff from '../assets/Survivor_50_Cila_Buff.png'
 import vatuBuff from '../assets/Survivor_50_Vatu_Buff.png'
@@ -17,14 +18,30 @@ export default function TeamProfileView() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
+  const [allTeams, setAllTeams] = useState([])
+  const [currentIndex, setCurrentIndex] = useState(0)
   const [contestants, setContestants] = useState([])
   const [weeklyResults, setWeeklyResults] = useState([])
   const [loading, setLoading] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 640px)')
+    const update = () => setIsMobile(mediaQuery.matches)
+    update()
+    mediaQuery.addEventListener('change', update)
+    return () => mediaQuery.removeEventListener('change', update)
+  }, [])
+
+  const cardWidth = isMobile ? 'min(620px, calc(100vw - 108px))' : 'min(860px, calc(100vw - 210px))'
+  const sideArrowOffset = isMobile ? '44px' : '86px'
+  const arrowSize = isMobile ? 42 : 48
 
   const fetchAll = async () => {
     setLoading(true)
     const [
       { data: profileData, error: profileError },
+      { data: teamsData, error: teamsError },
       { data: contestantsData, error: contestantsError },
       { data: resultsData, error: resultsError }
     ] = await Promise.all([
@@ -34,6 +51,10 @@ export default function TeamProfileView() {
         .eq('id', id)
         .single(),
       supabase
+        .from('profiles')
+        .select('id, team_name, total_score, team_points, bonus_points, manual_points')
+        .order('total_score', { ascending: false }),
+      supabase
         .from('contestants')
         .select('*'),
       supabase
@@ -42,10 +63,19 @@ export default function TeamProfileView() {
     ])
 
     if (profileError) console.error(profileError)
+    if (teamsError) console.error(teamsError)
     if (contestantsError) console.error(contestantsError)
     if (resultsError) console.error(resultsError)
 
     setProfile(profileData || null)
+    const sortedTeams = [...(teamsData || [])].sort((a, b) => {
+      const aTotal = a.total_score ?? ((a.team_points || 0) + (a.bonus_points || 0) + (a.manual_points || 0))
+      const bTotal = b.total_score ?? ((b.team_points || 0) + (b.bonus_points || 0) + (b.manual_points || 0))
+      if (bTotal !== aTotal) return bTotal - aTotal
+      return (a.team_name || '').localeCompare(b.team_name || '')
+    })
+    setAllTeams(sortedTeams)
+    setCurrentIndex(sortedTeams.findIndex(team => String(team.id) === String(id)))
     setContestants(contestantsData || [])
     setWeeklyResults(resultsData || [])
     setLoading(false)
@@ -87,6 +117,20 @@ export default function TeamProfileView() {
       supabase.removeChannel(channel)
     }
   }, [id])
+
+  const nextTeam = () => {
+    if (allTeams.length === 0) return
+    const newIndex = (currentIndex + 1) % allTeams.length
+    const nextTeamId = allTeams[newIndex]?.id
+    if (nextTeamId) navigate(`/teams/${nextTeamId}`)
+  }
+
+  const prevTeam = () => {
+    if (allTeams.length === 0) return
+    const newIndex = (currentIndex - 1 + allTeams.length) % allTeams.length
+    const prevTeamId = allTeams[newIndex]?.id
+    if (prevTeamId) navigate(`/teams/${prevTeamId}`)
+  }
 
   const contestantMap = useMemo(() => buildContestantMap(contestants), [contestants])
   const hydratedTeam = useMemo(
@@ -156,14 +200,54 @@ export default function TeamProfileView() {
   if (!profile) return <div style={{ padding: '1rem' }}>Team not found.</div>
 
   return (
-    <div style={{ padding: '1rem' }}>
-      <div style={{ maxWidth: '920px', margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.86)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
+    <div style={{ padding: '1rem', paddingTop: isMobile ? '2.9rem' : '2.5rem', textAlign: 'center', position: 'relative' }}>
+      <button
+        onClick={prevTeam}
+        aria-label="Previous team"
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: `max(${isMobile ? '4px' : '10px'}, calc(50vw - (${cardWidth}) / 2 - ${sideArrowOffset}))`,
+          transform: 'translateY(-50%)',
+          width: 'clamp(42px, 10vw, 56px)',
+          height: 'clamp(42px, 10vw, 56px)',
+          border: 'none',
+          background: 'transparent',
+          cursor: 'pointer',
+          padding: 0,
+          zIndex: 20
+        }}
+      >
+        <img src={leftArrowIcon} alt="Previous" width={arrowSize} height={arrowSize} style={{ display: 'block', filter: 'brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.5))' }} />
+      </button>
+
+      <button
+        onClick={nextTeam}
+        aria-label="Next team"
+        style={{
+          position: 'fixed',
+          top: '50%',
+          right: `max(${isMobile ? '4px' : '10px'}, calc(50vw - (${cardWidth}) / 2 - ${sideArrowOffset}))`,
+          transform: 'translateY(-50%)',
+          width: 'clamp(42px, 10vw, 56px)',
+          height: 'clamp(42px, 10vw, 56px)',
+          border: 'none',
+          background: 'transparent',
+          cursor: 'pointer',
+          padding: 0,
+          zIndex: 20
+        }}
+      >
+        <img src={rightArrowIcon} alt="Next" width={arrowSize} height={arrowSize} style={{ display: 'block', filter: 'brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.5))' }} />
+      </button>
+
+      <div style={{ width: cardWidth, margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.86)', borderRadius: '12px', padding: isMobile ? '0.82rem' : '0.95rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
         <button
           onClick={() => navigate('/teams')}
           style={{
             position: 'absolute',
-            top: '0.65rem',
-            left: '0.65rem',
+            top: '0.55rem',
+            left: '0.55rem',
             padding: 0,
             borderRadius: '999px',
             border: 'none',
@@ -188,7 +272,7 @@ export default function TeamProfileView() {
           <img
             src={profile.avatar_url || '/fallback.png'}
             alt={profile.team_name || 'Team Avatar'}
-            style={{ width: '110px', height: '110px', borderRadius: '50%', objectFit: 'cover' }}
+            style={{ width: isMobile ? '92px' : '100px', height: isMobile ? '92px' : '100px', borderRadius: '50%', objectFit: 'cover' }}
           />
         </div>
 
@@ -205,8 +289,8 @@ export default function TeamProfileView() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(122px, 1fr))',
-            gap: '0.6rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(112px, 1fr))',
+            gap: '0.52rem',
             marginTop: '0.75rem'
           }}
         >
@@ -216,11 +300,11 @@ export default function TeamProfileView() {
               style={{
                 border: '2px solid #9ca3af',
                 borderRadius: '8px',
-                padding: '0.42rem',
+                padding: '0.36rem',
                 background: 'rgba(255,255,255,0.88)',
                 opacity: c.is_eliminated ? 0.58 : 1,
                 display: 'grid',
-                gridTemplateRows: '132px auto auto auto',
+                gridTemplateRows: '112px auto auto auto',
                 alignContent: 'start'
               }}
             >
@@ -237,15 +321,15 @@ export default function TeamProfileView() {
                 alt={c.name}
                 style={{
                   width: '100%',
-                  height: '132px',
+                  height: '112px',
                   objectFit: 'cover',
                   borderRadius: '6px',
                   filter: c.is_eliminated ? 'grayscale(100%)' : 'none'
                 }}
               />
-              <p style={{ margin: '0.32rem 0 0 0', fontWeight: 700, fontSize: '0.86rem', minHeight: '2.1em', lineHeight: 1.1 }}>{c.name}</p>
-              <p style={{ margin: '0.16rem 0 0 0', color: '#4b5563', fontSize: '0.79rem', minHeight: '1.2em' }}>{c.tribe || c.starting_tribe || '-'}</p>
-              <p style={{ margin: '0.2rem 0 0 0', fontWeight: 700, fontSize: '0.82rem', minHeight: '1.2em' }}>Points: {getContestantPoints(c)}</p>
+              <p style={{ margin: '0.28rem 0 0 0', fontWeight: 700, fontSize: '0.79rem', minHeight: '2.05em', lineHeight: 1.08 }}>{c.name}</p>
+              <p style={{ margin: '0.12rem 0 0 0', color: '#4b5563', fontSize: '0.72rem', minHeight: '1.1em' }}>{c.tribe || c.starting_tribe || '-'}</p>
+              <p style={{ margin: '0.16rem 0 0 0', fontWeight: 700, fontSize: '0.74rem', minHeight: '1.1em' }}>Points: {getContestantPoints(c)}</p>
             </div>
           ))}
         </div>
@@ -255,8 +339,8 @@ export default function TeamProfileView() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-            gap: '0.6rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(112px, 1fr))',
+            gap: '0.52rem',
             marginTop: '0.75rem'
           }}
         >
@@ -269,47 +353,47 @@ export default function TeamProfileView() {
               style={{
                 border: '1px solid rgba(156,163,175,0.9)',
                 borderRadius: '10px',
-                padding: '0.5rem',
+                padding: '0.44rem',
                 background: row.status === 'loser' ? 'rgba(229,231,235,0.78)' : 'rgba(255,255,255,0.9)',
                 opacity: row.status === 'loser' ? 0.62 : 1,
                 filter: row.status === 'loser' ? 'grayscale(100%)' : 'none'
               }}
             >
-              <p style={{ margin: 0, fontWeight: 700, fontSize: '0.84rem' }}>Week {row.week}</p>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: '0.76rem' }}>Week {row.week}</p>
               {buffSrc ? (
                 <img
                   src={buffSrc}
                   alt={`${row.pickLabel} buff`}
                   style={{
                     width: '100%',
-                    height: 'clamp(112px, 28vw, 156px)',
+                    height: 'clamp(92px, 24vw, 130px)',
                     objectFit: 'cover',
                     borderRadius: '8px',
-                    marginTop: '0.38rem'
+                    marginTop: '0.3rem'
                   }}
                 />
               ) : (
                 <div
                   style={{
                     width: '100%',
-                    height: 'clamp(112px, 28vw, 156px)',
+                    height: 'clamp(92px, 24vw, 130px)',
                     borderRadius: '8px',
-                    marginTop: '0.38rem',
+                    marginTop: '0.3rem',
                     background: 'rgba(243,244,246,0.92)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: '#4b5563',
                     fontWeight: 700,
-                    fontSize: '0.82rem'
+                    fontSize: '0.74rem'
                   }}
                 >
                   {row.pickLabel}
                 </div>
               )}
-              <p style={{ margin: '0.38rem 0 0 0', fontWeight: 700 }}>{row.pickLabel}</p>
+              <p style={{ margin: '0.3rem 0 0 0', fontWeight: 700, fontSize: '0.78rem' }}>{row.pickLabel}</p>
               {row.status === 'winner' && row.bonusLabel && (
-                <p style={{ margin: '0.3rem 0 0 0', color: '#166534', fontWeight: 700, fontSize: '0.82rem' }}>{row.bonusLabel}</p>
+                <p style={{ margin: '0.22rem 0 0 0', color: '#166534', fontWeight: 700, fontSize: '0.74rem' }}>{row.bonusLabel}</p>
               )}
             </div>
               )
