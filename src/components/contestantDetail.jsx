@@ -13,6 +13,7 @@ export default function ContestantDetail() {
   const [allContestants, setAllContestants] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [draftedIds, setDraftedIds] = useState([])
+  const [draftedByTeams, setDraftedByTeams] = useState([])
   const [isAdmin, setIsAdmin] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -43,8 +44,23 @@ export default function ContestantDetail() {
 
     if (error) console.error(error)
     else {
-      setAllContestants(data)
-      const index = data.findIndex(c => c.id.toString() === id)
+      const sorted = [...(data || [])].sort((a, b) => {
+        const aElim = a.is_eliminated === true
+        const bElim = b.is_eliminated === true
+
+        if (aElim !== bElim) return aElim ? 1 : -1
+
+        if (!aElim && !bElim) {
+          return (a.name || '').localeCompare(b.name || '')
+        }
+
+        const aDay = Number(a.elim_day || 0)
+        const bDay = Number(b.elim_day || 0)
+        if (aDay !== bDay) return bDay - aDay
+        return (a.name || '').localeCompare(b.name || '')
+      })
+      setAllContestants(sorted)
+      const index = sorted.findIndex(c => c.id.toString() === id)
       setCurrentIndex(index)
     }
   }
@@ -57,7 +73,31 @@ export default function ContestantDetail() {
       .single()
 
     if (error) console.error(error)
-    else setContestant(data)
+    else {
+      setContestant(data)
+      fetchDraftedByTeams(data?.id)
+    }
+  }
+
+  async function fetchDraftedByTeams(contestantId) {
+    if (!contestantId) {
+      setDraftedByTeams([])
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, team_name, avatar_url, team')
+
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    const draftedBy = (data || []).filter(profile =>
+      Array.isArray(profile.team) && profile.team.some(player => Number(player?.id) === Number(contestantId))
+    )
+    setDraftedByTeams(draftedBy)
   }
 
   async function fetchDrafted() {
@@ -184,6 +224,9 @@ export default function ContestantDetail() {
 
   if (!contestant) return <div>Loading contestant...</div>
 
+  const currentGameDay = allContestants.reduce((max, c) => Math.max(max, Number(c.elim_day || 0)), 0)
+  const computedScore = (contestant.is_eliminated ? Number(contestant.elim_day || 0) : currentGameDay) + Number(contestant.jury_votes_received || 0)
+
   return (
     <div style={{ padding: isMobile ? '0.45rem' : '0.7rem', paddingTop: isMobile ? '3.4rem' : '3rem', textAlign: 'center', position: 'relative' }}>
       <button
@@ -269,7 +312,31 @@ export default function ContestantDetail() {
           <h2 style={{ fontSize: isMobile ? 'clamp(1.8rem, 8vw, 2.3rem)' : 'clamp(2.2rem, 6vw, 2.8rem)', margin: isMobile ? '0.6rem 0 0.4rem 0' : '0.8rem 0 0.55rem 0' }}>{contestant.name}</h2>
           <p style={{ margin: isMobile ? '0.35rem 0' : '0.45rem 0', fontSize: isMobile ? '1rem' : '1.08rem' }}><b>Season:</b> {contestant.season}</p>
           <p style={{ margin: isMobile ? '0.35rem 0' : '0.45rem 0', fontSize: isMobile ? '1rem' : '1.08rem' }}><b>Tribe:</b> {contestant.tribe}</p>
-          <p style={{ margin: isMobile ? '0.35rem 0' : '0.45rem 0', fontSize: isMobile ? '1rem' : '1.08rem' }}><b>Score:</b> {contestant.score}</p>
+          <p style={{ margin: isMobile ? '0.35rem 0' : '0.45rem 0', fontSize: isMobile ? '1rem' : '1.08rem' }}><b>Score:</b> {computedScore}</p>
+          <div style={{ margin: isMobile ? '0.38rem auto 0 auto' : '0.45rem auto 0 auto', maxWidth: '560px' }}>
+            <p style={{ margin: 0, fontSize: isMobile ? '0.9rem' : '0.98rem' }}><b>Drafted By:</b></p>
+            {draftedByTeams.length === 0 ? (
+              <p style={{ margin: '0.3rem 0 0 0', fontSize: isMobile ? '0.85rem' : '0.92rem', color: '#4b5563' }}>No teams yet</p>
+            ) : (
+              <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                {draftedByTeams.map(team => (
+                  <div key={team.id} title={team.team_name || 'Team'} style={{ width: isMobile ? '34px' : '38px', height: isMobile ? '34px' : '38px' }}>
+                    <img
+                      src={team.avatar_url || '/fallback.png'}
+                      alt={team.team_name || 'Team avatar'}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: '999px',
+                        objectFit: 'cover',
+                        border: '2px solid rgba(17,24,39,0.85)'
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <p style={{ maxWidth: '600px', margin: isMobile ? '0.65rem auto' : '0.85rem auto', fontSize: isMobile ? '1.02rem' : '1.1rem', lineHeight: isMobile ? 1.45 : 1.5 }}>{contestant.bio}</p>
 
           <button
