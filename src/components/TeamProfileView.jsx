@@ -282,7 +282,7 @@ export default function TeamProfileView() {
           Name: <b>{profile.player_name || 'Unknown Player'}</b>
         </p>
 
-        <p style={{ margin: '0.25rem 0', color: '#111827' }}>
+        <p style={{ margin: '0.25rem 0', color: '#111827', fontSize: isMobile ? '0.95rem' : '1.02rem' }}>
           Team Points: <b>{profile.team_points || 0}</b> | Bonus Points: <b>{profile.bonus_points || 0}</b> | Total: <b>{profile.total_score || 0}</b>
         </p>
 

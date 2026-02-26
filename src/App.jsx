@@ -30,11 +30,12 @@ function getRouteBackground(pathname) {
   if (pathname === "/teams") return leaderboardBg;
   if (pathname === "/weekly-picks") return weeklyPicksBg;
   if (pathname === "/rules") return rulesBg;
-  if (pathname === "/" || pathname.startsWith("/contestant/")) return castawaysBg;
+  if (pathname === "/castaways" || pathname.startsWith("/contestant/")) return castawaysBg;
+  if (pathname === "/") return leaderboardBg;
   return null;
 }
 
-function AppLayout({ session, profile, setProfile, needsTeamSetup, hasCompletedInitialDraft }) {
+function AppLayout({ session, profile, setProfile, needsTeamSetup }) {
   const location = useLocation();
   const pageBackground = getRouteBackground(location.pathname);
 
@@ -97,6 +98,11 @@ function AppLayout({ session, profile, setProfile, needsTeamSetup, hasCompletedI
 
           <Route
             path="/"
+            element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <Navigate to="/teams" replace />) : <Navigate to="/login" />}
+          />
+
+          <Route
+            path="/castaways"
             element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <Contestants />) : <Navigate to="/login" />}
           />
 
@@ -111,7 +117,7 @@ function AppLayout({ session, profile, setProfile, needsTeamSetup, hasCompletedI
               session
                 ? (needsTeamSetup
                   ? <Navigate to="/create-team" />
-                  : (hasCompletedInitialDraft ? <Teams /> : <Navigate to="/" />))
+                  : <Teams />)
                 : <Navigate to="/login" />
             }
           />
@@ -187,8 +193,6 @@ function App() {
   }, [session]);
 
   const needsTeamSetup = !!session && (!profile?.player_name || !profile?.team_name);
-  const hasCompletedInitialDraft = Array.isArray(profile?.team) && profile.team.length >= 5;
-
   if (loadingProfile) {
     return <div style={{ padding: "2rem" }}>Loading...</div>;
   }
@@ -200,7 +204,6 @@ function App() {
         profile={profile}
         setProfile={setProfile}
         needsTeamSetup={needsTeamSetup}
-        hasCompletedInitialDraft={hasCompletedInitialDraft}
       />
     </Router>
   );

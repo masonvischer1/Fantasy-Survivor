@@ -12,7 +12,6 @@ export function TopNav({ session }) {
 
 export function BottomNav({ session, profile }) {
   const location = useLocation()
-  const hasCompletedInitialDraft = Array.isArray(profile?.team) && profile.team.length >= 5
 
   if (!session) return null
 
@@ -60,7 +59,7 @@ export function BottomNav({ session, profile }) {
         zIndex: 160,
         height: '64px',
         display: 'grid',
-        gridTemplateColumns: hasCompletedInitialDraft ? 'repeat(5, 1fr)' : 'repeat(4, 1fr)',
+        gridTemplateColumns: 'repeat(5, 1fr)',
         gap: '0.2rem',
         alignItems: 'center',
         padding: '0.2rem 0.55rem',
@@ -72,7 +71,7 @@ export function BottomNav({ session, profile }) {
         boxShadow: '0 8px 22px rgba(2,6,23,0.22)'
       }}
     >
-      <Link to="/" style={tabStyle(location.pathname === '/' || location.pathname.startsWith('/contestant/'))}>
+      <Link to="/castaways" style={tabStyle(location.pathname === '/castaways' || location.pathname.startsWith('/contestant/'))}>
         <span style={iconWrapStyle}>
           <img src={castawaysIcon} alt="" aria-hidden="true" style={{ ...iconStyle, filter: 'brightness(0)' }} />
         </span>
@@ -84,14 +83,12 @@ export function BottomNav({ session, profile }) {
         </span>
         <span style={labelStyle}>Picks</span>
       </Link>
-      {hasCompletedInitialDraft && (
-        <Link to="/teams" style={tabStyle(location.pathname === '/teams')}>
-          <span style={iconWrapStyle}>
-            <img src={leaderboardIcon} alt="" aria-hidden="true" style={{ ...iconStyle, filter: 'brightness(0)' }} />
-          </span>
-          <span style={labelStyle}>Leaderboard</span>
-        </Link>
-      )}
+      <Link to="/teams" style={tabStyle(location.pathname === '/teams' || location.pathname.startsWith('/teams/'))}>
+        <span style={iconWrapStyle}>
+          <img src={leaderboardIcon} alt="" aria-hidden="true" style={{ ...iconStyle, filter: 'brightness(0)' }} />
+        </span>
+        <span style={labelStyle}>Leaderboard</span>
+      </Link>
       <Link to="/rules" style={tabStyle(location.pathname === '/rules')}>
         <span style={iconWrapStyle}>
           <img src={rulesIcon} alt="" aria-hidden="true" style={iconStyle} />
