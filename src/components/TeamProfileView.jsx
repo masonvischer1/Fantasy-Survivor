@@ -35,6 +35,8 @@ export default function TeamProfileView() {
 
   const cardWidth = isMobile ? 'min(860px, calc(100vw - 24px))' : 'min(860px, calc(100vw - 190px))'
   const arrowSize = isMobile ? 42 : 48
+  const sideContentPadding = isMobile ? '24px' : 0
+  const contestantGridGap = isMobile ? '0.48rem' : '0.52rem'
 
   const fetchAll = async () => {
     setLoading(true)
@@ -265,7 +267,7 @@ export default function TeamProfileView() {
           />
         </button>
 
-        <div style={{ paddingLeft: isMobile ? '34px' : 0, paddingRight: isMobile ? '34px' : 0 }}>
+        <div style={{ paddingLeft: sideContentPadding, paddingRight: sideContentPadding }}>
         <h1 style={{ marginTop: 0 }}>{profile.team_name || 'Unnamed Team'}</h1>
 
         <div style={{ margin: '0.75rem 0 0.5rem 0' }}>
@@ -290,10 +292,10 @@ export default function TeamProfileView() {
           style={{
             display: 'grid',
             gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(auto-fit, minmax(112px, 1fr))',
-            gap: isMobile ? '0.48rem' : '0.52rem',
+            gap: contestantGridGap,
             marginTop: '0.75rem',
-            paddingLeft: isMobile ? '34px' : 0,
-            paddingRight: isMobile ? '34px' : 0
+            paddingLeft: sideContentPadding,
+            paddingRight: sideContentPadding
           }}
         >
           {hydratedTeam.map((c, index) => {
@@ -311,7 +313,7 @@ export default function TeamProfileView() {
                 gridTemplateRows: isMobile ? '96px auto auto auto' : '112px auto auto auto',
                 alignContent: 'start',
                 gridColumn: isLastOddCard ? '1 / -1' : 'auto',
-                width: isLastOddCard ? 'min(148px, 80%)' : 'auto',
+                width: isLastOddCard ? `calc((100% - ${contestantGridGap}) / 2)` : 'auto',
                 justifySelf: isLastOddCard ? 'center' : 'stretch'
               }}
             >
@@ -350,8 +352,8 @@ export default function TeamProfileView() {
             gridTemplateColumns: 'repeat(auto-fit, minmax(112px, 1fr))',
             gap: '0.52rem',
             marginTop: '0.75rem',
-            paddingLeft: isMobile ? '34px' : 0,
-            paddingRight: isMobile ? '34px' : 0
+            paddingLeft: sideContentPadding,
+            paddingRight: sideContentPadding
           }}
         >
           {weeklyPickRows.map(row => (
