@@ -33,7 +33,7 @@ export default function TeamProfileView() {
     return () => mediaQuery.removeEventListener('change', update)
   }, [])
 
-  const cardWidth = isMobile ? 'calc(100vw - 30px)' : 'min(860px, calc(100vw - 190px))'
+  const cardWidth = isMobile ? 'min(860px, calc(100vw - 24px))' : 'min(860px, calc(100vw - 190px))'
   const arrowSize = isMobile ? 42 : 48
 
   const fetchAll = async () => {
@@ -200,14 +200,14 @@ export default function TeamProfileView() {
 
   return (
     <div style={{ padding: isMobile ? '0.45rem 0.5rem' : '1rem', paddingTop: isMobile ? '2.9rem' : '2.5rem', textAlign: 'center', position: 'relative' }}>
-      <div style={{ width: cardWidth, margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.86)', borderRadius: '12px', padding: isMobile ? '0.82rem' : '0.95rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
+      <div style={{ width: cardWidth, maxWidth: '100%', margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.86)', borderRadius: '12px', padding: isMobile ? '0.82rem' : '0.95rem', backdropFilter: 'blur(2px)', position: 'relative', boxSizing: 'border-box', overflow: 'hidden' }}>
       <button
         onClick={prevTeam}
         aria-label="Previous team"
         style={{
           position: 'absolute',
           top: '50%',
-          left: isMobile ? '-14px' : '-58px',
+          left: isMobile ? '4px' : '-58px',
           transform: 'translateY(-50%)',
           width: 'clamp(42px, 10vw, 56px)',
           height: 'clamp(42px, 10vw, 56px)',
@@ -227,7 +227,7 @@ export default function TeamProfileView() {
         style={{
           position: 'absolute',
           top: '50%',
-          right: isMobile ? '-14px' : '-58px',
+          right: isMobile ? '4px' : '-58px',
           transform: 'translateY(-50%)',
           width: 'clamp(42px, 10vw, 56px)',
           height: 'clamp(42px, 10vw, 56px)',
@@ -265,6 +265,7 @@ export default function TeamProfileView() {
           />
         </button>
 
+        <div style={{ paddingLeft: isMobile ? '34px' : 0, paddingRight: isMobile ? '34px' : 0 }}>
         <h1 style={{ marginTop: 0 }}>{profile.team_name || 'Unnamed Team'}</h1>
 
         <div style={{ margin: '0.75rem 0 0.5rem 0' }}>
@@ -290,7 +291,9 @@ export default function TeamProfileView() {
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(112px, 1fr))',
             gap: '0.52rem',
-            marginTop: '0.75rem'
+            marginTop: '0.75rem',
+            paddingLeft: isMobile ? '34px' : 0,
+            paddingRight: isMobile ? '34px' : 0
           }}
         >
           {hydratedTeam.map(c => (
@@ -340,7 +343,9 @@ export default function TeamProfileView() {
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(112px, 1fr))',
             gap: '0.52rem',
-            marginTop: '0.75rem'
+            marginTop: '0.75rem',
+            paddingLeft: isMobile ? '34px' : 0,
+            paddingRight: isMobile ? '34px' : 0
           }}
         >
           {weeklyPickRows.map(row => (
@@ -398,6 +403,7 @@ export default function TeamProfileView() {
               )
             })()
           ))}
+        </div>
         </div>
       </div>
     </div>
