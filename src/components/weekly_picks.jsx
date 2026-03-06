@@ -28,6 +28,38 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   const [adminWinnerSaving, setAdminWinnerSaving] = useState(false);
   const [weeklyResultByWeek, setWeeklyResultByWeek] = useState({});
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadDefaultWeek = async () => {
+      const { data, error } = await supabase
+        .from("weekly_immunity_results")
+        .select("week, winner_team, winner_contestant_id")
+        .or("winner_team.not.is.null,winner_contestant_id.not.is.null")
+        .order("week", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      if (!isMounted || !data?.week) return;
+
+      const nextWeek = Math.min(TOTAL_EPISODES, Math.max(1, Number(data.week) + 1));
+      setSelectedWeek((prev) => (prev === currentWeek ? nextWeek : prev));
+    };
+
+    Promise.resolve().then(() => {
+      loadDefaultWeek();
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentWeek]);
+
   const fetchLeagueProfiles = useCallback(async (weekNum) => {
     const { data, error } = await supabase
       .from("profiles")

@@ -118,6 +118,7 @@ export default function Teams() {
       {sortedTeams.map((profile, index) => {
         const teamPoints = profile.team_points || 0
         const bonusPoints = profile.bonus_points || 0
+        const totalPoints = profile.total_score ?? (teamPoints + bonusPoints + (profile.manual_points || 0))
         const rank = index + 1
         const isGold = rank === 1
         const isSilver = rank === 2
@@ -179,12 +180,12 @@ export default function Teams() {
               </p>
             </div>
 
-            <div style={{ textAlign: 'right', marginLeft: 'auto', minWidth: '118px', flex: '0 0 118px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.15rem' }}>
-              <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.02rem', lineHeight: 1.15 }}>
-                Points: {teamPoints}
+            <div style={{ textAlign: 'right', marginLeft: 'auto', minWidth: '132px', flex: '0 0 132px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.15rem' }}>
+              <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.08rem', lineHeight: 1.15 }}>
+                {totalPoints} Points
               </p>
-              <p style={{ margin: 0, color: '#0b7d2b', fontSize: '0.86rem', lineHeight: 1.15 }}>
-                +{bonusPoints} bonus points
+              <p style={{ margin: 0, color: '#0b7d2b', fontSize: '0.78rem', lineHeight: 1.15 }}>
+                {teamPoints} Team | +{bonusPoints} Bonus
               </p>
               <p style={{ margin: 0, fontWeight: 'bold', color: '#555', fontSize: '0.86rem', lineHeight: 1.15 }}>
                 {rankLabel}
