@@ -66,6 +66,19 @@ function getPickPresentation(pickValue, contestantsById, contestants) {
   };
 }
 
+function getPickColor(label) {
+  if (label === "Kalo") return "#95ECF0";
+  if (label === "Cila") return "#F97316";
+  if (label === "Vatu") return "#EE0372";
+
+  let hash = 0;
+  for (let i = 0; i < label.length; i += 1) {
+    hash = label.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue} 62% 56%)`;
+}
+
 export default function WeeklyPicks({ currentWeek = 1 }) {
   const [profile, setProfile] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -365,10 +378,14 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
     const rows = Array.from(counts.entries())
       .map(([contestantId, count]) => {
         const pickPresentation = getPickPresentation(contestantId, contestantsById, contestants);
+        const percentage = (count / leagueProfiles.length) * 100;
         return {
           contestantId,
           pickPresentation,
           count,
+          percentage,
+          percentageLabel: `${Math.round(percentage)}%`,
+          color: getPickColor(pickPresentation.label),
         };
       })
       .sort((a, b) => {
@@ -379,6 +396,13 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
     return {
       total: leagueProfiles.length,
       rows,
+      gradientStops: rows.reduce((acc, row, index) => {
+        const start = index === 0 ? 0 : acc.running;
+        const end = start + row.percentage;
+        acc.running = end;
+        acc.stops.push(`${row.color} ${start.toFixed(2)}% ${end.toFixed(2)}%`);
+        return acc;
+      }, { running: 0, stops: [] }).stops.join(", "),
     };
   }, [contestants, contestantsById, hasOwnPickThisWeek, leagueProfiles, selectedWeek]);
 
@@ -668,13 +692,49 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                 Pick Breakdown ({pickBreakdown.total} teams)
               </p>
 
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "12px" }}>
+                <div
+                  aria-hidden="true"
+                  style={{
+                    width: "min(48vw, 180px)",
+                    height: "min(48vw, 180px)",
+                    borderRadius: "50%",
+                    background: `conic-gradient(${pickBreakdown.gradientStops})`,
+                    position: "relative",
+                    boxShadow: "0 6px 20px rgba(17,24,39,0.18)",
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: "22%",
+                      borderRadius: "50%",
+                      background: "rgba(255,255,255,0.94)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      textAlign: "center",
+                      fontWeight: "bold",
+                      color: "#111827",
+                      fontSize: "0.86rem",
+                      lineHeight: 1.15,
+                      padding: "6px",
+                    }}
+                  >
+                    Week {selectedWeek}
+                    <br />
+                    Picks
+                  </div>
+                </div>
+              </div>
+
               <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "8px" }}>
                 {pickBreakdown.rows.map((row) => (
                   <div
                     key={`${selectedWeek}-breakdown-${row.contestantId}`}
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "48px 1fr auto",
+                      gridTemplateColumns: "14px 48px 1fr auto auto",
                       alignItems: "center",
                       gap: "10px",
                       padding: "8px 10px",
@@ -683,6 +743,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                       border: "1px solid rgba(209,213,219,0.9)",
                     }}
                   >
+                    <span style={{ width: "14px", height: "14px", borderRadius: "999px", backgroundColor: row.color, display: "inline-block" }} />
                     <img
                       src={row.pickPresentation.imageSrc || "/fallback.png"}
                       alt={row.pickPresentation.label}
@@ -695,6 +756,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                       }}
                     />
                     <span style={{ fontWeight: "bold", color: "#111827" }}>{row.pickPresentation.label}</span>
+                    <span style={{ color: "#374151", fontWeight: "bold" }}>{row.percentageLabel}</span>
                     <span style={{ color: "#374151", fontWeight: "bold" }}>{row.count}</span>
                   </div>
                 ))}
