@@ -99,6 +99,7 @@ export default function Teams() {
     const boundedSize = Math.min(1.12, Math.max(0.8, calculatedSize))
     return `${boundedSize.toFixed(2)}rem`
   }
+  const getFirstName = (name) => (name || '').trim().split(/\s+/)[0] || name || ''
   let currentRank = 0
   let lastTotalPoints = null
   const rankedTeams = sortedTeams.map((profile, index) => {
@@ -265,7 +266,7 @@ export default function Teams() {
                       filter: c.is_eliminated ? 'grayscale(100%)' : 'none'
                     }}
                   />
-                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.62rem', lineHeight: '1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</p>
+                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.62rem', lineHeight: '1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getFirstName(c.name)}</p>
                 </div>
               ))
             )}

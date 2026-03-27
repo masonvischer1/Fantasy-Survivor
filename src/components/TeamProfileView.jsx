@@ -165,7 +165,6 @@ export default function TeamProfileView() {
     const juryVotes = Number(contestant?.jury_votes_received || 0)
     return basePoints + juryVotes
   }
-
   const weeklyPickRows = useMemo(() => {
     const picks = profile?.weekly_picks || {}
     return Object.entries(picks)

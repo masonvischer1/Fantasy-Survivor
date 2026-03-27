@@ -1,19 +1,31 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
-import kaloBuff from "../assets/Survivor_50_Kalo_Buff.png";
-import cilaBuff from "../assets/Survivor_50_Cila_Buff.png";
-import vatuBuff from "../assets/Survivor_50_Vatu_Buff.png";
 import siteLogo from "../assets/Logo.png";
 import leftArrowIcon from "../assets/arrow-left-circle.svg";
 import rightArrowIcon from "../assets/arrow-right-circle.svg";
 
-const TEAMS = [
-  { name: "Kalo", color: "#95ECF0", flagSrc: kaloBuff },
-  { name: "Cila", color: "#F97316", flagSrc: cilaBuff },
-  { name: "Vatu", color: "#EE0372", flagSrc: vatuBuff },
-];
-
 const TOTAL_EPISODES = 14;
+
+function getContestantImage(contestant) {
+  return (
+    contestant?.picture_url ||
+    contestant?.elimPhoto_url ||
+    contestant?.elim_photo_url ||
+    "/fallback.png"
+  );
+}
+
+function getContestantLabel(contestant) {
+  if (!contestant) return "Unknown Contestant";
+  return contestant.name || `Contestant ${contestant.id}`;
+}
+
+function resolveContestantFromPickValue(pickValue, contestantsById, contestants) {
+  if (!pickValue) return null;
+
+  const normalizedPickValue = String(pickValue);
+  return contestantsById.get(normalizedPickValue) || contestants.find((contestant) => String(contestant.name) === normalizedPickValue) || null;
+}
 
 export default function WeeklyPicks({ currentWeek = 1 }) {
   const [profile, setProfile] = useState(null);
@@ -21,10 +33,12 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(currentWeek);
   const [leagueProfiles, setLeagueProfiles] = useState([]);
+  const [contestants, setContestants] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [imageErrors, setImageErrors] = useState({});
-  const [adminWinnersByWeek, setAdminWinnersByWeek] = useState({});
+  const [adminWinnerByWeek, setAdminWinnerByWeek] = useState({});
+  const [adminPlayersRemainingByWeek, setAdminPlayersRemainingByWeek] = useState({});
   const [adminWinnerSaving, setAdminWinnerSaving] = useState(false);
   const [weeklyResultByWeek, setWeeklyResultByWeek] = useState({});
 
@@ -73,6 +87,26 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
 
     const submittedForWeek = (data || []).filter((p) => !!p.weekly_picks?.[weekNum]);
     setLeagueProfiles(submittedForWeek);
+  }, []);
+
+  useEffect(() => {
+    const loadContestants = async () => {
+      const { data, error } = await supabase
+        .from("contestants")
+        .select("*")
+        .order("name", { ascending: true });
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      setContestants(data || []);
+    };
+
+    Promise.resolve().then(() => {
+      loadContestants();
+    });
   }, []);
 
   useEffect(() => {
@@ -130,7 +164,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
     const loadWeeklyWinner = async () => {
       const { data, error } = await supabase
         .from("weekly_immunity_results")
-        .select("week, phase, winner_team")
+        .select("week, phase, winner_team, winner_contestant_id, players_remaining")
         .eq("week", selectedWeek)
         .maybeSingle();
 
@@ -146,7 +180,14 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
 
       if (!isAdmin) return;
 
-      setAdminWinnersByWeek((prev) => ({ ...prev, [selectedWeek]: data?.winner_team || "" }));
+      setAdminWinnerByWeek((prev) => ({
+        ...prev,
+        [selectedWeek]: data?.winner_contestant_id ? String(data.winner_contestant_id) : "",
+      }));
+      setAdminPlayersRemainingByWeek((prev) => ({
+        ...prev,
+        [selectedWeek]: data?.players_remaining ? String(data.players_remaining) : "",
+      }));
     };
 
     Promise.resolve().then(() => {
@@ -154,10 +195,42 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
     });
   }, [isAdmin, selectedWeek]);
 
-  const handlePick = async (weekNum, teamName) => {
+  const contestantsById = useMemo(() => {
+    const map = new Map();
+    contestants.forEach((contestant) => {
+      map.set(String(contestant.id), contestant);
+    });
+    return map;
+  }, [contestants]);
+
+  const remainingContestants = useMemo(
+    () =>
+      contestants
+        .filter((contestant) => !contestant.is_eliminated)
+        .sort((a, b) => (a.name || "").localeCompare(b.name || "")),
+    [contestants]
+  );
+
+  const adminWinnerOptions = useMemo(() => {
+    const activeIds = new Set(remainingContestants.map((contestant) => String(contestant.id)));
+    const merged = [...remainingContestants];
+
+    contestants.forEach((contestant) => {
+      const key = String(contestant.id);
+      if (!activeIds.has(key)) {
+        merged.push(contestant);
+      }
+    });
+
+    return merged;
+  }, [contestants, remainingContestants]);
+
+  const handlePick = async (weekNum, contestant) => {
     if (!profile || !currentUserId) return;
 
-    const confirmed = window.confirm(`Are you sure you want to select ${teamName} Tribe for Week ${weekNum}?`);
+    const contestantId = String(contestant.id);
+    const contestantName = getContestantLabel(contestant);
+    const confirmed = window.confirm(`Are you sure you want to select ${contestantName} for Week ${weekNum}?`);
     if (!confirmed) return;
 
     setLoading(true);
@@ -165,7 +238,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
 
     const updatedPicks = {
       ...(profile.weekly_picks || {}),
-      [weekNum]: teamName,
+      [weekNum]: contestantId,
     };
 
     const { error } = await supabase
@@ -187,24 +260,54 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   const goBackWeek = () => setSelectedWeek((prev) => Math.max(1, prev - 1));
   const goForwardWeek = () => setSelectedWeek((prev) => Math.min(TOTAL_EPISODES, prev + 1));
 
-  const getTeam = (teamName) => TEAMS.find((team) => team.name === teamName);
   const currentWeekPick = profile?.weekly_picks?.[selectedWeek];
   const hasOwnPickThisWeek = !!currentWeekPick;
-  const selectedImmunityWinner = adminWinnersByWeek?.[selectedWeek] || "";
+  const selectedWinnerId = adminWinnerByWeek?.[selectedWeek] || "";
+  const selectedPlayersRemaining = adminPlayersRemainingByWeek?.[selectedWeek] || "";
   const selectedWeeklyResult = weeklyResultByWeek?.[selectedWeek] || null;
-  const resolvedWinnerTeam = selectedWeeklyResult?.phase === "tribal" ? selectedWeeklyResult?.winner_team : null;
-  const hasResolvedWinner = !!resolvedWinnerTeam;
+  const resolvedWinnerId = selectedWeeklyResult?.phase === "individual" && selectedWeeklyResult?.winner_contestant_id
+    ? String(selectedWeeklyResult.winner_contestant_id)
+    : null;
+  const resolvedPlayersRemaining = Number(selectedWeeklyResult?.players_remaining || 0);
+  const hasResolvedWinner = !!resolvedWinnerId;
+  const ownPickedContestant = resolveContestantFromPickValue(currentWeekPick, contestantsById, contestants);
 
-  const handleAdminWinnerChange = async (event) => {
-    const winner = event.target.value;
+  const handleAdminWinnerSelect = (event) => {
+    const winnerId = event.target.value;
+    setAdminWinnerByWeek((prev) => ({
+      ...prev,
+      [selectedWeek]: winnerId,
+    }));
+  };
+
+  const handleAdminPlayersRemainingChange = (event) => {
+    setAdminPlayersRemainingByWeek((prev) => ({
+      ...prev,
+      [selectedWeek]: event.target.value,
+    }));
+  };
+
+  const saveAdminWinner = async () => {
+    const parsedPlayersRemaining = Number.parseInt(selectedPlayersRemaining, 10);
+
+    if (!selectedWinnerId) {
+      alert("Select the immunity winner first.");
+      return;
+    }
+
+    if (Number.isNaN(parsedPlayersRemaining) || parsedPlayersRemaining < 1) {
+      alert("Enter the number of players remaining in the challenge.");
+      return;
+    }
+
     setAdminWinnerSaving(true);
 
     const { error } = await supabase.rpc("admin_set_weekly_immunity_result", {
       p_week: selectedWeek,
-      p_phase: "tribal",
-      p_winner_team: winner || null,
-      p_winner_contestant_id: null,
-      p_players_remaining: null,
+      p_phase: "individual",
+      p_winner_team: null,
+      p_winner_contestant_id: Number(selectedWinnerId),
+      p_players_remaining: parsedPlayersRemaining,
     });
 
     if (error) {
@@ -213,13 +316,15 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
       return;
     }
 
-    setAdminWinnersByWeek((prev) => ({
-      ...prev,
-      [selectedWeek]: winner,
-    }));
     setWeeklyResultByWeek((prev) => ({
       ...prev,
-      [selectedWeek]: winner ? { week: selectedWeek, phase: "tribal", winner_team: winner } : null,
+      [selectedWeek]: {
+        week: selectedWeek,
+        phase: "individual",
+        winner_team: null,
+        winner_contestant_id: Number(selectedWinnerId),
+        players_remaining: parsedPlayersRemaining,
+      },
     }));
     await fetchLeagueProfiles(selectedWeek);
     setAdminWinnerSaving(false);
@@ -228,47 +333,35 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   const pickBreakdown = useMemo(() => {
     if (!hasOwnPickThisWeek || leagueProfiles.length === 0) return null;
 
-    const counts = TEAMS.reduce((acc, team) => {
-      acc[team.name] = 0;
-      return acc;
-    }, {});
+    const counts = new Map();
 
     leagueProfiles.forEach((profileItem) => {
-      const teamName = profileItem.weekly_picks?.[selectedWeek];
-      if (teamName && counts[teamName] !== undefined) counts[teamName] += 1;
+      const contestantId = String(profileItem.weekly_picks?.[selectedWeek] || "");
+      if (!contestantId) return;
+      counts.set(contestantId, (counts.get(contestantId) || 0) + 1);
     });
 
-    const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
-    if (total === 0) return null;
+    if (counts.size === 0) return null;
 
-    const rows = TEAMS.map((team) => {
-      const count = counts[team.name] || 0;
-      const percentage = (count / total) * 100;
-      return {
-        ...team,
-        count,
-        percentage,
-        percentageLabel: `${Math.round(percentage)}%`,
-      };
-    })
-      .filter((team) => team.count > 0)
-      .sort((a, b) => b.count - a.count);
-
-    let running = 0;
-    const gradientStops = rows
-      .map((team) => {
-        const start = running;
-        running += (team.count / total) * 100;
-        return `${team.color} ${start.toFixed(2)}% ${running.toFixed(2)}%`;
+    const rows = Array.from(counts.entries())
+      .map(([contestantId, count]) => {
+        const contestant = resolveContestantFromPickValue(contestantId, contestantsById, contestants);
+        return {
+          contestantId,
+          contestant,
+          count,
+        };
       })
-      .join(", ");
+      .sort((a, b) => {
+        if (b.count !== a.count) return b.count - a.count;
+        return getContestantLabel(a.contestant).localeCompare(getContestantLabel(b.contestant));
+      });
 
     return {
-      total,
+      total: leagueProfiles.length,
       rows,
-      gradientStops,
     };
-  }, [hasOwnPickThisWeek, leagueProfiles, selectedWeek]);
+  }, [contestants, contestantsById, hasOwnPickThisWeek, leagueProfiles, selectedWeek]);
 
   return (
     <div
@@ -281,7 +374,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
         Survivor Picks
       </h1>
       <p style={{ textAlign: "center", marginBottom: "20px", color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
-        Use Back/Forward to make picks for each week or review history.
+        Pick the individual immunity winner each week. Correct picks earn bonus points equal to the number of players remaining.
       </p>
 
       <div style={{ width: "100%", maxWidth: "980px", margin: "0 auto" }}>
@@ -306,12 +399,13 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
           >
             <p style={{ margin: "0 0 12px 0", fontWeight: "bold" }}>Week {selectedWeek}</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "10px" }}>
-              {TEAMS.map((team) => {
-                const imageFailed = imageErrors[team.name];
+              {remainingContestants.map((contestant) => {
+                const imageKey = String(contestant.id);
+                const imageFailed = imageErrors[imageKey];
                 return (
                   <button
-                    key={`${selectedWeek}-select-${team.name}`}
-                    onClick={() => handlePick(selectedWeek, team.name)}
+                    key={`${selectedWeek}-select-${contestant.id}`}
+                    onClick={() => handlePick(selectedWeek, contestant)}
                     style={{
                       border: "1px solid #d1d5db",
                       borderRadius: "12px",
@@ -322,10 +416,10 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                   >
                     {!imageFailed ? (
                       <img
-                        src={team.flagSrc}
-                        alt={`${team.name} flag`}
+                        src={getContestantImage(contestant)}
+                        alt={getContestantLabel(contestant)}
                         style={{ width: "100%", height: "clamp(180px, 46vw, 260px)", objectFit: "cover", borderRadius: "10px", backgroundColor: "#f3f4f6" }}
-                        onError={() => setImageErrors((prev) => ({ ...prev, [team.name]: true }))}
+                        onError={() => setImageErrors((prev) => ({ ...prev, [imageKey]: true }))}
                       />
                     ) : (
                       <div
@@ -333,18 +427,20 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                           width: "100%",
                           height: "clamp(180px, 46vw, 260px)",
                           borderRadius: "10px",
-                          backgroundColor: team.color,
+                          background: "linear-gradient(160deg, #e5c07b, #c2410c)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           color: "white",
                           fontWeight: "bold",
+                          padding: "10px",
+                          textAlign: "center",
                         }}
                       >
-                        {team.name}
+                        {getContestantLabel(contestant)}
                       </div>
                     )}
-                    <p style={{ margin: "10px 0 0 0", fontWeight: "bold" }}>{team.name}</p>
+                    <p style={{ margin: "10px 0 0 0", fontWeight: "bold", fontSize: "0.95rem", lineHeight: 1.2 }}>{getContestantLabel(contestant)}</p>
                   </button>
                 );
               })}
@@ -399,6 +495,11 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
       {hasOwnPickThisWeek && (
         <div style={{ width: "100%", maxWidth: "980px", margin: "24px auto 0 auto" }}>
           <h2 style={{ textAlign: "center", marginBottom: "12px", color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>Week {selectedWeek} Picks</h2>
+          {ownPickedContestant && (
+            <p style={{ textAlign: "center", color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)", marginTop: 0 }}>
+              Your pick: <b>{getContestantLabel(ownPickedContestant)}</b>
+            </p>
+          )}
           {leagueProfiles.length === 0 && (
             <p style={{ textAlign: "center", color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>No teams have submitted Week {selectedWeek} picks yet.</p>
           )}
@@ -414,37 +515,29 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
               }}
             >
               {leagueProfiles.map((p) => {
-                const pickName = p.weekly_picks?.[selectedWeek];
-                const pickTeam = getTeam(pickName);
+                const pickId = String(p.weekly_picks?.[selectedWeek] || "");
+                const pickedContestant = resolveContestantFromPickValue(p.weekly_picks?.[selectedWeek], contestantsById, contestants);
+                const pickedContestantId = pickedContestant ? String(pickedContestant.id) : pickId;
+                const isWinningPick = hasResolvedWinner && pickedContestantId === resolvedWinnerId;
+                const isLosingPick = hasResolvedWinner && pickedContestantId && pickedContestantId !== resolvedWinnerId;
 
                 return (
                   <div
                     key={p.id}
-                    data-status={
-                      hasResolvedWinner && pickName
-                        ? (pickName === resolvedWinnerTeam ? "winner" : "loser")
-                        : "pending"
-                    }
+                    data-status={hasResolvedWinner ? (isWinningPick ? "winner" : "loser") : "pending"}
                     style={{
                       flex: "0 0 calc((100% - 24px) / 3)",
                       minWidth: "112px",
                       scrollSnapAlign: "start",
                       border: "1px solid rgba(209,213,219,0.9)",
                       borderRadius: "12px",
-                      backgroundColor:
-                        hasResolvedWinner && pickName && pickName !== resolvedWinnerTeam
-                          ? "rgba(229,231,235,0.72)"
-                          : "rgba(255,255,255,0.9)",
+                      backgroundColor: isLosingPick ? "rgba(229,231,235,0.72)" : "rgba(255,255,255,0.9)",
                       backdropFilter: "blur(2px)",
                       padding: "8px",
                       display: "flex",
                       flexDirection: "column",
-                      opacity:
-                        hasResolvedWinner && pickName && pickName !== resolvedWinnerTeam ? 0.62 : 1,
-                      filter:
-                        hasResolvedWinner && pickName && pickName !== resolvedWinnerTeam
-                          ? "grayscale(100%)"
-                          : "none",
+                      opacity: isLosingPick ? 0.62 : 1,
+                      filter: isLosingPick ? "grayscale(100%)" : "none",
                     }}
                   >
                     <p
@@ -464,10 +557,10 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                       {p.team_name || "Unnamed Team"}
                     </p>
 
-                    {pickTeam ? (
+                    {pickedContestant ? (
                       <img
-                        src={pickTeam.flagSrc}
-                        alt={`${pickName} flag`}
+                        src={getContestantImage(pickedContestant)}
+                        alt={getContestantLabel(pickedContestant)}
                         style={{
                           width: "100%",
                           height: "clamp(180px, 46vw, 260px)",
@@ -487,7 +580,9 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                           alignItems: "center",
                           justifyContent: "center",
                           color: "#111827",
-                          fontWeight: "bold"
+                          fontWeight: "bold",
+                          textAlign: "center",
+                          padding: "10px"
                         }}
                       >
                         No Pick
@@ -500,13 +595,14 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                         fontWeight: "bold",
                         textAlign: "center",
                         fontSize: "0.84rem",
-                        minHeight: "1.2em"
+                        minHeight: "2.4em",
+                        lineHeight: 1.2
                       }}
                     >
-                      {pickName || "No Pick"}
+                      {pickedContestant ? getContestantLabel(pickedContestant) : "No Pick"}
                     </p>
 
-                    {hasResolvedWinner && pickName === resolvedWinnerTeam && (
+                    {isWinningPick && (
                       <p
                         style={{
                           margin: "7px 0 0 0",
@@ -516,7 +612,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                           fontSize: "0.8rem",
                         }}
                       >
-                        +5 Points
+                        +{resolvedPlayersRemaining} Points
                       </p>
                     )}
                   </div>
@@ -540,118 +636,132 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                 Pick Breakdown ({pickBreakdown.total} teams)
               </p>
 
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "12px" }}>
-                <div
-                  aria-hidden="true"
-                  style={{
-                    width: "min(48vw, 180px)",
-                    height: "min(48vw, 180px)",
-                    borderRadius: "50%",
-                    background: `conic-gradient(${pickBreakdown.gradientStops})`,
-                    position: "relative",
-                    boxShadow: "0 6px 20px rgba(17,24,39,0.18)",
-                  }}
-                >
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: "22%",
-                      borderRadius: "50%",
-                      background: "rgba(255,255,255,0.94)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      textAlign: "center",
-                      fontWeight: "bold",
-                      color: "#111827",
-                      fontSize: "0.86rem",
-                      lineHeight: 1.15,
-                      padding: "6px",
-                    }}
-                  >
-                    Week {selectedWeek}
-                    <br />
-                    Picks
-                  </div>
-                </div>
-              </div>
-
               <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "8px" }}>
                 {pickBreakdown.rows.map((row) => (
                   <div
-                    key={`${selectedWeek}-breakdown-${row.name}`}
+                    key={`${selectedWeek}-breakdown-${row.contestantId}`}
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "14px 1fr auto auto",
+                      gridTemplateColumns: "48px 1fr auto",
                       alignItems: "center",
-                      gap: "8px",
+                      gap: "10px",
                       padding: "8px 10px",
                       borderRadius: "10px",
                       background: "rgba(248,250,252,0.95)",
                       border: "1px solid rgba(209,213,219,0.9)",
                     }}
                   >
-                    <span style={{ width: "14px", height: "14px", borderRadius: "999px", backgroundColor: row.color, display: "inline-block" }} />
-                    <span style={{ fontWeight: "bold", color: "#111827" }}>{row.name}</span>
-                    <span style={{ color: "#374151", fontWeight: "bold" }}>{row.percentageLabel}</span>
-                    <span style={{ color: "#6b7280" }}>({row.count})</span>
+                    <img
+                      src={getContestantImage(row.contestant)}
+                      alt={getContestantLabel(row.contestant)}
+                      style={{
+                        width: "48px",
+                        height: "48px",
+                        objectFit: "cover",
+                        borderRadius: "10px",
+                        backgroundColor: "#e5e7eb",
+                      }}
+                    />
+                    <span style={{ fontWeight: "bold", color: "#111827" }}>{getContestantLabel(row.contestant)}</span>
+                    <span style={{ color: "#374151", fontWeight: "bold" }}>{row.count}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {isAdmin && leagueProfiles.length > 0 && (
-            <div
+        </div>
+      )}
+
+      {isAdmin && (
+        <div style={{ width: "100%", maxWidth: "980px", margin: "16px auto 0 auto" }}>
+          <div
+            style={{
+              border: "1px solid rgba(209,213,219,0.9)",
+              borderRadius: "14px",
+              background: "rgba(255,255,255,0.9)",
+              backdropFilter: "blur(2px)",
+              padding: "12px",
+            }}
+          >
+            <p style={{ margin: "0 0 10px 0", fontWeight: "bold", textAlign: "center", color: "#111827" }}>
+              Admin: Immunity Winner
+            </p>
+            <label
+              htmlFor="admin-immunity-winner"
+              style={{ display: "block", marginBottom: "8px", color: "#374151", fontWeight: "bold", fontSize: "0.9rem" }}
+            >
+              Week {selectedWeek} winner
+            </label>
+            <select
+              id="admin-immunity-winner"
+              value={selectedWinnerId}
+              onChange={handleAdminWinnerSelect}
+              disabled={adminWinnerSaving}
               style={{
-                marginTop: "16px",
-                border: "1px solid rgba(209,213,219,0.9)",
-                borderRadius: "14px",
-                background: "rgba(255,255,255,0.9)",
-                backdropFilter: "blur(2px)",
-                padding: "12px",
+                width: "100%",
+                borderRadius: "10px",
+                border: "1px solid rgba(156,163,175,0.9)",
+                background: "rgba(255,255,255,0.98)",
+                color: "#111827",
+                fontWeight: "bold",
+                padding: "10px 12px",
+                marginBottom: "10px",
               }}
             >
-              <p style={{ margin: "0 0 10px 0", fontWeight: "bold", textAlign: "center", color: "#111827" }}>
-                Admin: Immunity Winner
-              </p>
-              <label
-                htmlFor="admin-immunity-winner"
-                style={{ display: "block", marginBottom: "8px", color: "#374151", fontWeight: "bold", fontSize: "0.9rem" }}
-              >
-                Week {selectedWeek} winner
-              </label>
-              <select
-                id="admin-immunity-winner"
-                value={selectedImmunityWinner}
-                onChange={handleAdminWinnerChange}
-                disabled={adminWinnerSaving}
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                  border: "1px solid rgba(156,163,175,0.9)",
-                  background: "rgba(255,255,255,0.98)",
-                  color: "#111827",
-                  fontWeight: "bold",
-                  padding: "10px 12px",
-                }}
-              >
-                <option value="">Select immunity winner</option>
-                {TEAMS.map((team) => (
-                  <option key={`admin-winner-${team.name}`} value={team.name}>
-                    {team.name}
-                  </option>
-                ))}
-              </select>
-              {adminWinnerSaving && (
-                <p style={{ margin: "8px 0 0 0", color: "#374151", fontSize: "0.85rem" }}>Saving winner...</p>
-              )}
-            </div>
-          )}
+              <option value="">Select immunity winner</option>
+              {adminWinnerOptions.map((contestant) => (
+                <option key={`admin-winner-${contestant.id}`} value={contestant.id}>
+                  {getContestantLabel(contestant)}
+                </option>
+              ))}
+            </select>
+
+            <label
+              htmlFor="admin-players-remaining"
+              style={{ display: "block", marginBottom: "8px", color: "#374151", fontWeight: "bold", fontSize: "0.9rem" }}
+            >
+              Players remaining in challenge
+            </label>
+            <input
+              id="admin-players-remaining"
+              type="number"
+              min="1"
+              value={selectedPlayersRemaining}
+              onChange={handleAdminPlayersRemainingChange}
+              disabled={adminWinnerSaving}
+              style={{
+                width: "100%",
+                borderRadius: "10px",
+                border: "1px solid rgba(156,163,175,0.9)",
+                background: "rgba(255,255,255,0.98)",
+                color: "#111827",
+                fontWeight: "bold",
+                padding: "10px 12px",
+                boxSizing: "border-box",
+              }}
+            />
+
+            <button
+              onClick={saveAdminWinner}
+              disabled={adminWinnerSaving}
+              style={{
+                width: "100%",
+                marginTop: "12px",
+                border: "none",
+                borderRadius: "10px",
+                background: "#0f766e",
+                color: "white",
+                fontWeight: "bold",
+                padding: "10px 12px",
+                cursor: adminWinnerSaving ? "not-allowed" : "pointer",
+              }}
+            >
+              {adminWinnerSaving ? "Saving winner..." : "Save Winner"}
+            </button>
+          </div>
         </div>
       )}
     </div>
   );
 }
-
-

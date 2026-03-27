@@ -22,19 +22,16 @@ export default function Rules() {
 
         <h2>WEEKLY PICKS</h2>
         <p>
-          Each week, before the episode airs, you will be given a chance to pick the tribe or
-          player that you think will WIN the immunity challenge. In the tribe phase of the game,
-          you must select from the 3 starting tribes, and in the individual phase of the game,
-          you must select from any remaining contestant.
+          Each week, before the episode airs, you will be given a chance to pick the remaining
+          player that you think will WIN the immunity challenge.
         </p>
         <p>
-          A correct pick in the tribal phase of the game will earn your team 5 bonus points.
-          A correct pick in the individual phase of the game will earn your team bonus points
-          equal to the number of players remaining in the game! (Example: if there are
+          A correct pick will earn your team bonus points equal to the number of players remaining
+          in the game! (Example: if there are
           12 players remaining you will earn 12 bonus points)
         </p>
         <p>
-          Note: The tribe or player you pick MUST win FIRST place in the IMMUNITY challenge.
+          Note: The player you pick MUST win FIRST place in the IMMUNITY challenge.
           Second place in immunity challenges do not count. Reward challenge wins also do not count.
         </p>
 
