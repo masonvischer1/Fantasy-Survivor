@@ -99,6 +99,33 @@ export default function Teams() {
     const boundedSize = Math.min(1.12, Math.max(0.8, calculatedSize))
     return `${boundedSize.toFixed(2)}rem`
   }
+  let currentRank = 0
+  let lastTotalPoints = null
+  const rankedTeams = sortedTeams.map((profile, index) => {
+    const totalPoints = profile.total_score ?? ((profile.team_points || 0) + (profile.bonus_points || 0) + (profile.manual_points || 0))
+
+    if (index === 0 || totalPoints !== lastTotalPoints) {
+      currentRank = index + 1
+    }
+
+    const nextProfile = sortedTeams[index + 1]
+    const nextTotalPoints = nextProfile
+      ? (nextProfile.total_score ?? ((nextProfile.team_points || 0) + (nextProfile.bonus_points || 0) + (nextProfile.manual_points || 0)))
+      : null
+    const previousTotalPoints = index > 0
+      ? (sortedTeams[index - 1].total_score ?? ((sortedTeams[index - 1].team_points || 0) + (sortedTeams[index - 1].bonus_points || 0) + (sortedTeams[index - 1].manual_points || 0)))
+      : null
+    const isTied = totalPoints === previousTotalPoints || totalPoints === nextTotalPoints
+
+    lastTotalPoints = totalPoints
+
+    return {
+      profile,
+      totalPoints,
+      displayRank: currentRank,
+      isTied
+    }
+  })
 
   return (
     <div style={{ padding: '1rem', position: 'relative' }}>
@@ -124,18 +151,17 @@ export default function Teams() {
 
       {teams.length === 0 && <p style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>No teams yet</p>}
 
-      {sortedTeams.map((profile, index) => {
+      {rankedTeams.map(({ profile, totalPoints, displayRank, isTied }) => {
         const teamPoints = profile.team_points || 0
         const bonusPoints = profile.bonus_points || 0
-        const totalPoints = profile.total_score ?? (teamPoints + bonusPoints + (profile.manual_points || 0))
         const shouldHideTeam = !viewerHasConfirmedMergePick && viewerId && String(profile.id) !== String(viewerId)
-        const rank = index + 1
+        const rank = displayRank
         const isGold = rank === 1
         const isSilver = rank === 2
         const isBronze = rank === 3
         const rankBorder = isGold ? '#d4af37' : isSilver ? '#c0c0c0' : isBronze ? '#cd7f32' : '#ddd'
         const rankBackground = isGold ? 'rgba(255,249,230,0.88)' : isSilver ? 'rgba(248,248,248,0.88)' : isBronze ? 'rgba(255,244,236,0.88)' : 'rgba(255,255,255,0.84)'
-        const rankLabel = `${getOrdinal(rank)} Place`
+        const rankLabel = `${isTied ? 'T-' : ''}${getOrdinal(rank)} Place`
 
         return (
         <div
