@@ -38,7 +38,6 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   const [saved, setSaved] = useState(false);
   const [imageErrors, setImageErrors] = useState({});
   const [adminWinnerByWeek, setAdminWinnerByWeek] = useState({});
-  const [adminPlayersRemainingByWeek, setAdminPlayersRemainingByWeek] = useState({});
   const [adminWinnerSaving, setAdminWinnerSaving] = useState(false);
   const [weeklyResultByWeek, setWeeklyResultByWeek] = useState({});
 
@@ -184,10 +183,6 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
         ...prev,
         [selectedWeek]: data?.winner_contestant_id ? String(data.winner_contestant_id) : "",
       }));
-      setAdminPlayersRemainingByWeek((prev) => ({
-        ...prev,
-        [selectedWeek]: data?.players_remaining ? String(data.players_remaining) : "",
-      }));
     };
 
     Promise.resolve().then(() => {
@@ -263,7 +258,6 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   const currentWeekPick = profile?.weekly_picks?.[selectedWeek];
   const hasOwnPickThisWeek = !!currentWeekPick;
   const selectedWinnerId = adminWinnerByWeek?.[selectedWeek] || "";
-  const selectedPlayersRemaining = adminPlayersRemainingByWeek?.[selectedWeek] || "";
   const selectedWeeklyResult = weeklyResultByWeek?.[selectedWeek] || null;
   const resolvedWinnerId = selectedWeeklyResult?.phase === "individual" && selectedWeeklyResult?.winner_contestant_id
     ? String(selectedWeeklyResult.winner_contestant_id)
@@ -280,23 +274,9 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
     }));
   };
 
-  const handleAdminPlayersRemainingChange = (event) => {
-    setAdminPlayersRemainingByWeek((prev) => ({
-      ...prev,
-      [selectedWeek]: event.target.value,
-    }));
-  };
-
   const saveAdminWinner = async () => {
-    const parsedPlayersRemaining = Number.parseInt(selectedPlayersRemaining, 10);
-
     if (!selectedWinnerId) {
       alert("Select the immunity winner first.");
-      return;
-    }
-
-    if (Number.isNaN(parsedPlayersRemaining) || parsedPlayersRemaining < 1) {
-      alert("Enter the number of players remaining in the challenge.");
       return;
     }
 
@@ -307,7 +287,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
       p_phase: "individual",
       p_winner_team: null,
       p_winner_contestant_id: Number(selectedWinnerId),
-      p_players_remaining: parsedPlayersRemaining,
+      p_players_remaining: null,
     });
 
     if (error) {
@@ -323,7 +303,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
         phase: "individual",
         winner_team: null,
         winner_contestant_id: Number(selectedWinnerId),
-        players_remaining: parsedPlayersRemaining,
+        players_remaining: remainingContestants.length,
       },
     }));
     await fetchLeagueProfiles(selectedWeek);
@@ -398,7 +378,15 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
             }}
           >
             <p style={{ margin: "0 0 12px 0", fontWeight: "bold" }}>Week {selectedWeek}</p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "10px" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                overflowX: "auto",
+                paddingBottom: "6px",
+                scrollSnapType: "x mandatory",
+              }}
+            >
               {remainingContestants.map((contestant) => {
                 const imageKey = String(contestant.id);
                 const imageFailed = imageErrors[imageKey];
@@ -407,11 +395,13 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                     key={`${selectedWeek}-select-${contestant.id}`}
                     onClick={() => handlePick(selectedWeek, contestant)}
                     style={{
+                      flex: "0 0 min(220px, 62vw)",
                       border: "1px solid #d1d5db",
                       borderRadius: "12px",
                       background: "rgba(255,255,255,0.86)",
                       cursor: "pointer",
                       padding: "12px 8px",
+                      scrollSnapAlign: "start",
                     }}
                   >
                     {!imageFailed ? (
@@ -716,31 +706,6 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                 </option>
               ))}
             </select>
-
-            <label
-              htmlFor="admin-players-remaining"
-              style={{ display: "block", marginBottom: "8px", color: "#374151", fontWeight: "bold", fontSize: "0.9rem" }}
-            >
-              Players remaining in challenge
-            </label>
-            <input
-              id="admin-players-remaining"
-              type="number"
-              min="1"
-              value={selectedPlayersRemaining}
-              onChange={handleAdminPlayersRemainingChange}
-              disabled={adminWinnerSaving}
-              style={{
-                width: "100%",
-                borderRadius: "10px",
-                border: "1px solid rgba(156,163,175,0.9)",
-                background: "rgba(255,255,255,0.98)",
-                color: "#111827",
-                fontWeight: "bold",
-                padding: "10px 12px",
-                boxSizing: "border-box",
-              }}
-            />
 
             <button
               onClick={saveAdminWinner}

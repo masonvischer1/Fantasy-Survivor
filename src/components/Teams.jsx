@@ -233,7 +233,7 @@ export default function Teams() {
           <div
             style={{
               display: 'flex',
-              gap: '0.35rem',
+              gap: '0.18rem',
               marginTop: '0.75rem',
               flexWrap: 'nowrap',
               overflowX: 'auto',
@@ -246,7 +246,7 @@ export default function Teams() {
               </p>
             ) : (
               profile.team?.map((c) => (
-                <div key={c.id} style={{ textAlign: 'center', width: '54px', flex: '0 0 auto' }}>
+                <div key={c.id} style={{ textAlign: 'center', width: '50px', flex: '0 0 auto' }}>
                   <img
                     src={
                       (c.is_eliminated
@@ -259,8 +259,8 @@ export default function Teams() {
                     }
                     alt={c.name}
                     style={{
-                      width: '46px',
-                      height: '46px',
+                      width: '42px',
+                      height: '42px',
                       objectFit: 'cover',
                       borderRadius: '6px',
                       filter: c.is_eliminated ? 'grayscale(100%)' : 'none'

@@ -114,6 +114,7 @@ set search_path = public
 as $$
 declare
   v_is_admin boolean;
+  v_players_remaining integer;
 begin
   select coalesce(pr.is_admin, false)
   into v_is_admin
@@ -123,6 +124,18 @@ begin
   if not coalesce(v_is_admin, false) then
     raise exception 'Only admins can set immunity results';
   end if;
+
+  v_players_remaining := case
+    when p_phase = 'individual' then coalesce(
+      p_players_remaining,
+      (
+        select count(*)
+        from public.contestants c
+        where coalesce(c.is_eliminated, false) = false
+      )
+    )
+    else p_players_remaining
+  end;
 
   insert into public.weekly_immunity_results (
     week,
@@ -138,7 +151,7 @@ begin
     p_phase,
     p_winner_team,
     p_winner_contestant_id,
-    p_players_remaining,
+    v_players_remaining,
     auth.uid(),
     now()
   )
@@ -187,4 +200,3 @@ after insert or update or delete on public.weekly_immunity_results
 for each statement execute function public.trigger_recalculate_scores();
 
 commit;
-
