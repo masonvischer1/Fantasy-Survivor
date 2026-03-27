@@ -101,20 +101,30 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
       const { data, error } = await supabase
         .from("weekly_immunity_results")
         .select("week, winner_team, winner_contestant_id, winner_contestant_ids")
-        .or("winner_team.not.is.null,winner_contestant_id.not.is.null,winner_contestant_ids.not.is.null")
-        .order("week", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .order("week", { ascending: true });
 
       if (error) {
         console.error(error);
         return;
       }
 
-      if (!isMounted || !data?.week) return;
+      if (!isMounted) return;
 
-      const nextWeek = Math.min(TOTAL_EPISODES, Math.max(1, Number(data.week) + 1));
-      setSelectedWeek((prev) => (prev === currentWeek ? nextWeek : prev));
+      const resolvedWeeks = new Set(
+        (data || [])
+          .filter((row) => {
+            const hasIndividualWinners = Array.isArray(row?.winner_contestant_ids) && row.winner_contestant_ids.length > 0;
+            return !!row?.winner_team || !!row?.winner_contestant_id || hasIndividualWinners;
+          })
+          .map((row) => Number(row.week))
+      );
+
+      let nextOpenWeek = 1;
+      while (nextOpenWeek < TOTAL_EPISODES && resolvedWeeks.has(nextOpenWeek)) {
+        nextOpenWeek += 1;
+      }
+
+      setSelectedWeek((prev) => (prev === currentWeek ? nextOpenWeek : prev));
     };
 
     Promise.resolve().then(() => {
