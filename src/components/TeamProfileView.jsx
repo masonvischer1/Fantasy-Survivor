@@ -65,7 +65,7 @@ export default function TeamProfileView() {
         .select('*'),
       supabase
         .from('weekly_immunity_results')
-        .select('week, phase, winner_team, winner_contestant_id, players_remaining')
+        .select('week, phase, winner_team, winner_contestant_id, winner_contestant_ids, players_remaining, bonus_points_awarded')
     ])
 
     if (profileError) console.error(profileError)
@@ -194,8 +194,15 @@ export default function TeamProfileView() {
 
         const winnerById = String(pickedValue) === String(result.winner_contestant_id)
         const winnerByName = contestants.find(c => String(c.id) === String(result.winner_contestant_id))?.name === String(pickedValue)
-        const isWinner = winnerById || winnerByName
-        const individualBonus = result.players_remaining || 0
+        const winnerIds = Array.isArray(result.winner_contestant_ids)
+          ? result.winner_contestant_ids.map(value => String(value))
+          : result.winner_contestant_id
+            ? [String(result.winner_contestant_id)]
+            : []
+        const winnerByIds = winnerIds.includes(String(pickedValue))
+        const winnerByNames = contestants.some(c => winnerIds.includes(String(c.id)) && c.name === String(pickedValue))
+        const isWinner = winnerById || winnerByName || winnerByIds || winnerByNames
+        const individualBonus = result.bonus_points_awarded || result.players_remaining || 0
         return {
           week: Number(weekKey),
           pickLabel: String(pickedValue),

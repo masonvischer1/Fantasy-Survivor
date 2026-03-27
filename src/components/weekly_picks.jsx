@@ -89,7 +89,8 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [imageErrors, setImageErrors] = useState({});
-  const [adminWinnerByWeek, setAdminWinnerByWeek] = useState({});
+  const [adminWinnerIdsByWeek, setAdminWinnerIdsByWeek] = useState({});
+  const [adminBonusPointsByWeek, setAdminBonusPointsByWeek] = useState({});
   const [adminWinnerSaving, setAdminWinnerSaving] = useState(false);
   const [weeklyResultByWeek, setWeeklyResultByWeek] = useState({});
 
@@ -99,8 +100,8 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
     const loadDefaultWeek = async () => {
       const { data, error } = await supabase
         .from("weekly_immunity_results")
-        .select("week, winner_team, winner_contestant_id")
-        .or("winner_team.not.is.null,winner_contestant_id.not.is.null")
+        .select("week, winner_team, winner_contestant_id, winner_contestant_ids")
+        .or("winner_team.not.is.null,winner_contestant_id.not.is.null,winner_contestant_ids.not.is.null")
         .order("week", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -215,7 +216,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
     const loadWeeklyWinner = async () => {
       const { data, error } = await supabase
         .from("weekly_immunity_results")
-        .select("week, phase, winner_team, winner_contestant_id, players_remaining")
+        .select("week, phase, winner_team, winner_contestant_id, winner_contestant_ids, players_remaining, bonus_points_awarded")
         .eq("week", selectedWeek)
         .maybeSingle();
 
@@ -231,9 +232,18 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
 
       if (!isAdmin) return;
 
-      setAdminWinnerByWeek((prev) => ({
+      const winnerIds = Array.isArray(data?.winner_contestant_ids)
+        ? data.winner_contestant_ids.map((value) => String(value))
+        : data?.winner_contestant_id
+          ? [String(data.winner_contestant_id)]
+          : [];
+      setAdminWinnerIdsByWeek((prev) => ({
         ...prev,
-        [selectedWeek]: data?.winner_contestant_id ? String(data.winner_contestant_id) : "",
+        [selectedWeek]: winnerIds,
+      }));
+      setAdminBonusPointsByWeek((prev) => ({
+        ...prev,
+        [selectedWeek]: data?.bonus_points_awarded ? String(data.bonus_points_awarded) : data?.players_remaining ? String(data.players_remaining) : "",
       }));
     };
 
@@ -309,26 +319,70 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
 
   const currentWeekPick = profile?.weekly_picks?.[selectedWeek];
   const hasOwnPickThisWeek = !!currentWeekPick;
-  const selectedWinnerId = adminWinnerByWeek?.[selectedWeek] || "";
+  const selectedWinnerIds = adminWinnerIdsByWeek?.[selectedWeek] || [];
+  const selectedBonusPoints = adminBonusPointsByWeek?.[selectedWeek] || "";
   const selectedWeeklyResult = weeklyResultByWeek?.[selectedWeek] || null;
-  const resolvedWinnerId = selectedWeeklyResult?.phase === "individual" && selectedWeeklyResult?.winner_contestant_id
-    ? String(selectedWeeklyResult.winner_contestant_id)
-    : null;
-  const resolvedPlayersRemaining = Number(selectedWeeklyResult?.players_remaining || 0);
-  const hasResolvedWinner = !!resolvedWinnerId;
+  const resolvedWinnerIds = selectedWeeklyResult?.phase === "individual"
+    ? (
+      Array.isArray(selectedWeeklyResult?.winner_contestant_ids) && selectedWeeklyResult.winner_contestant_ids.length > 0
+        ? selectedWeeklyResult.winner_contestant_ids.map((value) => String(value))
+        : selectedWeeklyResult?.winner_contestant_id
+          ? [String(selectedWeeklyResult.winner_contestant_id)]
+          : []
+    )
+    : [];
+  const resolvedPlayersRemaining = Number(selectedWeeklyResult?.players_remaining || remainingContestants.length || 0);
+  const resolvedBonusPoints = Number(selectedWeeklyResult?.bonus_points_awarded || selectedWeeklyResult?.players_remaining || 0);
+  const hasResolvedWinner = resolvedWinnerIds.length > 0;
   const ownPickPresentation = getPickPresentation(currentWeekPick, contestantsById, contestants);
+  const displayedPlayersRemaining = Number(selectedWeeklyResult?.players_remaining || remainingContestants.length || 0);
+  const bonusPointOptions = useMemo(
+    () => Array.from({ length: Math.max(contestants.length, displayedPlayersRemaining, 1) }, (_, index) => String(index + 1)),
+    [contestants.length, displayedPlayersRemaining]
+  );
 
-  const handleAdminWinnerSelect = (event) => {
-    const winnerId = event.target.value;
-    setAdminWinnerByWeek((prev) => ({
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    setAdminBonusPointsByWeek((prev) => {
+      if (prev?.[selectedWeek]) return prev;
+      return {
+        ...prev,
+        [selectedWeek]: String(displayedPlayersRemaining || 1),
+      };
+    });
+  }, [displayedPlayersRemaining, isAdmin, selectedWeek]);
+
+  const handleAdminWinnerToggle = (winnerId) => {
+    setAdminWinnerIdsByWeek((prev) => {
+      const currentWinnerIds = prev?.[selectedWeek] || [];
+      const nextWinnerIds = currentWinnerIds.includes(winnerId)
+        ? currentWinnerIds.filter((value) => value !== winnerId)
+        : [...currentWinnerIds, winnerId];
+      return {
+        ...prev,
+        [selectedWeek]: nextWinnerIds,
+      };
+    });
+  };
+
+  const handleAdminBonusPointsChange = (event) => {
+    setAdminBonusPointsByWeek((prev) => ({
       ...prev,
-      [selectedWeek]: winnerId,
+      [selectedWeek]: event.target.value,
     }));
   };
 
   const saveAdminWinner = async () => {
-    if (!selectedWinnerId) {
-      alert("Select the immunity winner first.");
+    const parsedBonusPoints = Number.parseInt(selectedBonusPoints, 10);
+
+    if (selectedWinnerIds.length === 0) {
+      alert("Select at least one immunity winner.");
+      return;
+    }
+
+    if (Number.isNaN(parsedBonusPoints) || parsedBonusPoints < 1) {
+      alert("Select how many bonus points should be awarded.");
       return;
     }
 
@@ -338,8 +392,10 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
       p_week: selectedWeek,
       p_phase: "individual",
       p_winner_team: null,
-      p_winner_contestant_id: Number(selectedWinnerId),
-      p_players_remaining: null,
+      p_winner_contestant_id: Number(selectedWinnerIds[0]),
+      p_players_remaining: remainingContestants.length,
+      p_bonus_points_awarded: parsedBonusPoints,
+      p_winner_contestant_ids: selectedWinnerIds.map((value) => Number(value)),
     });
 
     if (error) {
@@ -354,8 +410,10 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
         week: selectedWeek,
         phase: "individual",
         winner_team: null,
-        winner_contestant_id: Number(selectedWinnerId),
+        winner_contestant_id: Number(selectedWinnerIds[0]),
+        winner_contestant_ids: selectedWinnerIds.map((value) => Number(value)),
         players_remaining: remainingContestants.length,
+        bonus_points_awarded: parsedBonusPoints,
       },
     }));
     await fetchLeagueProfiles(selectedWeek);
@@ -417,8 +475,16 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
         Survivor Picks
       </h1>
       <p style={{ textAlign: "center", marginBottom: "20px", color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
-        Pick the individual immunity winner each week. Correct picks earn bonus points equal to the number of players remaining.
+        Pick the individual immunity winner each week. Admin can award the selected bonus value for any winning picks.
       </p>
+
+      <div style={{ width: "100%", maxWidth: "980px", margin: "0 auto 14px auto" }}>
+        <div style={{ padding: "12px 14px", backgroundColor: "rgba(255,255,255,0.86)", borderRadius: "10px", border: "1px solid rgba(209,213,219,0.9)", backdropFilter: "blur(2px)" }}>
+          <p style={{ margin: 0, textAlign: "center", color: "#111827", fontWeight: "bold" }}>
+            {displayedPlayersRemaining} Players Remaining
+          </p>
+        </div>
+      </div>
 
       <div style={{ width: "100%", maxWidth: "980px", margin: "0 auto" }}>
         {hasOwnPickThisWeek && (
@@ -574,7 +640,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                 const isResolvedWeek = !!selectedWeeklyResult;
                 const isWinningPick = selectedWeeklyResult?.phase === "tribal"
                   ? String(p.weekly_picks?.[selectedWeek]) === String(selectedWeeklyResult?.winner_team)
-                  : hasResolvedWinner && pickedContestantId === resolvedWinnerId;
+                  : hasResolvedWinner && resolvedWinnerIds.includes(String(pickedContestantId));
                 const isLosingPick = isResolvedWeek && !!p.weekly_picks?.[selectedWeek] && !isWinningPick;
 
                 return (
@@ -668,7 +734,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                           fontSize: "0.8rem",
                         }}
                       >
-                        {selectedWeeklyResult?.phase === "tribal" ? "+5 Points" : `+${resolvedPlayersRemaining} Points`}
+                        {selectedWeeklyResult?.phase === "tribal" ? "+5 Points" : `+${resolvedBonusPoints} Points`}
                       </p>
                     )}
                   </div>
@@ -781,16 +847,61 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
             <p style={{ margin: "0 0 10px 0", fontWeight: "bold", textAlign: "center", color: "#111827" }}>
               Admin: Immunity Winner
             </p>
+            <p style={{ display: "block", margin: "0 0 8px 0", color: "#374151", fontWeight: "bold", fontSize: "0.9rem" }}>
+              Week {selectedWeek} winner{selectedWinnerIds.length === 1 ? "" : "s"}
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "8px", maxHeight: "220px", overflowY: "auto", padding: "2px" }}>
+              {adminWinnerOptions.map((contestant) => {
+                const contestantId = String(contestant.id);
+                const checked = selectedWinnerIds.includes(contestantId);
+                return (
+                  <label
+                    key={`admin-winner-${contestant.id}`}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "20px 40px 1fr",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "8px 10px",
+                      borderRadius: "10px",
+                      border: "1px solid rgba(209,213,219,0.9)",
+                      background: checked ? "rgba(236,253,245,0.95)" : "rgba(255,255,255,0.98)",
+                      cursor: adminWinnerSaving ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={adminWinnerSaving}
+                      onChange={() => handleAdminWinnerToggle(contestantId)}
+                    />
+                    <img
+                      src={getContestantImage(contestant)}
+                      alt={getContestantLabel(contestant)}
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        objectFit: "cover",
+                        borderRadius: "10px",
+                        backgroundColor: "#e5e7eb",
+                      }}
+                    />
+                    <span style={{ color: "#111827", fontWeight: "bold" }}>{getContestantLabel(contestant)}</span>
+                  </label>
+                );
+              })}
+            </div>
+
             <label
-              htmlFor="admin-immunity-winner"
-              style={{ display: "block", marginBottom: "8px", color: "#374151", fontWeight: "bold", fontSize: "0.9rem" }}
+              htmlFor="admin-bonus-points"
+              style={{ display: "block", margin: "12px 0 8px 0", color: "#374151", fontWeight: "bold", fontSize: "0.9rem" }}
             >
-              Week {selectedWeek} winner
+              Bonus points awarded
             </label>
             <select
-              id="admin-immunity-winner"
-              value={selectedWinnerId}
-              onChange={handleAdminWinnerSelect}
+              id="admin-bonus-points"
+              value={selectedBonusPoints}
+              onChange={handleAdminBonusPointsChange}
               disabled={adminWinnerSaving}
               style={{
                 width: "100%",
@@ -800,13 +911,12 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                 color: "#111827",
                 fontWeight: "bold",
                 padding: "10px 12px",
-                marginBottom: "10px",
               }}
             >
-              <option value="">Select immunity winner</option>
-              {adminWinnerOptions.map((contestant) => (
-                <option key={`admin-winner-${contestant.id}`} value={contestant.id}>
-                  {getContestantLabel(contestant)}
+              <option value="">Select bonus points</option>
+              {bonusPointOptions.map((value) => (
+                <option key={`bonus-points-${value}`} value={value}>
+                  {value} Points
                 </option>
               ))}
             </select>

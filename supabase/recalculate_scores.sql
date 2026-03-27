@@ -10,15 +10,54 @@ create table if not exists public.weekly_immunity_results (
   phase text not null check (phase in ('tribal', 'individual')),
   winner_team text null,
   winner_contestant_id bigint null references public.contestants(id) on delete set null,
+  winner_contestant_ids jsonb null,
   players_remaining integer null,
+  bonus_points_awarded integer null,
   updated_by uuid null references auth.users(id) on delete set null,
   updated_at timestamptz not null default now(),
-  constraint weekly_immunity_results_winner_check check (
-    (phase = 'tribal' and winner_team is not null)
-    or
-    (phase = 'individual' and winner_contestant_id is not null)
+  constraint weekly_immunity_results_winner_contestant_ids_is_array check (
+    winner_contestant_ids is null or jsonb_typeof(winner_contestant_ids) = 'array'
   )
 );
+
+alter table public.weekly_immunity_results
+  add column if not exists winner_contestant_ids jsonb null;
+
+alter table public.weekly_immunity_results
+  add column if not exists bonus_points_awarded integer null;
+
+alter table public.weekly_immunity_results
+  drop constraint if exists weekly_immunity_results_winner_contestant_ids_is_array;
+
+alter table public.weekly_immunity_results
+  add constraint weekly_immunity_results_winner_contestant_ids_is_array check (
+    winner_contestant_ids is null or jsonb_typeof(winner_contestant_ids) = 'array'
+  );
+
+update public.weekly_immunity_results
+set winner_contestant_ids = jsonb_build_array(winner_contestant_id)
+where winner_contestant_id is not null
+  and (winner_contestant_ids is null or winner_contestant_ids = '[]'::jsonb);
+
+update public.weekly_immunity_results
+set bonus_points_awarded = coalesce(bonus_points_awarded, players_remaining)
+where phase = 'individual';
+
+alter table public.weekly_immunity_results
+  drop constraint if exists weekly_immunity_results_winner_check;
+
+alter table public.weekly_immunity_results
+  add constraint weekly_immunity_results_winner_check check (
+    (phase = 'tribal' and winner_team is not null)
+    or
+    (
+      phase = 'individual'
+      and (
+        winner_contestant_id is not null
+        or (winner_contestant_ids is not null and jsonb_array_length(winner_contestant_ids) > 0)
+      )
+    )
+  );
 
 create index if not exists idx_weekly_immunity_results_updated_at
   on public.weekly_immunity_results(updated_at desc);
@@ -75,8 +114,25 @@ begin
                  (p.weekly_picks ->> r.week::text) = (
                    select c2.name from public.contestants c2 where c2.id = r.winner_contestant_id
                  )
+                 or
+                 exists (
+                   select 1
+                   from jsonb_array_elements_text(coalesce(r.winner_contestant_ids, '[]'::jsonb)) winner_id
+                   where winner_id = (p.weekly_picks ->> r.week::text)
+                 )
+                 or
+                 exists (
+                   select 1
+                   from public.contestants c3
+                   where c3.name = (p.weekly_picks ->> r.week::text)
+                     and exists (
+                       select 1
+                       from jsonb_array_elements_text(coalesce(r.winner_contestant_ids, '[]'::jsonb)) winner_id
+                       where winner_id = c3.id::text
+                     )
+                 )
                )
-            then coalesce(r.players_remaining, 0)
+            then coalesce(r.bonus_points_awarded, r.players_remaining, 0)
           else 0
         end
       ), 0) as bonus_points
@@ -100,12 +156,16 @@ comment on function public.recalculate_scores(integer) is
 'Recomputes team_points, bonus_points, and total_score for all profiles.';
 
 -- Admin helper: set weekly immunity winner and recalculate immediately.
+drop function if exists public.admin_set_weekly_immunity_result(integer, text, text, bigint, integer);
+
 create or replace function public.admin_set_weekly_immunity_result(
   p_week integer,
   p_phase text,
   p_winner_team text default null,
   p_winner_contestant_id bigint default null,
-  p_players_remaining integer default null
+  p_players_remaining integer default null,
+  p_bonus_points_awarded integer default null,
+  p_winner_contestant_ids jsonb default null
 )
 returns void
 language plpgsql
@@ -115,6 +175,8 @@ as $$
 declare
   v_is_admin boolean;
   v_players_remaining integer;
+  v_bonus_points_awarded integer;
+  v_winner_contestant_ids jsonb;
 begin
   select coalesce(pr.is_admin, false)
   into v_is_admin
@@ -137,12 +199,30 @@ begin
     else p_players_remaining
   end;
 
+  v_bonus_points_awarded := case
+    when p_phase = 'individual' then coalesce(p_bonus_points_awarded, v_players_remaining)
+    else p_bonus_points_awarded
+  end;
+
+  v_winner_contestant_ids := case
+    when p_phase = 'individual' then coalesce(
+      p_winner_contestant_ids,
+      case
+        when p_winner_contestant_id is not null then jsonb_build_array(p_winner_contestant_id)
+        else '[]'::jsonb
+      end
+    )
+    else null
+  end;
+
   insert into public.weekly_immunity_results (
     week,
     phase,
     winner_team,
     winner_contestant_id,
+    winner_contestant_ids,
     players_remaining,
+    bonus_points_awarded,
     updated_by,
     updated_at
   )
@@ -151,7 +231,9 @@ begin
     p_phase,
     p_winner_team,
     p_winner_contestant_id,
+    v_winner_contestant_ids,
     v_players_remaining,
+    v_bonus_points_awarded,
     auth.uid(),
     now()
   )
@@ -160,7 +242,9 @@ begin
     phase = excluded.phase,
     winner_team = excluded.winner_team,
     winner_contestant_id = excluded.winner_contestant_id,
+    winner_contestant_ids = excluded.winner_contestant_ids,
     players_remaining = excluded.players_remaining,
+    bonus_points_awarded = excluded.bonus_points_awarded,
     updated_by = excluded.updated_by,
     updated_at = excluded.updated_at;
 
@@ -168,7 +252,7 @@ begin
 end;
 $$;
 
-comment on function public.admin_set_weekly_immunity_result(integer, text, text, bigint, integer) is
+comment on function public.admin_set_weekly_immunity_result(integer, text, text, bigint, integer, integer, jsonb) is
 'Admin upsert for weekly immunity winner; recalculates all scores.';
 
 -- Optional triggers so contestant/pick edits auto-refresh scores.
