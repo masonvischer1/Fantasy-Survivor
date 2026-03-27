@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import leftArrowIcon from '../assets/arrow-left-circle.svg'
 import rightArrowIcon from '../assets/arrow-right-circle.svg'
 import closeIcon from '../assets/x-circle.svg'
+import { MERGE_DRAFT_SIZE, getRemainingDraftSpots, hasConfirmedMergePick, isMergeDraftAvailable } from '../utils/draftState'
 
 export default function ContestantDetail() {
   const { id } = useParams()
@@ -14,6 +15,7 @@ export default function ContestantDetail() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [draftedIds, setDraftedIds] = useState([])
   const [draftedByTeams, setDraftedByTeams] = useState([])
+  const [viewerTeam, setViewerTeam] = useState([])
   const [isAdmin, setIsAdmin] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -37,12 +39,12 @@ export default function ContestantDetail() {
   }, [id])
 
   useEffect(() => {
-    if (contestant?.id) {
+    if (contestant?.id && hasConfirmedMergePick(viewerTeam)) {
       fetchDraftedByTeams(contestant.id)
     } else {
       setDraftedByTeams([])
     }
-  }, [contestant?.id])
+  }, [contestant?.id, viewerTeam])
 
   async function fetchAllContestants() {
     const { data, error } = await supabase
@@ -121,6 +123,7 @@ export default function ContestantDetail() {
     }
 
     const team = data?.team || []
+    setViewerTeam(team)
     setDraftedIds(team.map(c => c.id))
   }
 
@@ -172,8 +175,8 @@ export default function ContestantDetail() {
       return
     }
 
-    if (currentTeam.length >= 5) {
-      alert('You have already drafted 5 players!')
+    if (currentTeam.length >= MERGE_DRAFT_SIZE) {
+      alert('You have already used your merge draft pick!')
       return
     }
 
@@ -189,6 +192,7 @@ export default function ContestantDetail() {
       return
     }
 
+    setViewerTeam(updatedTeam)
     setDraftedIds(updatedTeam.map(c => c.id))
   }
 
@@ -231,6 +235,20 @@ export default function ContestantDetail() {
 
   const currentGameDay = allContestants.reduce((max, c) => Math.max(max, Number(c.elim_day || 0)), 0)
   const computedScore = (contestant.is_eliminated ? Number(contestant.elim_day || 0) : currentGameDay) + Number(contestant.jury_votes_received || 0)
+  const mergePickConfirmed = hasConfirmedMergePick(viewerTeam)
+  const mergeDraftAvailable = isMergeDraftAvailable(viewerTeam)
+  const picksRemaining = getRemainingDraftSpots(viewerTeam)
+  const isAlreadyDrafted = draftedIds.includes(contestant.id)
+  const draftDisabled = isAlreadyDrafted || contestant.is_eliminated || mergePickConfirmed
+  const draftButtonLabel = contestant.is_eliminated
+    ? 'Eliminated'
+    : isAlreadyDrafted
+      ? 'Drafted'
+      : mergeDraftAvailable
+        ? 'Confirm Merge Pick'
+        : mergePickConfirmed
+          ? 'Merge Pick Locked'
+          : 'Draft Player'
 
   return (
     <div style={{ padding: isMobile ? '0.45rem' : '0.7rem', paddingTop: isMobile ? '3.4rem' : '3rem', textAlign: 'center', position: 'relative' }}>
@@ -300,7 +318,14 @@ export default function ContestantDetail() {
       </button>
 
       <div style={{ width: cardWidth, margin: '0 auto', backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid rgba(209,213,219,0.9)', borderRadius: '12px', padding: isMobile ? '0.7rem' : '0.95rem', backdropFilter: 'blur(2px)', position: 'relative' }}>
-        <p style={{ marginTop: 0, fontSize: isMobile ? '1rem' : '1.1rem' }}>Picks remaining: {Math.max(0, 5 - draftedIds.length)}</p>
+        <p style={{ marginTop: 0, fontSize: isMobile ? '1rem' : '1.1rem' }}>
+          {mergePickConfirmed ? 'Merge pick submitted.' : `Merge picks remaining: ${picksRemaining}`}
+        </p>
+        {!mergePickConfirmed && (
+          <p style={{ margin: '0.35rem 0 0 0', fontSize: isMobile ? '0.84rem' : '0.92rem', color: '#4b5563' }}>
+            Other teams&apos; merge additions stay hidden until you confirm your own pick.
+          </p>
+        )}
 
         <div style={{ marginTop: isMobile ? '0.65rem' : '1rem' }}>
           <img
@@ -320,7 +345,11 @@ export default function ContestantDetail() {
           <p style={{ margin: isMobile ? '0.35rem 0' : '0.45rem 0', fontSize: isMobile ? '1rem' : '1.08rem' }}><b>Score:</b> {computedScore}</p>
           <div style={{ margin: isMobile ? '0.38rem auto 0 auto' : '0.45rem auto 0 auto', maxWidth: '560px' }}>
             <p style={{ margin: 0, fontSize: isMobile ? '0.9rem' : '0.98rem' }}><b>Drafted By:</b></p>
-            {draftedByTeams.length === 0 ? (
+            {!mergePickConfirmed ? (
+              <p style={{ margin: '0.3rem 0 0 0', fontSize: isMobile ? '0.85rem' : '0.92rem', color: '#4b5563' }}>
+                Hidden until you submit your merge pick.
+              </p>
+            ) : draftedByTeams.length === 0 ? (
               <p style={{ margin: '0.3rem 0 0 0', fontSize: isMobile ? '0.85rem' : '0.92rem', color: '#4b5563' }}>No teams yet</p>
             ) : (
               <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
@@ -346,21 +375,21 @@ export default function ContestantDetail() {
 
           <button
             onClick={draftPlayer}
-            disabled={draftedIds.includes(contestant.id) || contestant.is_eliminated}
+            disabled={draftDisabled}
             style={{
-              backgroundColor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'gray' : 'green',
+              backgroundColor: draftDisabled ? 'gray' : 'green',
               color: 'white',
               minWidth: isMobile ? '70%' : 'auto',
               padding: isMobile ? '0.62rem 1rem' : '0.6rem 1.2rem',
               marginTop: isMobile ? '0.8rem' : '1rem',
               border: 'none',
               borderRadius: '999px',
-              cursor: draftedIds.includes(contestant.id) || contestant.is_eliminated ? 'not-allowed' : 'pointer',
+              cursor: draftDisabled ? 'not-allowed' : 'pointer',
               fontFamily: 'Survivant, system-ui, sans-serif',
               fontSize: isMobile ? '1.05rem' : '1.1rem'
             }}
           >
-            {contestant.is_eliminated ? 'Eliminated' : draftedIds.includes(contestant.id) ? 'Drafted' : 'Draft Player'}
+            {draftButtonLabel}
           </button>
 
           {isAdmin && !contestant.is_eliminated && (

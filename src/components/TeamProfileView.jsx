@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { buildContestantMap, hydrateTeamFromContestants } from '../utils/teamHydration'
+import { hasConfirmedMergePick } from '../utils/draftState'
 import leftArrowIcon from '../assets/arrow-left-circle.svg'
 import rightArrowIcon from '../assets/arrow-right-circle.svg'
 import kaloBuff from '../assets/Survivor_50_Kalo_Buff.png'
@@ -24,6 +25,8 @@ export default function TeamProfileView() {
   const [weeklyResults, setWeeklyResults] = useState([])
   const [loading, setLoading] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
+  const [viewerId, setViewerId] = useState(null)
+  const [viewerHasConfirmedMergePick, setViewerHasConfirmedMergePick] = useState(false)
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 640px)')
@@ -41,11 +44,13 @@ export default function TeamProfileView() {
   const fetchAll = async () => {
     setLoading(true)
     const [
+      { data: authData },
       { data: profileData, error: profileError },
       { data: teamsData, error: teamsError },
       { data: contestantsData, error: contestantsError },
       { data: resultsData, error: resultsError }
     ] = await Promise.all([
+      supabase.auth.getUser(),
       supabase
         .from('profiles')
         .select('id, player_name, team_name, avatar_url, team, team_points, bonus_points, manual_points, total_score, weekly_picks')
@@ -53,7 +58,7 @@ export default function TeamProfileView() {
         .single(),
       supabase
         .from('profiles')
-        .select('id, team_name, total_score, team_points, bonus_points, manual_points')
+        .select('id, team_name, team, total_score, team_points, bonus_points, manual_points')
         .order('total_score', { ascending: false }),
       supabase
         .from('contestants')
@@ -67,6 +72,11 @@ export default function TeamProfileView() {
     if (teamsError) console.error(teamsError)
     if (contestantsError) console.error(contestantsError)
     if (resultsError) console.error(resultsError)
+
+    const currentUserId = authData?.user?.id || null
+    const currentViewerProfile = (teamsData || []).find(team => String(team.id) === String(currentUserId))
+    setViewerId(currentUserId)
+    setViewerHasConfirmedMergePick(hasConfirmedMergePick(currentViewerProfile?.team))
 
     setProfile(profileData || null)
     const sortedTeams = [...(teamsData || [])].sort((a, b) => {
@@ -138,6 +148,7 @@ export default function TeamProfileView() {
     () => hydrateTeamFromContestants(profile?.team, contestantMap),
     [profile?.team, contestantMap]
   )
+  const shouldHideTeam = !viewerHasConfirmedMergePick && viewerId && String(viewerId) !== String(id)
   const currentGameDay = useMemo(() => contestants.reduce((max, c) => Math.max(max, c.elim_day || 0), 0), [contestants])
   const weeklyResultsByWeek = useMemo(() => {
     const map = new Map()
@@ -287,62 +298,68 @@ export default function TeamProfileView() {
         </p>
 
         <h2 style={{ marginTop: '1.2rem' }}>Drafted Contestants</h2>
-        {hydratedTeam.length === 0 && <p>No drafted contestants.</p>}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(auto-fit, minmax(112px, 1fr))',
-            gap: contestantGridGap,
-            marginTop: '0.75rem',
-            paddingLeft: sideContentPadding,
-            paddingRight: sideContentPadding
-          }}
-        >
-          {hydratedTeam.map((c, index) => {
-            const isLastOddCard = isMobile && hydratedTeam.length % 2 === 1 && index === hydratedTeam.length - 1
-            return (
+        {shouldHideTeam ? (
+          <p style={{ color: '#4b5563' }}>Hidden until you submit your merge draft pick.</p>
+        ) : (
+          <>
+            {hydratedTeam.length === 0 && <p>No drafted contestants.</p>}
             <div
-              key={c.id}
               style={{
-                border: '2px solid #9ca3af',
-                borderRadius: '8px',
-                padding: isMobile ? '0.32rem' : '0.36rem',
-                background: 'rgba(255,255,255,0.88)',
-                opacity: c.is_eliminated ? 0.58 : 1,
                 display: 'grid',
-                gridTemplateRows: isMobile ? '96px auto auto auto' : '112px auto auto auto',
-                alignContent: 'start',
-                gridColumn: isLastOddCard ? '1 / -1' : 'auto',
-                width: isLastOddCard ? `calc((100% - ${contestantGridGap}) / 2)` : 'auto',
-                justifySelf: isLastOddCard ? 'center' : 'stretch'
+                gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(auto-fit, minmax(112px, 1fr))',
+                gap: contestantGridGap,
+                marginTop: '0.75rem',
+                paddingLeft: sideContentPadding,
+                paddingRight: sideContentPadding
               }}
             >
-              <img
-                src={
-                  (c.is_eliminated
-                    ? (c.elimPhoto_url || c.elim_photo_url)
-                    : c.picture_url) ||
-                  c.picture_url ||
-                  c.elimPhoto_url ||
-                  c.elim_photo_url ||
-                  '/fallback.png'
-                }
-                alt={c.name}
-                style={{
-                  width: '100%',
-                  height: isMobile ? '96px' : '112px',
-                  objectFit: 'cover',
-                  borderRadius: '6px',
-                  filter: c.is_eliminated ? 'grayscale(100%)' : 'none'
-                }}
-              />
-              <p style={{ margin: '0.24rem 0 0 0', fontWeight: 700, fontSize: isMobile ? '0.74rem' : '0.79rem', minHeight: '2.05em', lineHeight: 1.08 }}>{c.name}</p>
-              <p style={{ margin: '0.1rem 0 0 0', color: '#4b5563', fontSize: isMobile ? '0.68rem' : '0.72rem', minHeight: '1.1em' }}>{c.tribe || c.starting_tribe || '-'}</p>
-              <p style={{ margin: '0.14rem 0 0 0', fontWeight: 700, fontSize: isMobile ? '0.7rem' : '0.74rem', minHeight: '1.1em' }}>Points: {getContestantPoints(c)}</p>
+              {hydratedTeam.map((c, index) => {
+                const isLastOddCard = isMobile && hydratedTeam.length % 2 === 1 && index === hydratedTeam.length - 1
+                return (
+                <div
+                  key={c.id}
+                  style={{
+                    border: '2px solid #9ca3af',
+                    borderRadius: '8px',
+                    padding: isMobile ? '0.32rem' : '0.36rem',
+                    background: 'rgba(255,255,255,0.88)',
+                    opacity: c.is_eliminated ? 0.58 : 1,
+                    display: 'grid',
+                    gridTemplateRows: isMobile ? '96px auto auto auto' : '112px auto auto auto',
+                    alignContent: 'start',
+                    gridColumn: isLastOddCard ? '1 / -1' : 'auto',
+                    width: isLastOddCard ? `calc((100% - ${contestantGridGap}) / 2)` : 'auto',
+                    justifySelf: isLastOddCard ? 'center' : 'stretch'
+                  }}
+                >
+                  <img
+                    src={
+                      (c.is_eliminated
+                        ? (c.elimPhoto_url || c.elim_photo_url)
+                        : c.picture_url) ||
+                      c.picture_url ||
+                      c.elimPhoto_url ||
+                      c.elim_photo_url ||
+                      '/fallback.png'
+                    }
+                    alt={c.name}
+                    style={{
+                      width: '100%',
+                      height: isMobile ? '96px' : '112px',
+                      objectFit: 'cover',
+                      borderRadius: '6px',
+                      filter: c.is_eliminated ? 'grayscale(100%)' : 'none'
+                    }}
+                  />
+                  <p style={{ margin: '0.24rem 0 0 0', fontWeight: 700, fontSize: isMobile ? '0.74rem' : '0.79rem', minHeight: '2.05em', lineHeight: 1.08 }}>{c.name}</p>
+                  <p style={{ margin: '0.1rem 0 0 0', color: '#4b5563', fontSize: isMobile ? '0.68rem' : '0.72rem', minHeight: '1.1em' }}>{c.tribe || c.starting_tribe || '-'}</p>
+                  <p style={{ margin: '0.14rem 0 0 0', fontWeight: 700, fontSize: isMobile ? '0.7rem' : '0.74rem', minHeight: '1.1em' }}>Points: {getContestantPoints(c)}</p>
+                </div>
+                )
+              })}
             </div>
-            )
-          })}
-        </div>
+          </>
+        )}
 
         <h2 style={{ marginTop: '1.2rem' }}>Weekly Picks</h2>
         {weeklyPickRows.length === 0 && <p>No weekly picks submitted yet.</p>}

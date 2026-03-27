@@ -4,13 +4,17 @@ import { supabase } from '../supabaseClient'
 import siteLogo from '../assets/Logo.png'
 import idolImg from '../assets/idol.png'
 import { buildContestantMap, hydrateTeamFromContestants } from '../utils/teamHydration'
+import { hasConfirmedMergePick } from '../utils/draftState'
 
 export default function Teams() {
   const navigate = useNavigate()
   const [teams, setTeams] = useState([])
+  const [viewerId, setViewerId] = useState(null)
+  const [viewerHasConfirmedMergePick, setViewerHasConfirmedMergePick] = useState(false)
 
   const fetchAllTeams = async () => {
-    const [{ data: profileData, error: profileError }, { data: contestantData, error: contestantError }] = await Promise.all([
+    const [{ data: authData }, { data: profileData, error: profileError }, { data: contestantData, error: contestantError }] = await Promise.all([
+      supabase.auth.getUser(),
       supabase
         .from('profiles')
         .select('id, team_name, player_name, avatar_url, team, team_points, bonus_points, manual_points, total_score')
@@ -29,6 +33,11 @@ export default function Teams() {
       console.error('Error fetching contestants:', contestantError)
       return
     }
+
+    const currentUserId = authData?.user?.id || null
+    const currentViewerProfile = (profileData || []).find(profile => String(profile.id) === String(currentUserId))
+    setViewerId(currentUserId)
+    setViewerHasConfirmedMergePick(hasConfirmedMergePick(currentViewerProfile?.team))
 
     const contestantMap = buildContestantMap(contestantData)
     const hydratedProfiles = (profileData || []).map(profile => ({
@@ -119,6 +128,7 @@ export default function Teams() {
         const teamPoints = profile.team_points || 0
         const bonusPoints = profile.bonus_points || 0
         const totalPoints = profile.total_score ?? (teamPoints + bonusPoints + (profile.manual_points || 0))
+        const shouldHideTeam = !viewerHasConfirmedMergePick && viewerId && String(profile.id) !== String(viewerId)
         const rank = index + 1
         const isGold = rank === 1
         const isSilver = rank === 2
@@ -203,30 +213,36 @@ export default function Teams() {
               paddingBottom: '0.25rem'
             }}
           >
-            {profile.team?.map((c) => (
-              <div key={c.id} style={{ textAlign: 'center', width: '54px', flex: '0 0 auto' }}>
-                <img
-                  src={
-                    (c.is_eliminated
-                      ? (c.elimPhoto_url || c.elim_photo_url)
-                      : c.picture_url) ||
-                    c.picture_url ||
-                    c.elimPhoto_url ||
-                    c.elim_photo_url ||
-                    '/fallback.png'
-                  }
-                  alt={c.name}
-                  style={{
-                    width: '46px',
-                    height: '46px',
-                    objectFit: 'cover',
-                    borderRadius: '6px',
-                    filter: c.is_eliminated ? 'grayscale(100%)' : 'none'
-                  }}
-                />
-                <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.62rem', lineHeight: '1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</p>
-              </div>
-            ))}
+            {shouldHideTeam ? (
+              <p style={{ margin: 0, color: '#4b5563', fontSize: '0.82rem', lineHeight: 1.3 }}>
+                Hidden until you submit your merge draft pick.
+              </p>
+            ) : (
+              profile.team?.map((c) => (
+                <div key={c.id} style={{ textAlign: 'center', width: '54px', flex: '0 0 auto' }}>
+                  <img
+                    src={
+                      (c.is_eliminated
+                        ? (c.elimPhoto_url || c.elim_photo_url)
+                        : c.picture_url) ||
+                      c.picture_url ||
+                      c.elimPhoto_url ||
+                      c.elim_photo_url ||
+                      '/fallback.png'
+                    }
+                    alt={c.name}
+                    style={{
+                      width: '46px',
+                      height: '46px',
+                      objectFit: 'cover',
+                      borderRadius: '6px',
+                      filter: c.is_eliminated ? 'grayscale(100%)' : 'none'
+                    }}
+                  />
+                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.62rem', lineHeight: '1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</p>
+                </div>
+              ))
+            )}
           </div>
         </div>
         )
