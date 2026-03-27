@@ -3,8 +3,16 @@ import { supabase } from "../supabaseClient";
 import siteLogo from "../assets/Logo.png";
 import leftArrowIcon from "../assets/arrow-left-circle.svg";
 import rightArrowIcon from "../assets/arrow-right-circle.svg";
+import kaloBuff from "../assets/Survivor_50_Kalo_Buff.png";
+import cilaBuff from "../assets/Survivor_50_Cila_Buff.png";
+import vatuBuff from "../assets/Survivor_50_Vatu_Buff.png";
 
 const TOTAL_EPISODES = 14;
+const TEAMS = [
+  { name: "Kalo", flagSrc: kaloBuff },
+  { name: "Cila", flagSrc: cilaBuff },
+  { name: "Vatu", flagSrc: vatuBuff },
+];
 
 function getContestantImage(contestant) {
   return (
@@ -25,6 +33,37 @@ function resolveContestantFromPickValue(pickValue, contestantsById, contestants)
 
   const normalizedPickValue = String(pickValue);
   return contestantsById.get(normalizedPickValue) || contestants.find((contestant) => String(contestant.name) === normalizedPickValue) || null;
+}
+
+function getTeamPick(pickValue) {
+  if (!pickValue) return null;
+  return TEAMS.find((team) => team.name === String(pickValue)) || null;
+}
+
+function getPickPresentation(pickValue, contestantsById, contestants) {
+  const teamPick = getTeamPick(pickValue);
+  if (teamPick) {
+    return {
+      label: teamPick.name,
+      imageSrc: teamPick.flagSrc,
+      contestantId: null,
+    };
+  }
+
+  const contestant = resolveContestantFromPickValue(pickValue, contestantsById, contestants);
+  if (contestant) {
+    return {
+      label: getContestantLabel(contestant),
+      imageSrc: getContestantImage(contestant),
+      contestantId: String(contestant.id),
+    };
+  }
+
+  return {
+    label: String(pickValue || "No Pick"),
+    imageSrc: null,
+    contestantId: null,
+  };
 }
 
 export default function WeeklyPicks({ currentWeek = 1 }) {
@@ -264,7 +303,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
     : null;
   const resolvedPlayersRemaining = Number(selectedWeeklyResult?.players_remaining || 0);
   const hasResolvedWinner = !!resolvedWinnerId;
-  const ownPickedContestant = resolveContestantFromPickValue(currentWeekPick, contestantsById, contestants);
+  const ownPickPresentation = getPickPresentation(currentWeekPick, contestantsById, contestants);
 
   const handleAdminWinnerSelect = (event) => {
     const winnerId = event.target.value;
@@ -325,16 +364,16 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
 
     const rows = Array.from(counts.entries())
       .map(([contestantId, count]) => {
-        const contestant = resolveContestantFromPickValue(contestantId, contestantsById, contestants);
+        const pickPresentation = getPickPresentation(contestantId, contestantsById, contestants);
         return {
           contestantId,
-          contestant,
+          pickPresentation,
           count,
         };
       })
       .sort((a, b) => {
         if (b.count !== a.count) return b.count - a.count;
-        return getContestantLabel(a.contestant).localeCompare(getContestantLabel(b.contestant));
+        return a.pickPresentation.label.localeCompare(b.pickPresentation.label);
       });
 
     return {
@@ -485,9 +524,9 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
       {hasOwnPickThisWeek && (
         <div style={{ width: "100%", maxWidth: "980px", margin: "24px auto 0 auto" }}>
           <h2 style={{ textAlign: "center", marginBottom: "12px", color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>Week {selectedWeek} Picks</h2>
-          {ownPickedContestant && (
+          {ownPickPresentation && currentWeekPick && (
             <p style={{ textAlign: "center", color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)", marginTop: 0 }}>
-              Your pick: <b>{getContestantLabel(ownPickedContestant)}</b>
+              Your pick: <b>{ownPickPresentation.label}</b>
             </p>
           )}
           {leagueProfiles.length === 0 && (
@@ -506,15 +545,18 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
             >
               {leagueProfiles.map((p) => {
                 const pickId = String(p.weekly_picks?.[selectedWeek] || "");
-                const pickedContestant = resolveContestantFromPickValue(p.weekly_picks?.[selectedWeek], contestantsById, contestants);
-                const pickedContestantId = pickedContestant ? String(pickedContestant.id) : pickId;
-                const isWinningPick = hasResolvedWinner && pickedContestantId === resolvedWinnerId;
-                const isLosingPick = hasResolvedWinner && pickedContestantId && pickedContestantId !== resolvedWinnerId;
+                const pickPresentation = getPickPresentation(p.weekly_picks?.[selectedWeek], contestantsById, contestants);
+                const pickedContestantId = pickPresentation.contestantId || pickId;
+                const isResolvedWeek = !!selectedWeeklyResult;
+                const isWinningPick = selectedWeeklyResult?.phase === "tribal"
+                  ? String(p.weekly_picks?.[selectedWeek]) === String(selectedWeeklyResult?.winner_team)
+                  : hasResolvedWinner && pickedContestantId === resolvedWinnerId;
+                const isLosingPick = isResolvedWeek && !!p.weekly_picks?.[selectedWeek] && !isWinningPick;
 
                 return (
                   <div
                     key={p.id}
-                    data-status={hasResolvedWinner ? (isWinningPick ? "winner" : "loser") : "pending"}
+                    data-status={isResolvedWeek ? (isWinningPick ? "winner" : "loser") : "pending"}
                     style={{
                       flex: "0 0 calc((100% - 24px) / 3)",
                       minWidth: "112px",
@@ -547,10 +589,10 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                       {p.team_name || "Unnamed Team"}
                     </p>
 
-                    {pickedContestant ? (
+                    {pickPresentation.imageSrc ? (
                       <img
-                        src={getContestantImage(pickedContestant)}
-                        alt={getContestantLabel(pickedContestant)}
+                        src={pickPresentation.imageSrc}
+                        alt={pickPresentation.label}
                         style={{
                           width: "100%",
                           height: "clamp(180px, 46vw, 260px)",
@@ -589,7 +631,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                         lineHeight: 1.2
                       }}
                     >
-                      {pickedContestant ? getContestantLabel(pickedContestant) : "No Pick"}
+                      {pickPresentation.label || "No Pick"}
                     </p>
 
                     {isWinningPick && (
@@ -602,7 +644,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                           fontSize: "0.8rem",
                         }}
                       >
-                        +{resolvedPlayersRemaining} Points
+                        {selectedWeeklyResult?.phase === "tribal" ? "+5 Points" : `+${resolvedPlayersRemaining} Points`}
                       </p>
                     )}
                   </div>
@@ -642,8 +684,8 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                     }}
                   >
                     <img
-                      src={getContestantImage(row.contestant)}
-                      alt={getContestantLabel(row.contestant)}
+                      src={row.pickPresentation.imageSrc || "/fallback.png"}
+                      alt={row.pickPresentation.label}
                       style={{
                         width: "48px",
                         height: "48px",
@@ -652,7 +694,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
                         backgroundColor: "#e5e7eb",
                       }}
                     />
-                    <span style={{ fontWeight: "bold", color: "#111827" }}>{getContestantLabel(row.contestant)}</span>
+                    <span style={{ fontWeight: "bold", color: "#111827" }}>{row.pickPresentation.label}</span>
                     <span style={{ color: "#374151", fontWeight: "bold" }}>{row.count}</span>
                   </div>
                 ))}

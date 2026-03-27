@@ -246,7 +246,7 @@ export default function Teams() {
               </p>
             ) : (
               profile.team?.map((c) => (
-                <div key={c.id} style={{ textAlign: 'center', width: '50px', flex: '0 0 auto' }}>
+                <div key={c.id} style={{ textAlign: 'center', width: '55px', flex: '0 0 auto' }}>
                   <img
                     src={
                       (c.is_eliminated
@@ -259,8 +259,8 @@ export default function Teams() {
                     }
                     alt={c.name}
                     style={{
-                      width: '42px',
-                      height: '42px',
+                      width: '47px',
+                      height: '47px',
                       objectFit: 'cover',
                       borderRadius: '6px',
                       filter: c.is_eliminated ? 'grayscale(100%)' : 'none'
