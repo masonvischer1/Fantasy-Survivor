@@ -8,6 +8,7 @@ import cilaBuff from "../assets/Survivor_50_Cila_Buff.png";
 import vatuBuff from "../assets/Survivor_50_Vatu_Buff.png";
 
 const TOTAL_EPISODES = 14;
+const DEFAULT_OPEN_WEEK = 6;
 const TEAMS = [
   { name: "Kalo", flagSrc: kaloBuff },
   { name: "Cila", flagSrc: cilaBuff },
@@ -79,11 +80,11 @@ function getPickColor(label) {
   return `hsl(${hue} 62% 56%)`;
 }
 
-export default function WeeklyPicks({ currentWeek = 1 }) {
+export default function WeeklyPicks({ currentWeek = DEFAULT_OPEN_WEEK }) {
   const [profile, setProfile] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [selectedWeek, setSelectedWeek] = useState(currentWeek);
+  const [selectedWeek, setSelectedWeek] = useState(DEFAULT_OPEN_WEEK);
   const [leagueProfiles, setLeagueProfiles] = useState([]);
   const [contestants, setContestants] = useState([]);
   const [loading, setLoading] = useState(false);
