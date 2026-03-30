@@ -101,7 +101,7 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
       const { data, error } = await supabase
         .from("weekly_immunity_results")
         .select("week, winner_team, winner_contestant_id, winner_contestant_ids")
-        .order("week", { ascending: true });
+        .order("week", { ascending: false });
 
       if (error) {
         console.error(error);
@@ -110,18 +110,15 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
 
       if (!isMounted) return;
 
-      const resolvedWeeks = (data || [])
-        .filter((row) => {
-          const hasIndividualWinners = Array.isArray(row?.winner_contestant_ids) && row.winner_contestant_ids.length > 0;
-          return !!row?.winner_team || !!row?.winner_contestant_id || hasIndividualWinners;
-        })
-        .map((row) => Number(row.week))
-        .filter((week) => !Number.isNaN(week));
+      const latestResolvedRow = (data || []).find((row) => {
+        const hasIndividualWinners = Array.isArray(row?.winner_contestant_ids) && row.winner_contestant_ids.length > 0;
+        return !!row?.winner_team || !!row?.winner_contestant_id || hasIndividualWinners;
+      });
 
-      const latestResolvedWeek = resolvedWeeks.length > 0 ? Math.max(...resolvedWeeks) : 0;
+      const latestResolvedWeek = Number(latestResolvedRow?.week || 0);
       const nextOpenWeek = Math.min(TOTAL_EPISODES, Math.max(1, latestResolvedWeek + 1));
 
-      setSelectedWeek((prev) => (prev === currentWeek ? nextOpenWeek : prev));
+      setSelectedWeek(nextOpenWeek);
     };
 
     Promise.resolve().then(() => {
