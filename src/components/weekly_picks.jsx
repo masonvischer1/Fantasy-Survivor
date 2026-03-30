@@ -110,19 +110,16 @@ export default function WeeklyPicks({ currentWeek = 1 }) {
 
       if (!isMounted) return;
 
-      const resolvedWeeks = new Set(
-        (data || [])
-          .filter((row) => {
-            const hasIndividualWinners = Array.isArray(row?.winner_contestant_ids) && row.winner_contestant_ids.length > 0;
-            return !!row?.winner_team || !!row?.winner_contestant_id || hasIndividualWinners;
-          })
-          .map((row) => Number(row.week))
-      );
+      const resolvedWeeks = (data || [])
+        .filter((row) => {
+          const hasIndividualWinners = Array.isArray(row?.winner_contestant_ids) && row.winner_contestant_ids.length > 0;
+          return !!row?.winner_team || !!row?.winner_contestant_id || hasIndividualWinners;
+        })
+        .map((row) => Number(row.week))
+        .filter((week) => !Number.isNaN(week));
 
-      let nextOpenWeek = 1;
-      while (nextOpenWeek < TOTAL_EPISODES && resolvedWeeks.has(nextOpenWeek)) {
-        nextOpenWeek += 1;
-      }
+      const latestResolvedWeek = resolvedWeeks.length > 0 ? Math.max(...resolvedWeeks) : 0;
+      const nextOpenWeek = Math.min(TOTAL_EPISODES, Math.max(1, latestResolvedWeek + 1));
 
       setSelectedWeek((prev) => (prev === currentWeek ? nextOpenWeek : prev));
     };
