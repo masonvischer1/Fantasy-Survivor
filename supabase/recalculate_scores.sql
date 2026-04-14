@@ -99,6 +99,21 @@ begin
       on c.id = nullif(t.player_json ->> 'id', '')::bigint
     group by p.id
   ),
+  normalized_weekly_results as (
+    select
+      r.week,
+      r.phase,
+      r.winner_team,
+      coalesce(
+        nullif(r.winner_contestant_ids, '[]'::jsonb),
+        case
+          when r.winner_contestant_id is not null then jsonb_build_array(r.winner_contestant_id)
+          else '[]'::jsonb
+        end
+      ) as normalized_winner_ids,
+      coalesce(r.bonus_points_awarded, r.players_remaining, 0) as awarded_points
+    from public.weekly_immunity_results r
+  ),
   bonus_points as (
     select
       p.id as profile_id,
@@ -109,35 +124,29 @@ begin
             then 5
           when r.phase = 'individual'
                and (
-                 (p.weekly_picks ->> r.week::text) = r.winner_contestant_id::text
-                 or
-                 (p.weekly_picks ->> r.week::text) = (
-                   select c2.name from public.contestants c2 where c2.id = r.winner_contestant_id
-                 )
-                 or
                  exists (
                    select 1
-                   from jsonb_array_elements_text(coalesce(r.winner_contestant_ids, '[]'::jsonb)) winner_id
+                   from jsonb_array_elements_text(r.normalized_winner_ids) winner_id
                    where winner_id = (p.weekly_picks ->> r.week::text)
                  )
                  or
                  exists (
                    select 1
-                   from public.contestants c3
-                   where c3.name = (p.weekly_picks ->> r.week::text)
+                   from public.contestants c2
+                   where c2.name = (p.weekly_picks ->> r.week::text)
                      and exists (
                        select 1
-                       from jsonb_array_elements_text(coalesce(r.winner_contestant_ids, '[]'::jsonb)) winner_id
-                       where winner_id = c3.id::text
+                       from jsonb_array_elements_text(r.normalized_winner_ids) winner_id
+                       where winner_id = c2.id::text
                      )
                  )
                )
-            then coalesce(r.bonus_points_awarded, r.players_remaining, 0)
+            then r.awarded_points
           else 0
         end
       ), 0) as bonus_points
     from public.profiles p
-    left join public.weekly_immunity_results r on true
+    left join normalized_weekly_results r on true
     group by p.id
   )
   update public.profiles p
@@ -157,6 +166,7 @@ comment on function public.recalculate_scores(integer) is
 
 -- Admin helper: set weekly immunity winner and recalculate immediately.
 drop function if exists public.admin_set_weekly_immunity_result(integer, text, text, bigint, integer);
+drop function if exists public.admin_set_weekly_immunity_result(integer, text, text, bigint, integer, integer, jsonb);
 
 create or replace function public.admin_set_weekly_immunity_result(
   p_week integer,
@@ -174,6 +184,7 @@ set search_path = public
 as $$
 declare
   v_is_admin boolean;
+  v_primary_winner_contestant_id bigint;
   v_players_remaining integer;
   v_bonus_points_awarded integer;
   v_winner_contestant_ids jsonb;
@@ -215,6 +226,18 @@ begin
     else null
   end;
 
+  v_primary_winner_contestant_id := case
+    when p_phase = 'individual' then coalesce(
+      p_winner_contestant_id,
+      (
+        select nullif(value, '')::bigint
+        from jsonb_array_elements_text(coalesce(v_winner_contestant_ids, '[]'::jsonb)) as winner(value)
+        limit 1
+      )
+    )
+    else null
+  end;
+
   insert into public.weekly_immunity_results (
     week,
     phase,
@@ -230,7 +253,7 @@ begin
     p_week,
     p_phase,
     p_winner_team,
-    p_winner_contestant_id,
+    v_primary_winner_contestant_id,
     v_winner_contestant_ids,
     v_players_remaining,
     v_bonus_points_awarded,
