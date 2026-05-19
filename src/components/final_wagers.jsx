@@ -145,12 +145,9 @@ export default function FinalWagers() {
   );
 
   const resolvedWinner = useMemo(() => resolveSeasonWinner(contestants), [contestants]);
-  const earnedBonusPoints = Math.max(0, Number(profile?.bonus_points || 0));
+  const currentBonusPoints = Math.max(0, Number(profile?.bonus_points || 0));
   const lockedWagerPoints = Math.max(0, Number(profile?.final_wager_points || 0));
   const hasSubmittedWager = !!profile?.final_winner_pick && lockedWagerPoints > 0;
-  const availableBonusPoints = hasSubmittedWager
-    ? Math.max(0, earnedBonusPoints - lockedWagerPoints)
-    : earnedBonusPoints;
   const ownPickedContestant = contestantsById.get(String(profile?.final_winner_pick || ""));
   const ownWager = lockedWagerPoints;
   const ownWagerOutcome = resolvedWinner && ownPickedContestant
@@ -160,8 +157,8 @@ export default function FinalWagers() {
     : "pending";
 
   const wagerOptions = useMemo(
-    () => Array.from({ length: availableBonusPoints }, (_, index) => String(index + 1)),
-    [availableBonusPoints]
+    () => Array.from({ length: currentBonusPoints }, (_, index) => String(index + 1)),
+    [currentBonusPoints]
   );
 
   const submitWager = async () => {
@@ -176,7 +173,7 @@ export default function FinalWagers() {
       return;
     }
 
-    if (parsedWager > availableBonusPoints) {
+    if (parsedWager > currentBonusPoints) {
       alert("You cannot wager more bonus points than you currently have.");
       return;
     }
@@ -231,16 +228,13 @@ export default function FinalWagers() {
       <div style={{ width: "100%", maxWidth: "980px", margin: "0 auto" }}>
         <div style={{ marginBottom: "16px", padding: "14px", backgroundColor: "rgba(255,255,255,0.86)", borderRadius: "10px", border: "1px solid rgba(209,213,219,0.9)", backdropFilter: "blur(2px)" }}>
           <p style={{ margin: "0 0 8px 0", textAlign: "center", color: "#111827", fontWeight: "bold" }}>
-            Earned Bonus Points: {earnedBonusPoints}
+            Current Bonus Points: {currentBonusPoints}
           </p>
           {hasSubmittedWager && (
             <p style={{ margin: "0 0 8px 0", textAlign: "center", color: "#374151", fontWeight: "bold" }}>
               Locked Final Wager: {lockedWagerPoints}
             </p>
           )}
-          <p style={{ margin: "0 0 8px 0", textAlign: "center", color: "#374151", fontWeight: "bold" }}>
-            Bonus Points Available to Wager: {hasSubmittedWager ? 0 : availableBonusPoints}
-          </p>
           <p style={{ margin: 0, textAlign: "center", color: "#374151" }}>
             Current Total Score: {Number(profile?.total_score || 0)}
           </p>
@@ -264,7 +258,7 @@ export default function FinalWagers() {
               {ownWagerOutcome === "winner" ? ` | +${ownWager} points` : ownWagerOutcome === "loser" ? ` | -${ownWager} points` : ""}
             </p>
           </div>
-        ) : availableBonusPoints === 0 ? (
+        ) : currentBonusPoints === 0 ? (
           <div style={{ marginBottom: "18px", padding: "14px", backgroundColor: "rgba(255,255,255,0.86)", borderRadius: "10px", border: "1px solid rgba(209,213,219,0.9)", backdropFilter: "blur(2px)" }}>
             <p style={{ margin: 0, textAlign: "center", color: "#111827", fontWeight: "bold" }}>
               You need at least 1 bonus point to place a final wager.
