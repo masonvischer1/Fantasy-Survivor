@@ -59,6 +59,7 @@ export default function FinalWagers() {
 
     if (error) {
       console.error(error);
+      setLeagueProfiles([]);
       return;
     }
 
@@ -103,7 +104,7 @@ export default function FinalWagers() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("bonus_points, total_score, final_winner_pick, final_wager_points")
+        .select("bonus_points, total_score")
         .eq("id", user.id)
         .single();
 
@@ -112,12 +113,35 @@ export default function FinalWagers() {
         return;
       }
 
-      setProfile(data || null);
-      if (data?.final_winner_pick) {
-        setSelectedWinnerId(String(data.final_winner_pick));
+      const baseProfile = {
+        ...(data || {}),
+        final_winner_pick: null,
+        final_wager_points: 0,
+      };
+
+      const { data: finalWagerData, error: finalWagerError } = await supabase
+        .from("profiles")
+        .select("final_winner_pick, final_wager_points")
+        .eq("id", user.id)
+        .single();
+
+      if (finalWagerError) {
+        console.error(finalWagerError);
+        setProfile(baseProfile);
+        return;
       }
-      if (data?.final_wager_points) {
-        setSelectedWagerPoints(String(data.final_wager_points));
+
+      const mergedProfile = {
+        ...baseProfile,
+        ...(finalWagerData || {}),
+      };
+
+      setProfile(mergedProfile);
+      if (mergedProfile?.final_winner_pick) {
+        setSelectedWinnerId(String(mergedProfile.final_winner_pick));
+      }
+      if (mergedProfile?.final_wager_points) {
+        setSelectedWagerPoints(String(mergedProfile.final_wager_points));
         await fetchSubmittedWagers();
       }
     };
@@ -197,6 +221,7 @@ export default function FinalWagers() {
 
     if (error) {
       console.error(error);
+      alert("Final wager columns are not available in Supabase yet. Run the SQL update first.");
       setLoading(false);
       return;
     }

@@ -54,7 +54,7 @@ export default function TeamProfileView() {
       supabase.auth.getUser(),
       supabase
         .from('profiles')
-        .select('id, player_name, team_name, avatar_url, team, team_points, bonus_points, manual_points, total_score, weekly_picks, final_winner_pick, final_wager_points')
+        .select('id, player_name, team_name, avatar_url, team, team_points, bonus_points, manual_points, total_score, weekly_picks')
         .eq('id', id)
         .single(),
       supabase
@@ -74,12 +74,28 @@ export default function TeamProfileView() {
     if (contestantsError) console.error(contestantsError)
     if (resultsError) console.error(resultsError)
 
+    const { data: finalWagerData, error: finalWagerError } = await supabase
+      .from('profiles')
+      .select('final_winner_pick, final_wager_points')
+      .eq('id', id)
+      .single()
+
+    if (finalWagerError) console.error(finalWagerError)
+
     const currentUserId = authData?.user?.id || null
     const currentViewerProfile = (teamsData || []).find(team => String(team.id) === String(currentUserId))
     setViewerId(currentUserId)
     setViewerHasConfirmedMergePick(hasConfirmedMergePick(currentViewerProfile?.team))
 
-    setProfile(profileData || null)
+    setProfile(
+      profileData
+        ? {
+            ...profileData,
+            final_winner_pick: finalWagerData?.final_winner_pick ?? null,
+            final_wager_points: finalWagerData?.final_wager_points ?? 0
+          }
+        : null
+    )
     const sortedTeams = [...(teamsData || [])].sort((a, b) => {
       const aTotal = a.total_score ?? ((a.team_points || 0) + (a.bonus_points || 0) + (a.manual_points || 0))
       const bTotal = b.total_score ?? ((b.team_points || 0) + (b.bonus_points || 0) + (b.manual_points || 0))
