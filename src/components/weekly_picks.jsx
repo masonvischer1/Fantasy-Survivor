@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import siteLogo from "../assets/Logo.png";
 import leftArrowIcon from "../assets/arrow-left-circle.svg";
@@ -7,7 +8,7 @@ import kaloBuff from "../assets/Survivor_50_Kalo_Buff.png";
 import cilaBuff from "../assets/Survivor_50_Cila_Buff.png";
 import vatuBuff from "../assets/Survivor_50_Vatu_Buff.png";
 
-const TOTAL_EPISODES = 14;
+const TOTAL_EPISODES = 15;
 const DEFAULT_OPEN_WEEK = 6;
 const TEAMS = [
   { name: "Kalo", flagSrc: kaloBuff },
@@ -481,6 +482,9 @@ export default function WeeklyPicks({ currentWeek = DEFAULT_OPEN_WEEK }) {
       </h1>
       <p style={{ textAlign: "center", marginBottom: "20px", color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
         Pick the individual immunity winner each week. Admin can award the selected bonus value for any winning picks.
+      </p>
+      <p style={{ textAlign: "center", marginBottom: "20px", color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
+        <Link to="/final-wagers" style={{ color: "#fef08a", fontWeight: "bold" }}>Go to Final Wagers</Link>
       </p>
 
       <div style={{ width: "100%", maxWidth: "980px", margin: "0 auto 14px auto" }}>

@@ -4,6 +4,12 @@
 
 begin;
 
+alter table public.profiles
+  add column if not exists final_winner_pick bigint null references public.contestants(id) on delete set null;
+
+alter table public.profiles
+  add column if not exists final_wager_points integer null default 0;
+
 -- Global weekly winner source of truth (admin-controlled).
 create table if not exists public.weekly_immunity_results (
   week integer primary key,
@@ -148,21 +154,44 @@ begin
     from public.profiles p
     left join normalized_weekly_results r on true
     group by p.id
+  ),
+  resolved_final_winner as (
+    select c.id
+    from public.contestants c
+    where coalesce(c.jury_votes_received, 0) = (
+      select max(coalesce(c2.jury_votes_received, 0))
+      from public.contestants c2
+    )
+      and coalesce(c.jury_votes_received, 0) > 0
+    order by c.id
+  ),
+  final_wager_points as (
+    select
+      p.id as profile_id,
+      case
+        when coalesce(p.final_wager_points, 0) <= 0 or p.final_winner_pick is null then 0
+        when (select count(*) from resolved_final_winner) != 1 then 0
+        when p.final_winner_pick = (select id from resolved_final_winner limit 1) then coalesce(p.final_wager_points, 0)
+        else coalesce(p.final_wager_points, 0) * -1
+      end as final_wager_points
+    from public.profiles p
   )
   update public.profiles p
   set
     team_points = rp.team_points,
     bonus_points = bp.bonus_points,
-    total_score = rp.team_points + bp.bonus_points + coalesce(p.manual_points, 0)
+    total_score = rp.team_points + bp.bonus_points + fwp.final_wager_points + coalesce(p.manual_points, 0)
   from roster_points rp
   join bonus_points bp
     on bp.profile_id = rp.profile_id
+  join final_wager_points fwp
+    on fwp.profile_id = rp.profile_id
   where p.id = rp.profile_id;
 end;
 $$;
 
 comment on function public.recalculate_scores(integer) is
-'Recomputes team_points, bonus_points, and total_score for all profiles.';
+'Recomputes team_points, bonus_points, final wager effects, and total_score for all profiles.';
 
 -- Admin helper: set weekly immunity winner and recalculate immediately.
 drop function if exists public.admin_set_weekly_immunity_result(integer, text, text, bigint, integer);
@@ -293,12 +322,12 @@ $$;
 
 drop trigger if exists trg_recalc_on_contestants on public.contestants;
 create trigger trg_recalc_on_contestants
-after insert or update of is_eliminated, elim_day on public.contestants
+after insert or update of is_eliminated, elim_day, jury_votes_received on public.contestants
 for each statement execute function public.trigger_recalculate_scores();
 
 drop trigger if exists trg_recalc_on_profiles_picks on public.profiles;
 create trigger trg_recalc_on_profiles_picks
-after update of weekly_picks, team, manual_points on public.profiles
+after update of weekly_picks, team, manual_points, final_winner_pick, final_wager_points on public.profiles
 for each statement execute function public.trigger_recalculate_scores();
 
 drop trigger if exists trg_recalc_on_weekly_results on public.weekly_immunity_results;

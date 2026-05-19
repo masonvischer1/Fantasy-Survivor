@@ -217,6 +217,31 @@ export default function ContestantDetail() {
     }
   }
 
+  const setJuryVotes = async () => {
+    const juryVotesInput = prompt(`Enter the number of jury votes received by ${contestant.name} (Cancel to abort)`, String(contestant.jury_votes_received || 0))
+    if (juryVotesInput === null) return
+
+    const parsedVotes = Number.parseInt(juryVotesInput, 10)
+    if (Number.isNaN(parsedVotes) || parsedVotes < 0) {
+      alert('Please enter a valid non-negative number for jury votes.')
+      return
+    }
+
+    const { error } = await supabase
+      .from('contestants')
+      .update({ jury_votes_received: parsedVotes })
+      .eq('id', contestant.id)
+
+    if (error) {
+      console.error(error)
+      alert(`Could not save jury votes: ${error.message}`)
+      return
+    }
+
+    fetchContestant()
+    alert(`${contestant.name} now has ${parsedVotes} jury vote${parsedVotes === 1 ? '' : 's'}.`)
+  }
+
   const next = () => {
     if (allContestants.length === 0) return
     const newIndex = (currentIndex + 1) % allContestants.length
@@ -343,6 +368,7 @@ export default function ContestantDetail() {
           <p style={{ margin: isMobile ? '0.35rem 0' : '0.45rem 0', fontSize: isMobile ? '1rem' : '1.08rem' }}><b>Season:</b> {contestant.season}</p>
           <p style={{ margin: isMobile ? '0.35rem 0' : '0.45rem 0', fontSize: isMobile ? '1rem' : '1.08rem' }}><b>Tribe:</b> {contestant.tribe}</p>
           <p style={{ margin: isMobile ? '0.35rem 0' : '0.45rem 0', fontSize: isMobile ? '1rem' : '1.08rem' }}><b>Score:</b> {computedScore}</p>
+          <p style={{ margin: isMobile ? '0.35rem 0' : '0.45rem 0', fontSize: isMobile ? '1rem' : '1.08rem' }}><b>Jury Votes:</b> {Number(contestant.jury_votes_received || 0)}</p>
           <div style={{ margin: isMobile ? '0.38rem auto 0 auto' : '0.45rem auto 0 auto', maxWidth: '560px' }}>
             <p style={{ margin: 0, fontSize: isMobile ? '0.9rem' : '0.98rem' }}><b>Drafted By:</b></p>
             {!mergePickConfirmed ? (
@@ -409,6 +435,26 @@ export default function ContestantDetail() {
               }}
             >
               Eliminate Player
+            </button>
+          )}
+
+          {isAdmin && (
+            <button
+              onClick={setJuryVotes}
+              style={{
+                marginTop: '0.7rem',
+                backgroundColor: '#1d4ed8',
+                color: 'white',
+                minWidth: isMobile ? '70%' : 'auto',
+                padding: isMobile ? '0.56rem 0.95rem' : '0.5rem 1rem',
+                border: 'none',
+                borderRadius: '999px',
+                cursor: 'pointer',
+                fontFamily: 'Survivant, system-ui, sans-serif',
+                fontSize: isMobile ? '1.02rem' : '1.08rem'
+              }}
+            >
+              Set Jury Votes
             </button>
           )}
         </div>

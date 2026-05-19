@@ -23,6 +23,7 @@ export default function TeamProfileView() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [contestants, setContestants] = useState([])
   const [weeklyResults, setWeeklyResults] = useState([])
+  const [finalWagerWinner, setFinalWagerWinner] = useState(null)
   const [loading, setLoading] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const [viewerId, setViewerId] = useState(null)
@@ -53,7 +54,7 @@ export default function TeamProfileView() {
       supabase.auth.getUser(),
       supabase
         .from('profiles')
-        .select('id, player_name, team_name, avatar_url, team, team_points, bonus_points, manual_points, total_score, weekly_picks')
+        .select('id, player_name, team_name, avatar_url, team, team_points, bonus_points, manual_points, total_score, weekly_picks, final_winner_pick, final_wager_points')
         .eq('id', id)
         .single(),
       supabase
@@ -89,6 +90,19 @@ export default function TeamProfileView() {
     setCurrentIndex(sortedTeams.findIndex(team => String(team.id) === String(id)))
     setContestants(contestantsData || [])
     setWeeklyResults(resultsData || [])
+    const resolvedFinalWinner = [...(contestantsData || [])]
+      .map(contestant => ({ ...contestant, juryVotes: Number(contestant?.jury_votes_received || 0) }))
+      .sort((a, b) => {
+        if (b.juryVotes !== a.juryVotes) return b.juryVotes - a.juryVotes
+        return (a.name || '').localeCompare(b.name || '')
+      })
+    const topFinalWinner = resolvedFinalWinner[0]
+    const secondFinalWinner = resolvedFinalWinner[1]
+    setFinalWagerWinner(
+      topFinalWinner && topFinalWinner.juryVotes > 0 && (!secondFinalWinner || secondFinalWinner.juryVotes !== topFinalWinner.juryVotes)
+        ? topFinalWinner
+        : null
+    )
     setLoading(false)
   }
 
@@ -435,6 +449,37 @@ export default function TeamProfileView() {
             })()
           ))}
         </div>
+
+        {(profile.final_winner_pick || profile.final_wager_points) && (
+          <>
+            <h2 style={{ marginTop: '1.2rem' }}>Final Wager</h2>
+            <div
+              style={{
+                marginTop: '0.75rem',
+                padding: '0.75rem',
+                borderRadius: '10px',
+                border: '1px solid rgba(156,163,175,0.9)',
+                background: finalWagerWinner && String(profile.final_winner_pick) !== String(finalWagerWinner.id) ? 'rgba(229,231,235,0.78)' : 'rgba(255,255,255,0.9)',
+                opacity: finalWagerWinner && String(profile.final_winner_pick) !== String(finalWagerWinner.id) ? 0.62 : 1,
+                filter: finalWagerWinner && String(profile.final_winner_pick) !== String(finalWagerWinner.id) ? 'grayscale(100%)' : 'none'
+              }}
+            >
+              <p style={{ margin: 0, fontWeight: 700 }}>
+                Pick: {contestants.find(c => String(c.id) === String(profile.final_winner_pick))?.name || 'Unknown Contestant'}
+              </p>
+              <p style={{ margin: '0.35rem 0 0 0', color: '#374151' }}>
+                Wager: {Number(profile.final_wager_points || 0)} point{Number(profile.final_wager_points || 0) === 1 ? '' : 's'}
+              </p>
+              {finalWagerWinner && (
+                <p style={{ margin: '0.35rem 0 0 0', color: String(profile.final_winner_pick) === String(finalWagerWinner.id) ? '#166534' : '#991b1b', fontWeight: 700 }}>
+                  {String(profile.final_winner_pick) === String(finalWagerWinner.id)
+                    ? `+${Number(profile.final_wager_points || 0)} points`
+                    : `-${Number(profile.final_wager_points || 0)} points`}
+                </p>
+              )}
+            </div>
+          </>
+        )}
         </div>
       </div>
     </div>

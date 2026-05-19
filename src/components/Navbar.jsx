@@ -77,7 +77,7 @@ export function BottomNav({ session, profile }) {
         </span>
         <span style={labelStyle}>Castaways</span>
       </Link>
-      <Link to="/weekly-picks" style={tabStyle(location.pathname === '/weekly-picks')}>
+      <Link to="/weekly-picks" style={tabStyle(location.pathname === '/weekly-picks' || location.pathname === '/final-wagers')}>
         <span style={iconWrapStyle}>
           <img src={weeklyIcon} alt="" aria-hidden="true" style={{ ...iconStyle, width: '18px', height: '18px' }} />
         </span>

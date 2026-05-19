@@ -12,6 +12,7 @@ import CreateTeam from "./components/CreateTeam";
 import Profile from "./components/Profile";
 import TeamProfileView from "./components/TeamProfileView";
 import WeeklyPicksPage from "./components/weekly_picks";
+import FinalWagersPage from "./components/final_wagers";
 import Rules from "./components/Rules";
 
 import castawaysBg from "./assets/Tribe Flags - Castaways.png";
@@ -29,6 +30,7 @@ function getRouteBackground(pathname) {
   if (pathname.startsWith("/teams/")) return profileBg;
   if (pathname === "/teams") return leaderboardBg;
   if (pathname === "/weekly-picks") return weeklyPicksBg;
+  if (pathname === "/final-wagers") return weeklyPicksBg;
   if (pathname === "/rules") return rulesBg;
   if (pathname === "/castaways" || pathname.startsWith("/contestant/")) return castawaysBg;
   if (pathname === "/") return leaderboardBg;
@@ -130,6 +132,11 @@ function AppLayout({ session, profile, setProfile, needsTeamSetup }) {
           <Route
             path="/weekly-picks"
             element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <WeeklyPicksPage />) : <Navigate to="/login" />}
+          />
+
+          <Route
+            path="/final-wagers"
+            element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <FinalWagersPage />) : <Navigate to="/login" />}
           />
 
           <Route
