@@ -112,15 +112,25 @@ export default function WeeklyPicks({ currentWeek = DEFAULT_OPEN_WEEK }) {
 
       if (!isMounted) return;
 
-      const latestResolvedRow = (data || []).find((row) => {
-        const hasIndividualWinners = Array.isArray(row?.winner_contestant_ids) && row.winner_contestant_ids.length > 0;
-        return !!row?.winner_team || !!row?.winner_contestant_id || hasIndividualWinners;
-      });
+      const resolvedWeeks = new Set(
+        (data || [])
+          .filter((row) => {
+            const hasIndividualWinners = Array.isArray(row?.winner_contestant_ids) && row.winner_contestant_ids.length > 0;
+            return !!row?.winner_team || !!row?.winner_contestant_id || hasIndividualWinners;
+          })
+          .map((row) => Number(row.week))
+          .filter((week) => Number.isFinite(week) && week >= 1 && week <= TOTAL_EPISODES)
+      );
 
-      const latestResolvedWeek = Number(latestResolvedRow?.week || 0);
-      const nextOpenWeek = Math.min(TOTAL_EPISODES, Math.max(1, latestResolvedWeek + 1));
+      let latestOpenWeek = 1;
+      for (let week = TOTAL_EPISODES; week >= 1; week -= 1) {
+        if (!resolvedWeeks.has(week)) {
+          latestOpenWeek = week;
+          break;
+        }
+      }
 
-      setSelectedWeek(nextOpenWeek);
+      setSelectedWeek(latestOpenWeek);
     };
 
     Promise.resolve().then(() => {
