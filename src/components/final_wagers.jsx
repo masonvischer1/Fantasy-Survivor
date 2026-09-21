@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../supabaseClient";
-import siteLogo from "../assets/Logo.png";
+import siteLogo from "../assets/51/Logo.webp";
 
 function getContestantImage(contestant) {
   return (

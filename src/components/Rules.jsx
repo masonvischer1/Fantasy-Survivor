@@ -1,8 +1,9 @@
-import siteLogo from '../assets/Logo.png'
+import { Link } from 'react-router-dom'
+import siteLogo from '../assets/51/Logo.webp'
 
 export default function Rules() {
   return (
-    <div style={{ padding: '1rem' }}>
+    <div style={{ padding: '1rem 1rem 6rem' }}>
       <div style={{ width: 'min(820px, 100%)', maxWidth: '820px', margin: '0 auto', boxSizing: 'border-box', background: 'rgba(255,255,255,0.78)', border: '1px solid rgba(229,231,235,0.9)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)' }}>
         <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(180px, 46vw)', margin: '0 auto 0.75rem auto' }} />
         <h1 style={{ textAlign: 'center', fontSize: 'clamp(2.1rem, 7vw, 2.8rem)', marginTop: '0.25rem' }}>The Rules</h1>
@@ -22,16 +23,16 @@ export default function Rules() {
 
         <h2>WEEKLY PICKS</h2>
         <p>
-          Each week, before the episode airs, you will be given a chance to pick the remaining
-          player that you think will WIN the immunity challenge.
+          Each week, before the episode airs, you will be given a chance to pick the tribe or
+          remaining player that you think will WIN the immunity challenge.
         </p>
         <p>
-          A correct pick will earn your team bonus points equal to the number of players remaining
-          in the game! (Example: if there are
-          12 players remaining you will earn 12 bonus points)
+          A correct tribal immunity pick earns 3 bonus points. After the merge, a correct individual
+          immunity pick earns bonus points equal to the number of players remaining in the game!
+          (Example: if there are 12 players remaining you will earn 12 bonus points.)
         </p>
         <p>
-          Note: The player you pick MUST win FIRST place in the IMMUNITY challenge.
+          Note: The tribe or player you pick MUST win FIRST place in the IMMUNITY challenge.
           Second place in immunity challenges do not count. Reward challenge wins also do not count.
         </p>
 
@@ -45,12 +46,20 @@ export default function Rules() {
 
         <h2>TIEBREAKERS</h2>
         <p>
-          The player with the most points at the end of the season finale will win our Survivor 50
+          The player with the most points at the end of the season finale will win our Survivor 51
           FANTASY DRAFT! In the event of a tie score, the tiebreaker will go to the person who had
           the player that lasted the longest in the game. If the tie still cannot be broken, the
           tiebreaker will go to the person with the player that lasted the second longest in the game,
           and so on.
         </p>
+
+        <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid rgba(100,116,139,0.35)', textAlign: 'center' }}>
+          <h2 style={{ margin: '0 0 0.35rem' }}>PAST SEASONS</h2>
+          <p style={{ margin: '0 0 0.8rem', color: '#475569' }}>Relive previous drafts, final standings, weekly picks, and finale wagers.</p>
+          <Link to="/seasons" style={{ display: 'inline-block', padding: '0.75rem 1.1rem', borderRadius: '999px', background: '#92400e', color: 'white', fontWeight: 800, boxShadow: '0 6px 14px rgba(146,64,14,0.24)' }}>
+            View Previous Seasons
+          </Link>
+        </div>
       </div>
     </div>
   )

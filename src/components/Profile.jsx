@@ -1,300 +1,106 @@
-import React, { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import { buildContestantMap, hydrateTeamFromContestants } from '../utils/teamHydration'
 
 export default function Profile({ session, setProfile }) {
   const navigate = useNavigate()
+  const [entry, setEntry] = useState(null)
+  const [contestants, setContestants] = useState([])
   const [playerName, setPlayerName] = useState('')
   const [teamName, setTeamName] = useState('')
-  const [team, setTeam] = useState([])
-  const [avatarFile, setAvatarFile] = useState(null)
   const [avatarUrl, setAvatarUrl] = useState('')
+  const [avatarFile, setAvatarFile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [contestantMap, setContestantMap] = useState(new Map())
   const userId = session?.user?.id
 
-  async function fetchContestants() {
-    const { data, error } = await supabase
-      .from('contestants')
-      .select('*')
-
-    if (error) {
-      console.error(error)
-      return
-    }
-
-    setContestantMap(buildContestantMap(data))
-  }
-
-  async function fetchProfile() {
-    if (!userId) {
-      setLoading(false)
-      return
-    }
-
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('player_name, team_name, avatar_url, team')
-      .eq('id', userId)
-      .single()
-
-    if (error) {
-      console.error(error)
-    } else {
-      setPlayerName(data.player_name || '')
-      setTeamName(data.team_name || '')
-      setAvatarUrl(data.avatar_url || '')
-      setTeam(Array.isArray(data.team) ? data.team : [])
-    }
-    setLoading(false)
-  }
-
   useEffect(() => {
-    Promise.resolve().then(async () => {
-      await Promise.all([fetchProfile(), fetchContestants()])
-    })
-
-    const channel = supabase
-      .channel('profile-contestant-updates')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'contestants' },
-        () => {
-          fetchContestants()
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
+    let active = true
+    async function load() {
+      const { data: season, error: seasonError } = await supabase.from('seasons').select('id').in('status', ['draft', 'active', 'finale']).single()
+      if (seasonError || !active) return
+      const [{ data: seasonEntry, error: entryError }, { data: cast, error: castError }] = await Promise.all([
+        supabase.from('season_entries').select('*').eq('season_id', season.id).eq('profile_id', userId).single(),
+        supabase.from('season_contestants').select('*').eq('season_id', season.id)
+      ])
+      if (entryError || castError) console.error(entryError || castError)
+      if (!active) return
+      setEntry(seasonEntry)
+      setContestants(cast || [])
+      setPlayerName(seasonEntry?.player_name || '')
+      setTeamName(seasonEntry?.team_name || '')
+      setAvatarUrl(seasonEntry?.avatar_url || '')
+      setLoading(false)
     }
+    Promise.resolve().then(load)
+    return () => { active = false }
   }, [userId])
 
-  // Handle avatar file selection
-  const handleFileChange = e => {
-    if (e.target.files.length > 0) setAvatarFile(e.target.files[0])
-  }
+  const contestantMap = useMemo(() => new Map(contestants.map(c => [String(c.id), c])), [contestants])
+  const roster = useMemo(() => (entry?.drafted_team || []).map(pick => contestantMap.get(String(pick?.id ?? pick))).filter(Boolean), [contestantMap, entry])
 
-  // Upload avatar to Supabase Storage and get URL
   async function uploadAvatar() {
     if (!avatarFile) return avatarUrl
-
-    const fileExt = avatarFile.name.split('.').pop()
-    const fileName = `${session.user.id}.${fileExt}`
-    const filePath = `avatars/${fileName}`
-
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(filePath, avatarFile, { upsert: true })
-
-    if (uploadError) {
-      console.error('Upload error:', uploadError)
-      return avatarUrl
-    }
-
-    // Get public URL
-    const { data } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(filePath)
-
-    return data.publicUrl
+    const extension = avatarFile.name.split('.').pop()
+    const path = `${userId}-${Date.now()}.${extension}`
+    const { error } = await supabase.storage.from('avatars').upload(path, avatarFile)
+    if (error) throw error
+    return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
   }
 
-  // Save profile updates
-  const handleSave = async () => {
+  async function handleSave() {
+    if (!entry || !playerName.trim() || !teamName.trim()) return
     setSaving(true)
-    const url = await uploadAvatar()
-
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({
-        id: session.user.id,
-        player_name: playerName,
-        team_name: teamName,
-        avatar_url: url,
-        team
-      }, { onConflict: 'id' })
-
-    if (error) console.error('Update error:', error)
-    else {
-      alert('Profile updated successfully!')
-      setAvatarUrl(url)
-      if (typeof setProfile === 'function') {
-        setProfile(prev => ({
-          ...(prev || {}),
-          id: session.user.id,
-          player_name: playerName,
-          team_name: teamName,
-          avatar_url: url,
-          team
-        }))
-      }
+    try {
+      const nextAvatar = await uploadAvatar()
+      const [{ error: entryError }, { error: profileError }] = await Promise.all([
+        supabase.from('season_entries').update({ player_name: playerName.trim(), team_name: teamName.trim(), avatar_url: nextAvatar }).eq('id', entry.id),
+        supabase.from('profiles').update({ player_name: playerName.trim(), avatar_url: nextAvatar }).eq('id', userId)
+      ])
+      if (entryError || profileError) throw entryError || profileError
+      const updated = { ...entry, player_name: playerName.trim(), team_name: teamName.trim(), avatar_url: nextAvatar }
+      setEntry(updated)
+      setAvatarUrl(nextAvatar)
+      setProfile(previous => ({ ...previous, ...updated, id: userId, entry_id: updated.id }))
+      alert('Survivor 51 team updated!')
+    } catch (error) {
+      alert(error.message)
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
   }
 
-  const handleLogout = async () => {
+  async function handleLogout() {
     await supabase.auth.signOut()
     navigate('/login')
   }
 
-  if (loading) return <div style={{ padding: '1rem' }}>Loading profile...</div>
-  const hydratedTeam = hydrateTeamFromContestants(team, contestantMap)
+  if (loading) return <div style={{ padding: '1rem' }}>Loading tribe…</div>
 
   return (
-    <div style={{ padding: '1rem' }}>
-      <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.86)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(2px)' }}>
-      <h1>My Tribe</h1>
+    <div style={{ padding: '1rem 1rem 6rem' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center', background: 'rgba(255,255,255,.88)', borderRadius: 12, padding: '1rem' }}>
+        <h1>My Tribe</h1>
+        <img src={avatarUrl || '/fallback.png'} alt="Avatar" style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover' }} />
+        <div style={{ maxWidth: 420, margin: '1rem auto' }}>
+          <input value={playerName} onChange={e => setPlayerName(e.target.value)} placeholder="Your Name" style={{ display: 'block', width: '100%', boxSizing: 'border-box', marginBottom: 10, padding: 9 }} />
+          <input value={teamName} onChange={e => setTeamName(e.target.value)} placeholder="Team Name" style={{ display: 'block', width: '100%', boxSizing: 'border-box', marginBottom: 10, padding: 9 }} />
+          <input id="avatar-upload" type="file" accept="image/*" onChange={e => setAvatarFile(e.target.files?.[0] || null)} style={{ display: 'none' }} />
+          <label htmlFor="avatar-upload" style={{ display: 'block', padding: 10, border: '1px dashed #64748b', borderRadius: 8, cursor: 'pointer' }}>{avatarFile?.name || 'Choose Profile Photo'}</label>
+          <button onClick={handleSave} disabled={saving} style={{ marginTop: 12 }}>{saving ? 'Saving…' : 'Save Profile'}</button>
+        </div>
 
-      <div style={{ margin: '1rem 0' }}>
-        <img
-          src={avatarUrl || '/fallback.png'}
-          alt="Avatar"
-          style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover' }}
-        />
-      </div>
+        <h2>Your Survivor 51 Draft</h2>
+        {roster.length === 0 && <p>You haven’t drafted any Survivor 51 players yet.</p>}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(130px,1fr))', gap: 12 }}>
+          {roster.map(c => <article key={c.id} style={{ border: '1px solid #cbd5e1', borderRadius: 10, padding: 8 }}>
+            <img src={c.picture_url || '/fallback.png'} alt={c.name} style={{ width: '100%', aspectRatio: 1, objectFit: 'cover', objectPosition: 'center top', borderRadius: 8, filter: c.is_eliminated ? 'grayscale(1)' : 'none' }} />
+            <strong>{c.name}</strong>
+          </article>)}
+        </div>
 
-      <div style={{ margin: '0.75rem auto 0.25rem auto', maxWidth: '340px', width: '100%' }}>
-        <input id="avatar-upload" type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
-        <label
-          htmlFor="avatar-upload"
-          style={{
-            display: 'block',
-            width: '100%',
-            boxSizing: 'border-box',
-            padding: '0.65rem 0.9rem',
-            border: '1px dashed #9ca3af',
-            borderRadius: '10px',
-            backgroundColor: 'rgba(255,255,255,0.86)',
-            textAlign: 'center',
-            cursor: 'pointer'
-          }}
-        >
-          Choose Profile Photo
-        </label>
-        <p style={{ margin: '0.45rem 0 0 0', fontSize: '0.85rem', color: '#4b5563', textAlign: 'center' }}>
-          {avatarFile ? avatarFile.name : 'No file selected'}
-        </p>
-      </div>
-
-      <div style={{ margin: '1rem 0' }}>
-        <input
-          type="text"
-          value={playerName}
-          onChange={e => setPlayerName(e.target.value)}
-          placeholder="Your Name"
-          style={{
-            display: 'block',
-            width: '100%',
-            maxWidth: '100%',
-            margin: '0 auto 1rem auto',
-            boxSizing: 'border-box',
-            padding: '0.5rem',
-            borderRadius: '5px',
-            border: '1px solid #ccc'
-          }}
-        />
-
-        <input
-          type="text"
-          value={teamName}
-          onChange={e => setTeamName(e.target.value)}
-          placeholder="Team Name"
-          style={{
-            display: 'block',
-            width: '100%',
-            maxWidth: '100%',
-            margin: '0 auto',
-            boxSizing: 'border-box',
-            padding: '0.5rem',
-            borderRadius: '5px',
-            border: '1px solid #ccc'
-          }}
-        />
-      </div>
-
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        style={{
-          backgroundColor: '#0070f3',
-          color: 'white',
-          padding: '0.5rem 1rem',
-          border: 'none',
-          borderRadius: '5px',
-          cursor: saving ? 'not-allowed' : 'pointer',
-          fontFamily: 'Survivant, system-ui, sans-serif'
-        }}
-      >
-        {saving ? 'Saving...' : 'Save Profile'}
-      </button>
-
-      <h2 style={{ marginTop: '1.25rem' }}>Your Drafted Contestants</h2>
-      {team.length === 0 && <p>You haven't drafted any players yet.</p>}
-
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-          gap: '0.75rem',
-          marginTop: '1rem'
-        }}
-      >
-        {hydratedTeam.map(c => (
-          <div
-            key={c.id}
-            style={{
-              border: '2px solid gray',
-              borderRadius: '8px',
-              padding: '0.5rem',
-              opacity: c.is_eliminated ? 0.5 : 1
-            }}
-          >
-            <img
-              src={
-                (c.is_eliminated
-                  ? (c.elimPhoto_url || c.elim_photo_url)
-                  : c.picture_url) ||
-                c.picture_url ||
-                c.elimPhoto_url ||
-                c.elim_photo_url ||
-                '/fallback.png'
-              }
-              alt={c.name}
-              style={{
-                width: '100%',
-                borderRadius: '5px',
-                filter: c.is_eliminated ? 'grayscale(100%)' : 'none'
-              }}
-            />
-            <p><b>{c.name}</b></p>
-            <p>{c.tribe}</p>
-            <p>{c.season}</p>
-          </div>
-        ))}
-      </div>
-
-      <button
-        onClick={handleLogout}
-        style={{
-          marginTop: '1.25rem',
-          backgroundColor: '#111827',
-          color: 'white',
-          padding: '0.55rem 1rem',
-          border: 'none',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          fontFamily: 'Survivant, system-ui, sans-serif'
-        }}
-      >
-        Logout
-      </button>
+        <button onClick={handleLogout} style={{ marginTop: 20, background: '#111827', color: 'white' }}>Logout</button>
       </div>
     </div>
   )
 }
-
-

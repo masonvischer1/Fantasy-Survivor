@@ -6,33 +6,33 @@ import "./App.css";
 
 import Login from "./components/Login";
 import Contestants from "./components/contestantsGrid";
-import ContestantDetail from "./components/contestantDetail";
 import Teams from "./components/Teams";
 import CreateTeam from "./components/CreateTeam";
 import Profile from "./components/Profile";
 import TeamProfileView from "./components/TeamProfileView";
 import WeeklyPicksPage from "./components/weekly_picks";
-import FinalWagersPage from "./components/final_wagers";
 import Rules from "./components/Rules";
+import Seasons from "./components/Seasons";
+import SeasonArchive from "./components/SeasonArchive";
+import SeasonContestantDetail from "./components/SeasonContestantDetail";
 
-import castawaysBg from "./assets/Tribe Flags - Castaways.png";
+import castawaysBg from "./assets/51/Castaways.png";
 import rulesBg from "./assets/Jungle to Beach - Rules.png";
-import leaderboardBg from "./assets/Island Life - Leaderboard.png";
+import leaderboardBg from "./assets/51/Leaderboard.png";
 import weeklyPicksBg from "./assets/Challenge - Weekly Picks.png";
-import profileBg from "./assets/sand - profile.png";
-import createTeamBg from "./assets/Logo - Create Team.png";
-import loginBg from "./assets/New Login Background.png";
+import profileBg from "./assets/51/My Tribe.png";
+import loginBg from "./assets/51/Login.png";
 
 function getRouteBackground(pathname) {
   if (pathname === "/login") return loginBg;
-  if (pathname === "/create-team") return createTeamBg;
+  if (pathname === "/create-team") return loginBg;
   if (pathname === "/profile") return profileBg;
   if (pathname.startsWith("/teams/")) return profileBg;
   if (pathname === "/teams") return leaderboardBg;
   if (pathname === "/weekly-picks") return weeklyPicksBg;
-  if (pathname === "/final-wagers") return weeklyPicksBg;
   if (pathname === "/rules") return rulesBg;
-  if (pathname === "/castaways" || pathname.startsWith("/contestant/")) return castawaysBg;
+  if (pathname === "/seasons" || pathname.startsWith("/seasons/")) return leaderboardBg;
+  if (pathname === "/castaways" || pathname.startsWith("/castaways/") || pathname.startsWith("/contestant/")) return castawaysBg;
   if (pathname === "/") return leaderboardBg;
   return null;
 }
@@ -109,8 +109,8 @@ function AppLayout({ session, profile, setProfile, needsTeamSetup }) {
           />
 
           <Route
-            path="/contestant/:id"
-            element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <ContestantDetail />) : <Navigate to="/login" />}
+            path="/castaways/:id"
+            element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <SeasonContestantDetail />) : <Navigate to="/login" />}
           />
 
           <Route
@@ -136,12 +136,22 @@ function AppLayout({ session, profile, setProfile, needsTeamSetup }) {
 
           <Route
             path="/final-wagers"
-            element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <FinalWagersPage />) : <Navigate to="/login" />}
+            element={<Navigate to="/weekly-picks" replace />}
           />
 
           <Route
             path="/rules"
             element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <Rules />) : <Navigate to="/login" />}
+          />
+
+          <Route
+            path="/seasons"
+            element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <Seasons />) : <Navigate to="/login" />}
+          />
+
+          <Route
+            path="/seasons/:slug"
+            element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <SeasonArchive />) : <Navigate to="/login" />}
           />
         </Routes>
       </main>
@@ -154,15 +164,18 @@ function AppLayout({ session, profile, setProfile, needsTeamSetup }) {
 function App() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [loadingSession, setLoadingSession] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
+      setLoadingSession(false);
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
+      setLoadingSession(false);
     });
 
     return () => listener.subscription.unsubscribe();
@@ -177,30 +190,64 @@ function App() {
 
     setLoadingProfile(true);
     setProfile(null);
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
+    const [{ data: account, error: accountError }, { data: activeSeason, error: seasonError }] = await Promise.all([
+      supabase.from("profiles").select("*").eq("id", userId).single(),
+      supabase.from("seasons").select("*").in("status", ["draft", "active", "finale"]).single(),
+    ]);
 
-    if (error) {
+    if (accountError || seasonError) {
       setProfile(null);
-      console.error(error);
+      console.error(accountError || seasonError);
     } else {
-      setProfile(data);
+      let { data: seasonEntry, error: entryError } = await supabase
+        .from("season_entries")
+        .select("*")
+        .eq("season_id", activeSeason.id)
+        .eq("profile_id", userId)
+        .maybeSingle();
+
+      if (!seasonEntry && !entryError) {
+        const created = await supabase
+          .from("season_entries")
+          .insert({
+            season_id: activeSeason.id,
+            profile_id: userId,
+            player_name: account.player_name,
+            avatar_url: account.avatar_url,
+          })
+          .select("*")
+          .single();
+        seasonEntry = created.data;
+        entryError = created.error;
+      }
+
+      if (entryError) {
+        setProfile(null);
+        console.error(entryError);
+      } else {
+        setProfile({
+          ...account,
+          ...seasonEntry,
+          id: account.id,
+          entry_id: seasonEntry.id,
+          season_id: activeSeason.id,
+          season_name: activeSeason.name,
+        });
+      }
     }
     setLoadingProfile(false);
   }
 
   useEffect(() => {
+    if (loadingSession) return;
     const userId = session?.user?.id;
     Promise.resolve().then(() => {
       fetchProfile(userId);
     });
-  }, [session]);
+  }, [session, loadingSession]);
 
   const needsTeamSetup = !!session && (!profile?.player_name || !profile?.team_name);
-  if (loadingProfile) {
+  if (loadingSession || loadingProfile) {
     return <div style={{ padding: "2rem" }}>Loading...</div>;
   }
 

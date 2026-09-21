@@ -1,18 +1,29 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import siteLogo from '../assets/Logo.png'
+import siteLogo from '../assets/51/Logo.webp'
 
 export default function ContestantsGrid() {
   const navigate = useNavigate()
   const [contestants, setContestants] = useState([])
-  const [draftedIds, setDraftedIds] = useState([])
 
   // Fetch all contestants
   async function fetchContestants() {
-    const { data, error } = await supabase
-      .from('contestants')
+    const { data: seasonData, error: seasonError } = await supabase
+      .from('seasons')
       .select('*')
+      .in('status', ['draft', 'active', 'finale'])
+      .single()
+
+    if (seasonError) {
+      console.error(seasonError)
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('season_contestants')
+      .select('*')
+      .eq('season_id', seasonData.id)
       .order('name')
 
     if (error) console.error(error)
@@ -36,30 +47,9 @@ export default function ContestantsGrid() {
     }
   }
 
-  // Fetch drafted contestants for the current user
-  async function fetchDrafted() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('team')
-      .eq('id', user.id)
-      .single()
-
-    if (error) {
-      console.error(error)
-      return
-    }
-
-    const team = data?.team || []
-    setDraftedIds(team.map(c => c.id))
-  }
-
   useEffect(() => {
     Promise.resolve().then(() => {
       fetchContestants()
-      fetchDrafted()
     })
 
     // Keep list in sync when contestant elimination status changes elsewhere.
@@ -67,7 +57,7 @@ export default function ContestantsGrid() {
       .channel('contestants-grid-updates')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'contestants' },
+        { event: '*', schema: 'public', table: 'season_contestants' },
         () => {
           fetchContestants()
         }
@@ -80,18 +70,17 @@ export default function ContestantsGrid() {
   }, [])
 
   return (
-    <div style={{ padding: '1rem' }}>
+    <div style={{ padding: '1rem 1rem 6rem' }}>
       <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(180px, 46vw)', margin: '0 auto 0.75rem auto' }} />
       <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)', marginBottom: '0.75rem' }}>Castaways</h1>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
       {contestants.map(c => {
-        const isDrafted = draftedIds.includes(c.id)
         const isEliminated = c.is_eliminated === true
 
         return (
           <div
             key={c.id}
-            onClick={() => navigate(`/contestant/${c.id}`)}
+            onClick={() => navigate(`/castaways/${c.id}`)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -113,7 +102,8 @@ export default function ContestantsGrid() {
                 height: '80px',
                 borderRadius: '10px',
                 objectFit: 'cover',
-                border: isDrafted ? '3px solid #00FF00' : '2px solid #fff'
+                border: '2px solid #fff',
+                objectPosition: 'center top'
               }}
             />
             <div style={{ flex: 1, color: 'white' }}>
@@ -121,7 +111,7 @@ export default function ContestantsGrid() {
                 {c.name}
               </p>
               <p style={{ margin: '0.2rem 0', fontSize: '0.85rem', opacity: 0.8 }}>
-                {c.city ? `${c.city}, ${c.state}` : ''}
+                {c.age ? `Age ${c.age} · ${c.occupation}` : c.occupation || ''}
               </p>
               <span
                 style={{
@@ -140,5 +130,3 @@ export default function ContestantsGrid() {
     </div>
   )
 }
-
-

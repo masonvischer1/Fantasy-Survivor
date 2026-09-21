@@ -1,279 +1,107 @@
-import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import siteLogo from '../assets/Logo.png'
+import siteLogo from '../assets/51/Logo.webp'
 import idolImg from '../assets/idol.png'
-import { buildContestantMap, hydrateTeamFromContestants } from '../utils/teamHydration'
-import { hasConfirmedMergePick } from '../utils/draftState'
+
+const totalFor = entry => Number(entry.total_score ?? 0)
 
 export default function Teams() {
   const navigate = useNavigate()
-  const [teams, setTeams] = useState([])
-  const [viewerId, setViewerId] = useState(null)
-  const [viewerHasConfirmedMergePick, setViewerHasConfirmedMergePick] = useState(false)
+  const [entries, setEntries] = useState([])
+  const [contestants, setContestants] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [viewerCanSee, setViewerCanSee] = useState(false)
+  const [viewerDraftCount, setViewerDraftCount] = useState(0)
+  const [requiredDraftCount, setRequiredDraftCount] = useState(5)
 
-  const fetchAllTeams = async () => {
-    const [{ data: authData }, { data: profileData, error: profileError }, { data: contestantData, error: contestantError }] = await Promise.all([
-      supabase.auth.getUser(),
-      supabase
-        .from('profiles')
-        .select('id, team_name, player_name, avatar_url, team, team_points, bonus_points, manual_points, total_score')
-        .order('total_score', { ascending: false }),
-      supabase
-        .from('contestants')
-        .select('*')
+  const loadLeaderboard = useCallback(async () => {
+    const { data: activeSeason, error: seasonError } = await supabase
+      .from('seasons')
+      .select('*')
+      .in('status', ['draft', 'active', 'finale'])
+      .single()
+
+    if (seasonError) {
+      console.error(seasonError)
+      setLoading(false)
+      return
+    }
+
+    const [{ data: entryData, error: entryError }, { data: contestantData, error: contestantError }, { data: authData }] = await Promise.all([
+      supabase.from('season_entries').select('*').eq('season_id', activeSeason.id).not('team_name', 'is', null),
+      supabase.from('season_contestants').select('*').eq('season_id', activeSeason.id),
+      supabase.auth.getUser()
     ])
 
-    if (profileError) {
-      console.error('Error fetching teams:', profileError)
-      return
-    }
-
-    if (contestantError) {
-      console.error('Error fetching contestants:', contestantError)
-      return
-    }
-
-    const currentUserId = authData?.user?.id || null
-    const currentViewerProfile = (profileData || []).find(profile => String(profile.id) === String(currentUserId))
-    setViewerId(currentUserId)
-    setViewerHasConfirmedMergePick(hasConfirmedMergePick(currentViewerProfile?.team))
-
-    const contestantMap = buildContestantMap(contestantData)
-    const hydratedProfiles = (profileData || []).map(profile => ({
-      ...profile,
-      team: hydrateTeamFromContestants(profile.team, contestantMap)
-    }))
-
-    setTeams(hydratedProfiles)
-  }
-
-  useEffect(() => {
-    Promise.resolve().then(() => {
-      fetchAllTeams()
-    })
-
-    const channel = supabase
-      .channel('leaderboard-live-updates')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'contestants' },
-        () => {
-          fetchAllTeams()
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'profiles' },
-        () => {
-          fetchAllTeams()
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
+    if (entryError || contestantError) console.error(entryError || contestantError)
+    setEntries(entryData || [])
+    setContestants(contestantData || [])
+    const viewerEntry = (entryData || []).find(entry => String(entry.profile_id) === String(authData?.user?.id))
+    const draftCount = Array.isArray(viewerEntry?.drafted_team) ? viewerEntry.drafted_team.length : 0
+    setRequiredDraftCount(Number(activeSeason.initial_draft_size || 5))
+    setViewerDraftCount(draftCount)
+    setViewerCanSee(draftCount >= Number(activeSeason.initial_draft_size || 5))
+    setLoading(false)
   }, [])
 
-  const sortedTeams = [...teams].sort((a, b) => {
-    const aTotal = a.total_score ?? ((a.team_points || 0) + (a.bonus_points || 0) + (a.manual_points || 0))
-    const bTotal = b.total_score ?? ((b.team_points || 0) + (b.bonus_points || 0) + (b.manual_points || 0))
-    const totalDiff = bTotal - aTotal
-    if (totalDiff !== 0) return totalDiff
-    return (a.team_name || '').localeCompare(b.team_name || '')
-  })
+  useEffect(() => {
+    Promise.resolve().then(loadLeaderboard)
+    const channel = supabase
+      .channel('season-51-leaderboard')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'season_entries' }, loadLeaderboard)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'season_contestants' }, loadLeaderboard)
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [loadLeaderboard])
 
-  const getOrdinal = (value) => {
-    const teenCheck = value % 100
-    if (teenCheck >= 11 && teenCheck <= 13) return `${value}th`
-    const lastDigit = value % 10
-    if (lastDigit === 1) return `${value}st`
-    if (lastDigit === 2) return `${value}nd`
-    if (lastDigit === 3) return `${value}rd`
-    return `${value}th`
-  }
-  const getTeamNameFontSize = (teamName) => {
-    const length = (teamName || '').trim().length
-    const calculatedSize = 1.12 - (Math.max(0, length - 10) * 0.018)
-    const boundedSize = Math.min(1.12, Math.max(0.8, calculatedSize))
-    return `${boundedSize.toFixed(2)}rem`
-  }
-  const getFirstName = (name) => (name || '').trim().split(/\s+/)[0] || name || ''
-  let currentRank = 0
-  let lastTotalPoints = null
-  const rankedTeams = sortedTeams.map((profile, index) => {
-    const totalPoints = profile.total_score ?? ((profile.team_points || 0) + (profile.bonus_points || 0) + (profile.manual_points || 0))
-
-    if (index === 0 || totalPoints !== lastTotalPoints) {
-      currentRank = index + 1
-    }
-
-    const nextProfile = sortedTeams[index + 1]
-    const nextTotalPoints = nextProfile
-      ? (nextProfile.total_score ?? ((nextProfile.team_points || 0) + (nextProfile.bonus_points || 0) + (nextProfile.manual_points || 0)))
-      : null
-    const previousTotalPoints = index > 0
-      ? (sortedTeams[index - 1].total_score ?? ((sortedTeams[index - 1].team_points || 0) + (sortedTeams[index - 1].bonus_points || 0) + (sortedTeams[index - 1].manual_points || 0)))
-      : null
-    const isTied = totalPoints === previousTotalPoints || totalPoints === nextTotalPoints
-
-    lastTotalPoints = totalPoints
-
-    return {
-      profile,
-      totalPoints,
-      displayRank: currentRank,
-      isTied
-    }
-  })
+  const contestantMap = useMemo(() => new Map(contestants.map(c => [String(c.id), c])), [contestants])
+  const rankedEntries = useMemo(() => {
+    const sorted = [...entries].sort((a, b) => totalFor(b) - totalFor(a) || (a.team_name || '').localeCompare(b.team_name || ''))
+    return sorted.map(entry => {
+      const rank = sorted.findIndex(item => totalFor(item) === totalFor(entry)) + 1
+      return {
+        ...entry,
+        rank,
+        roster: (entry.drafted_team || []).map(pick => contestantMap.get(String(pick?.id ?? pick))).filter(Boolean)
+      }
+    })
+  }, [contestantMap, entries])
 
   return (
     <div style={{ padding: '1rem', position: 'relative' }}>
-      <img
-        src={idolImg}
-        alt=""
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          top: '-48px',
-          right: 'calc(-104px + env(safe-area-inset-right))',
-          width: 'clamp(200px, 46vw, 340px)',
-          height: 'auto',
-          zIndex: 2,
-          pointerEvents: 'none',
-          transform: 'rotate(22deg)',
-          transformOrigin: 'top right',
-          filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))'
-        }}
-      />
-      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem auto' }} />
+      <img src={idolImg} alt="" aria-hidden="true" style={{ position: 'absolute', top: '-48px', right: 'calc(-104px + env(safe-area-inset-right))', width: 'clamp(200px, 46vw, 340px)', pointerEvents: 'none', transform: 'rotate(22deg)', transformOrigin: 'top right', filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))' }} />
+      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem' }} />
       <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Leaderboard</h1>
 
-      {teams.length === 0 && <p style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>No teams yet</p>}
+      {loading && <p style={{ color: 'white' }}>Loading leaderboard…</p>}
+      {!loading && !viewerCanSee && <div style={{ maxWidth: 620, margin: '1rem auto', padding: '1rem', borderRadius: 12, background: 'rgba(255,255,255,.9)', textAlign: 'center' }}><h2>Complete Your Draft</h2><p>Draft your five starting players before viewing the other teams.</p><p><strong>{viewerDraftCount} / {requiredDraftCount}</strong> selected</p><Link to="/castaways" style={{ display: 'inline-block', padding: '.7rem 1rem', borderRadius: 8, background: '#166534', color: 'white', fontWeight: 700 }}>Choose Castaways</Link></div>}
+      {!loading && viewerCanSee && rankedEntries.length === 0 && <p style={{ color: 'white' }}>No Survivor 51 teams have been created yet.</p>}
 
-      {rankedTeams.map(({ profile, totalPoints, displayRank, isTied }) => {
-        const teamPoints = profile.team_points || 0
-        const bonusPoints = profile.bonus_points || 0
-        const shouldHideTeam = !viewerHasConfirmedMergePick && viewerId && String(profile.id) !== String(viewerId)
-        const rank = displayRank
-        const isGold = rank === 1
-        const isSilver = rank === 2
-        const isBronze = rank === 3
-        const rankBorder = isGold ? '#d4af37' : isSilver ? '#c0c0c0' : isBronze ? '#cd7f32' : '#ddd'
-        const rankBackground = isGold ? 'rgba(255,249,230,0.88)' : isSilver ? 'rgba(248,248,248,0.88)' : isBronze ? 'rgba(255,244,236,0.88)' : 'rgba(255,255,255,0.84)'
-        const rankLabel = `${isTied ? 'T-' : ''}${getOrdinal(rank)} Place`
-
-        return (
-        <div
-          key={profile.id}
-          onClick={() => navigate(`/teams/${profile.id}`)}
-          onKeyDown={event => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault()
-              navigate(`/teams/${profile.id}`)
-            }
-          }}
-          role="button"
-          tabIndex={0}
-          aria-label={`View ${profile.team_name || 'team'} profile`}
-          style={{
-            marginBottom: '1rem',
-            border: `2px solid ${rankBorder}`,
-            padding: '0.75rem',
-            borderRadius: '8px',
-            background: rankBackground,
-            backdropFilter: 'blur(2px)',
-            cursor: 'pointer'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'stretch', gap: '0.75rem', flexWrap: 'nowrap', minHeight: '78px' }}>
-            {profile.avatar_url && (
-              <img
-                src={profile.avatar_url}
-                alt={profile.team_name || 'avatar'}
-                style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '50%',
-                  objectFit: 'cover'
-                }}
-              />
-            )}
-            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '60px' }}>
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: getTeamNameFontSize(profile.team_name),
-                  lineHeight: 1.15,
-                  overflowWrap: 'anywhere'
-                }}
-                title={profile.team_name || 'Unnamed Team'}
-              >
-                {profile.team_name || 'Unnamed Team'}
-              </h2>
-              <p style={{ margin: '0.2rem 0 0 0', color: '#666', fontSize: '0.9rem', lineHeight: 1.2 }}>
-                {profile.player_name || 'Unknown Player'}
-              </p>
+      {viewerCanSee && rankedEntries.map(entry => (
+        <article key={entry.id} onClick={() => navigate(`/teams/${entry.id}`)} role="button" tabIndex={0} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') navigate(`/teams/${entry.id}`) }} style={{ marginBottom: '1rem', border: entry.rank === 1 ? '2px solid #d4af37' : '1px solid #ddd', padding: '0.85rem', borderRadius: '10px', background: 'rgba(255,255,255,0.88)', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {entry.avatar_url && <img src={entry.avatar_url} alt="" style={{ width: 58, height: 58, borderRadius: '50%', objectFit: 'cover' }} />}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h2 style={{ margin: 0, overflowWrap: 'anywhere' }}>{entry.team_name}</h2>
+              <p style={{ margin: '0.2rem 0 0', color: '#666' }}>{entry.player_name}</p>
             </div>
-
-            <div style={{ textAlign: 'right', marginLeft: 'auto', minWidth: '132px', flex: '0 0 132px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.15rem' }}>
-              <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.08rem', lineHeight: 1.15 }}>
-                {totalPoints} Points
-              </p>
-              <p style={{ margin: 0, color: '#0b7d2b', fontSize: '0.78rem', lineHeight: 1.15 }}>
-                {teamPoints} Team | +{bonusPoints} Bonus
-              </p>
-              <p style={{ margin: 0, fontWeight: 'bold', color: '#555', fontSize: '0.86rem', lineHeight: 1.15 }}>
-                {rankLabel}
-              </p>
+            <div style={{ textAlign: 'right' }}>
+              <strong>{totalFor(entry)} Points</strong>
+              <p style={{ margin: '0.2rem 0 0', color: '#555', fontSize: '0.85rem' }}>#{entry.rank}</p>
             </div>
           </div>
-
-          <div
-            style={{
-              display: 'flex',
-              gap: '0.18rem',
-              marginTop: '0.75rem',
-              flexWrap: 'nowrap',
-              overflowX: 'auto',
-              paddingBottom: '0.25rem'
-            }}
-          >
-            {shouldHideTeam ? (
-              <p style={{ margin: 0, color: '#4b5563', fontSize: '0.82rem', lineHeight: 1.3 }}>
-                Hidden until you submit your merge draft pick.
-              </p>
-            ) : (
-              profile.team?.map((c) => (
-                <div key={c.id} style={{ textAlign: 'center', width: '55px', flex: '0 0 auto' }}>
-                  <img
-                    src={
-                      (c.is_eliminated
-                        ? (c.elimPhoto_url || c.elim_photo_url)
-                        : c.picture_url) ||
-                      c.picture_url ||
-                      c.elimPhoto_url ||
-                      c.elim_photo_url ||
-                      '/fallback.png'
-                    }
-                    alt={c.name}
-                    style={{
-                      width: '47px',
-                      height: '47px',
-                      objectFit: 'cover',
-                      borderRadius: '6px',
-                      filter: c.is_eliminated ? 'grayscale(100%)' : 'none'
-                    }}
-                  />
-                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.62rem', lineHeight: '1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getFirstName(c.name)}</p>
-                </div>
-              ))
-            )}
+          <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.75rem', overflowX: 'auto' }}>
+            {entry.roster.length === 0 ? <span style={{ color: '#64748b', fontSize: '0.85rem' }}>Draft not submitted yet</span> : entry.roster.map(c => (
+              <div key={c.id} style={{ width: 54, flex: '0 0 auto', textAlign: 'center' }}>
+                <img src={c.picture_url || '/fallback.png'} alt={c.display_name || c.name} style={{ width: 48, height: 48, objectFit: 'cover', objectPosition: 'center top', borderRadius: 6, filter: c.is_eliminated ? 'grayscale(1)' : 'none' }} />
+                <small>{c.display_name || c.name.split(' ')[0]}</small>
+              </div>
+            ))}
           </div>
-        </div>
-        )
-      })}
+          <p style={{ margin: '0.75rem 0 0', color: '#166534', fontSize: '0.8rem' }}>{entry.team_points || 0} Team · +{entry.bonus_points || 0} Bonus</p>
+        </article>
+      ))}
     </div>
   )
 }
