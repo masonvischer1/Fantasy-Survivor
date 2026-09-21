@@ -40,7 +40,7 @@ export default function SeasonContestantDetail() {
   const draftLimit = Number(season?.current_week || 1) >= Number(season?.merge_week || 7) ? Number(season?.merge_draft_size || 6) : Number(season?.initial_draft_size || 5)
 
   async function toggleDraft() {
-    if (!entry) return
+    if (!entry || saving || contestant.is_eliminated || (!isDrafted && rosterIds.length >= draftLimit)) return
     setSaving(true)
     const { data, error } = await supabase.rpc('set_season_draft_pick', {
       p_season_id: contestant.season_id,
@@ -53,7 +53,8 @@ export default function SeasonContestantDetail() {
   }
 
   return (
-    <div style={{ padding: '1rem 1rem 6rem' }}>
+    <div className="castaway-detail">
+      <Link to="/castaways" className="castaway-back" aria-label="Back to Castaways">← Back</Link>
       <article style={{ width: 'min(620px, 100%)', margin: '0 auto', background: 'rgba(255,255,255,0.9)', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 12px 30px rgba(15,23,42,0.25)' }}>
         <img src={contestant.picture_url} alt={contestant.name} style={{ width: '100%', aspectRatio: '1', display: 'block', objectFit: 'cover', objectPosition: 'center top' }} />
         <div style={{ padding: '1rem' }}>
@@ -68,13 +69,23 @@ export default function SeasonContestantDetail() {
           <p style={{ lineHeight: 1.6 }}>{contestant.bio}</p>
           <div style={{ margin: '1rem 0', padding: '0.85rem', borderRadius: 10, background: '#f8fafc', border: '1px solid #cbd5e1' }}>
             <p style={{ margin: '0 0 0.6rem', fontWeight: 700 }}>Your tribe: {rosterIds.length} / {draftLimit}</p>
-            <button onClick={toggleDraft} disabled={saving || contestant.is_eliminated || (!isDrafted && rosterIds.length >= draftLimit)} style={{ width: '100%', background: isDrafted ? '#b91c1c' : '#166534', color: 'white' }}>
-              {saving ? 'Saving…' : isDrafted ? 'Remove from My Tribe' : rosterIds.length >= draftLimit ? 'Your Tribe Is Full' : 'Draft to My Tribe'}
-            </button>
+
           </div>
-          <Link to="/castaways" style={{ display: 'inline-block', marginTop: '0.5rem', fontWeight: 800 }}>← Back to Castaways</Link>
+
         </div>
       </article>
+      <div className="castaway-draft-bar">
+        <button
+          onClick={toggleDraft}
+          disabled={!entry || saving || contestant.is_eliminated || (!isDrafted && rosterIds.length >= draftLimit)}
+          className={`castaway-draft-button${isDrafted ? ' is-drafted' : rosterIds.length >= draftLimit ? ' is-full' : ''}`}
+          aria-label={isDrafted ? 'Drafted. Remove from My Tribe' : rosterIds.length >= draftLimit ? 'Draft unavailable: your tribe is full' : 'Draft'}
+          aria-pressed={isDrafted}
+          aria-busy={saving}
+        >
+          {saving ? 'Saving…' : isDrafted ? 'Drafted' : 'Draft'}
+        </button>
+      </div>
     </div>
   )
 }
