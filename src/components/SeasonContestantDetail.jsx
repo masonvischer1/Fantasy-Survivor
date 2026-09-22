@@ -27,7 +27,7 @@ export default function SeasonContestantDetail() {
         setSeason(castaway.seasons)
         const [{ data: seasonEntry, error: entryError }, { data: cast, error: castError }] = await Promise.all([
           supabase.from('season_entries').select('*').eq('season_id', castaway.season_id).eq('profile_id', authData?.user?.id).single(),
-          supabase.from('season_contestants').select('id, name, is_eliminated, elim_day').eq('season_id', castaway.season_id)
+          supabase.from('season_contestants').select('id, name, is_eliminated, elimination_day').eq('season_id', castaway.season_id)
         ])
         if (!active) return
         if (castError) console.error(castError)

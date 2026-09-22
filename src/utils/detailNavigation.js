@@ -4,7 +4,7 @@ export function compareCastaways(a, b) {
   const aEliminated = a.is_eliminated === true
   const bEliminated = b.is_eliminated === true
   if (aEliminated !== bEliminated) return aEliminated ? 1 : -1
-  if (aEliminated && Number(a.elim_day || 0) !== Number(b.elim_day || 0)) return Number(b.elim_day || 0) - Number(a.elim_day || 0)
+  if (aEliminated && Number(a.elimination_day || 0) !== Number(b.elimination_day || 0)) return Number(b.elimination_day || 0) - Number(a.elimination_day || 0)
   return (a.name || '').localeCompare(b.name || '') || Number(a.id) - Number(b.id)
 }
 
