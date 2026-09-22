@@ -48,13 +48,13 @@ export default function SeasonContestantDetail() {
   const isDrafted = rosterIds.includes(String(contestant.id))
   const draftLimit = Number(season?.current_week || 1) >= Number(season?.merge_week || 7) ? Number(season?.merge_draft_size || 6) : Number(season?.initial_draft_size || 5)
 
-  async function toggleDraft() {
-    if (!entry || saving || contestant.is_eliminated || (!isDrafted && rosterIds.length >= draftLimit)) return
+  async function draftPlayer() {
+    if (!entry || saving || isDrafted || contestant.is_eliminated || rosterIds.length >= draftLimit) return
     setSaving(true)
     const { data, error } = await supabase.rpc('set_season_draft_pick', {
       p_season_id: contestant.season_id,
       p_contestant_id: contestant.id,
-      p_add: !isDrafted
+      p_add: true
     })
     if (error) alert(error.message)
     else setEntry(previous => ({ ...previous, drafted_team: data || [] }))
@@ -79,7 +79,7 @@ export default function SeasonContestantDetail() {
           <p style={{ lineHeight: 1.6 }}>{contestant.bio}</p>
           <div style={{ margin: '1rem 0', padding: '0.85rem', borderRadius: 10, background: '#f8fafc', border: '1px solid #cbd5e1' }}>
             <p style={{ margin: '0 0 0.6rem', fontWeight: 700 }}>Your tribe: {rosterIds.length} / {draftLimit}</p>
-
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#475569' }}>Draft picks are permanent. Once drafted, a castaway cannot be removed or replaced.</p>
           </div>
 
         </div>
@@ -87,10 +87,10 @@ export default function SeasonContestantDetail() {
       </DetailNavigation>
       <div className="castaway-draft-bar">
         <button
-          onClick={toggleDraft}
-          disabled={!entry || saving || contestant.is_eliminated || (!isDrafted && rosterIds.length >= draftLimit)}
+          onClick={draftPlayer}
+          disabled={!entry || saving || isDrafted || contestant.is_eliminated || rosterIds.length >= draftLimit}
           className={`castaway-draft-button${isDrafted ? ' is-drafted' : rosterIds.length >= draftLimit ? ' is-full' : ''}`}
-          aria-label={isDrafted ? 'Drafted. Remove from My Tribe' : rosterIds.length >= draftLimit ? 'Draft unavailable: your tribe is full' : 'Draft'}
+          aria-label={isDrafted ? 'Drafted. Pick locked' : rosterIds.length >= draftLimit ? 'Draft unavailable: your tribe is full' : 'Draft'}
           aria-pressed={isDrafted}
           aria-busy={saving}
         >
