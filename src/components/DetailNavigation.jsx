@@ -30,10 +30,13 @@ export default function DetailNavigation({ items, id, basePath, label, disabled 
         if (direction) move(direction)
       }}
     >
-      <nav className="detail-pagination" aria-label={`${label} navigation`}>
-        <button type="button" disabled={!available} onClick={() => move(-1)} aria-label={`Previous ${label}`}>← Previous</button>
-        <span>{items.length > 1 ? 'Swipe to browse' : label}</span>
-        <button type="button" disabled={!available} onClick={() => move(1)} aria-label={`Next ${label}`}>Next →</button>
+      <nav className="detail-side-navigation" aria-label={`${label} navigation`}>
+        <button className="detail-side-arrow is-previous" type="button" disabled={!available} onClick={() => move(-1)} aria-label={`Previous ${label}`}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6" /></svg>
+        </button>
+        <button className="detail-side-arrow is-next" type="button" disabled={!available} onClick={() => move(1)} aria-label={`Next ${label}`}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6" /></svg>
+        </button>
       </nav>
       {children}
     </div>

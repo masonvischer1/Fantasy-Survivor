@@ -95,22 +95,68 @@
 .castaway-draft-button:disabled { cursor: not-allowed; }
 
 .detail-swipe-region {
+  --detail-card-width: 880px;
   touch-action: pan-y pinch-zoom;
-  max-width: 880px;
+  width: calc(100% - 40px);
+  max-width: var(--detail-card-width);
   margin: 0 auto;
 }
-.castaway-detail .detail-swipe-region { max-width: 620px; }
-.detail-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+.castaway-detail .detail-swipe-region { --detail-card-width: 620px; }
+.detail-side-arrow {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 140;
+  width: 44px;
+  height: 44px;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  color: #111827;
 }
-.detail-pagination button {
-  min-height: 44px;
+.detail-side-arrow.is-previous {
+  left: max(env(safe-area-inset-left, 0px), calc((100vw - var(--detail-card-width)) / 2 - 44px));
+}
+.detail-side-arrow.is-next {
+  right: max(env(safe-area-inset-right, 0px), calc((100vw - var(--detail-card-width)) / 2 - 44px));
+}
+.detail-side-arrow svg {
+  display: block;
+  width: 28px;
+  height: 28px;
   background: #fffffff0;
-  font-size: 0.8rem;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px #0003;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
-.detail-pagination button:disabled { opacity: 0.5; cursor: default; }
-.detail-pagination span { font-size: 0.75rem; color: white; text-shadow: 0 1px 4px #000; text-align: center; }
+.detail-side-arrow:disabled { opacity: 0.4; cursor: default; }
+.leaderboard-roster {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+  max-width: 360px;
+  margin-top: 0.45rem;
+}
+.leaderboard-roster-empty { grid-column: 1 / -1; color: #64748b; font-size: 0.85rem; }
+.leaderboard-roster-player { min-width: 0; text-align: center; }
+.leaderboard-roster-player img {
+  display: block;
+  width: min(100%, 52px);
+  aspect-ratio: 1;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 6px;
+  margin: 0 auto 0.2rem;
+}
+.leaderboard-roster-player small {
+  display: block;
+  font-size: 0.65rem;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

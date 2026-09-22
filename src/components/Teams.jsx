@@ -92,11 +92,11 @@ export default function Teams() {
               <p style={{ margin: '0.2rem 0 0', color: '#555', fontSize: '0.85rem' }}>#{entry.rank}</p>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.45rem', overflowX: 'auto' }}>
-            {entry.roster.length === 0 ? <span style={{ color: '#64748b', fontSize: '0.85rem' }}>Draft not submitted yet</span> : entry.roster.map(c => (
-              <div key={c.id} style={{ width: 44, flex: '0 0 auto', textAlign: 'center' }}>
-                <img src={c.picture_url || '/fallback.png'} alt={c.display_name || c.name} style={{ display: 'block', margin: '0 auto 0.2rem', width: 38, height: 38, objectFit: 'cover', objectPosition: 'center top', borderRadius: 6, filter: c.is_eliminated ? 'grayscale(1)' : 'none' }} />
-                <small style={{ display: 'block', fontSize: '0.65rem', lineHeight: 1.15, overflowWrap: 'anywhere' }}>{c.display_name || c.name.split(' ')[0]}</small>
+          <div className="leaderboard-roster">
+            {entry.roster.length === 0 ? <span className="leaderboard-roster-empty">Draft not submitted yet</span> : entry.roster.map(c => (
+              <div key={c.id} className="leaderboard-roster-player">
+                <img src={c.picture_url || '/fallback.png'} alt={c.display_name || c.name} style={{ filter: c.is_eliminated ? 'grayscale(1)' : 'none' }} />
+                <small title={c.display_name || c.name}>{c.display_name || c.name.split(' ')[0]}</small>
               </div>
             ))}
           </div>
