@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import DetailNavigation from './DetailNavigation'
+import { compareCastaways } from '../utils/detailNavigation'
 import { supabase } from '../supabaseClient'
 
 export default function SeasonContestantDetail() {
   const { id } = useParams()
+  const [castaways, setCastaways] = useState([])
   const [contestant, setContestant] = useState(null)
   const [season, setSeason] = useState(null)
   const [entry, setEntry] = useState(null)
@@ -22,7 +25,13 @@ export default function SeasonContestantDetail() {
       else {
         setContestant(castaway)
         setSeason(castaway.seasons)
-        const { data: seasonEntry, error: entryError } = await supabase.from('season_entries').select('*').eq('season_id', castaway.season_id).eq('profile_id', authData.user.id).single()
+        const [{ data: seasonEntry, error: entryError }, { data: cast, error: castError }] = await Promise.all([
+          supabase.from('season_entries').select('*').eq('season_id', castaway.season_id).eq('profile_id', authData?.user?.id).single(),
+          supabase.from('season_contestants').select('id, name, is_eliminated, elim_day').eq('season_id', castaway.season_id)
+        ])
+        if (!active) return
+        if (castError) console.error(castError)
+        setCastaways([...(cast || [])].sort(compareCastaways))
         if (entryError) console.error(entryError)
         else setEntry(seasonEntry)
       }
@@ -55,6 +64,7 @@ export default function SeasonContestantDetail() {
   return (
     <div className="castaway-detail">
       <Link to="/castaways" className="castaway-back" aria-label="Back to Castaways">← Back</Link>
+      <DetailNavigation items={castaways} id={id} basePath="/castaways" label="castaway" disabled={saving}>
       <article style={{ width: 'min(620px, 100%)', margin: '0 auto', background: 'rgba(255,255,255,0.9)', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 12px 30px rgba(15,23,42,0.25)' }}>
         <img src={contestant.picture_url} alt={contestant.name} style={{ width: '100%', aspectRatio: '1', display: 'block', objectFit: 'cover', objectPosition: 'center top' }} />
         <div style={{ padding: '1rem' }}>
@@ -74,6 +84,7 @@ export default function SeasonContestantDetail() {
 
         </div>
       </article>
+      </DetailNavigation>
       <div className="castaway-draft-bar">
         <button
           onClick={toggleDraft}

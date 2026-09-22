@@ -93,3 +93,24 @@
   color: #ffffffb3;
 }
 .castaway-draft-button:disabled { cursor: not-allowed; }
+
+.detail-swipe-region {
+  touch-action: pan-y pinch-zoom;
+  max-width: 880px;
+  margin: 0 auto;
+}
+.castaway-detail .detail-swipe-region { max-width: 620px; }
+.detail-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.detail-pagination button {
+  min-height: 44px;
+  background: #fffffff0;
+  font-size: 0.8rem;
+}
+.detail-pagination button:disabled { opacity: 0.5; cursor: default; }
+.detail-pagination span { font-size: 0.75rem; color: white; text-shadow: 0 1px 4px #000; text-align: center; }

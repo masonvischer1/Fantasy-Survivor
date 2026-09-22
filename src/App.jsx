@@ -41,6 +41,10 @@ function AppLayout({ session, profile, setProfile, needsTeamSetup }) {
   const location = useLocation();
   const pageBackground = getRouteBackground(location.pathname);
 
+  useEffect(() => {
+    document.querySelector('.app-shell-main')?.scrollTo(0, 0);
+  }, [location.pathname]);
+
   return (
     <div
       className="app-shell"
@@ -110,7 +114,7 @@ function AppLayout({ session, profile, setProfile, needsTeamSetup }) {
 
           <Route
             path="/castaways/:id"
-            element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <SeasonContestantDetail />) : <Navigate to="/login" />}
+            element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <SeasonContestantDetail key={location.pathname} />) : <Navigate to="/login" />}
           />
 
           <Route
@@ -126,7 +130,7 @@ function AppLayout({ session, profile, setProfile, needsTeamSetup }) {
 
           <Route
             path="/teams/:id"
-            element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <TeamProfileView />) : <Navigate to="/login" />}
+            element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <TeamProfileView key={location.pathname} />) : <Navigate to="/login" />}
           />
 
           <Route

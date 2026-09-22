@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import DetailNavigation from './DetailNavigation'
+import { compareTeams } from '../utils/detailNavigation'
 import { supabase } from '../supabaseClient'
 
 export default function TeamProfileView() {
   const { id } = useParams()
+  const [teams, setTeams] = useState([])
   const [entry, setEntry] = useState(null)
   const [contestants, setContestants] = useState([])
   const [results, setResults] = useState([])
@@ -17,18 +20,21 @@ export default function TeamProfileView() {
         supabase.from('season_entries').select('*').eq('id', id).single(),
         supabase.auth.getUser()
       ])
-      if (error || !active) {
+      if (!active) return
+      if (error) {
         if (error) console.error(error)
         setLoading(false)
         return
       }
-      const [{ data: cast }, { data: weekly }, { data: season }, { data: viewer }] = await Promise.all([
+      const [{ data: cast }, { data: weekly }, { data: season }, { data: viewer }, { data: teamList }] = await Promise.all([
         supabase.from('season_contestants').select('*').eq('season_id', team.season_id),
         supabase.from('season_weekly_results').select('*').eq('season_id', team.season_id).order('week'),
         supabase.from('seasons').select('initial_draft_size').eq('id', team.season_id).single(),
-        supabase.from('season_entries').select('drafted_team').eq('season_id', team.season_id).eq('profile_id', authData.user.id).single()
+        supabase.from('season_entries').select('drafted_team').eq('season_id', team.season_id).eq('profile_id', authData?.user?.id).single(),
+        supabase.from('season_entries').select('id, team_name, total_score').eq('season_id', team.season_id).not('team_name', 'is', null)
       ])
       if (!active) return
+      setTeams([...(teamList || [])].sort(compareTeams))
       setEntry(team)
       setContestants(cast || [])
       setResults(weekly || [])
@@ -49,6 +55,7 @@ export default function TeamProfileView() {
 
   return (
     <div style={{ padding: '1rem 1rem 6rem' }}>
+      <DetailNavigation items={teams} id={id} basePath="/teams" label="team">
       <article style={{ maxWidth: 880, margin: '0 auto', background: 'rgba(255,255,255,.9)', borderRadius: 14, padding: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {entry.avatar_url && <img src={entry.avatar_url} alt="" style={{ width: 76, height: 76, borderRadius: '50%', objectFit: 'cover' }} />}
@@ -74,6 +81,7 @@ export default function TeamProfileView() {
         </div>
         <Link to="/teams" style={{ display: 'inline-block', marginTop: 18 }}>← Back to Leaderboard</Link>
       </article>
+      </DetailNavigation>
     </div>
   )
 }

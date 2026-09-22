@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { compareCastaways } from '../utils/detailNavigation'
 import siteLogo from '../assets/51/Logo.webp'
 
 export default function ContestantsGrid() {
@@ -28,21 +29,7 @@ export default function ContestantsGrid() {
 
     if (error) console.error(error)
     else {
-      const sorted = [...(data || [])].sort((a, b) => {
-        const aElim = a.is_eliminated === true
-        const bElim = b.is_eliminated === true
-
-        if (aElim !== bElim) return aElim ? 1 : -1
-
-        if (!aElim && !bElim) {
-          return (a.name || '').localeCompare(b.name || '')
-        }
-
-        const aDay = Number(a.elim_day || 0)
-        const bDay = Number(b.elim_day || 0)
-        if (aDay !== bDay) return bDay - aDay
-        return (a.name || '').localeCompare(b.name || '')
-      })
+      const sorted = [...(data || [])].sort(compareCastaways)
       setContestants(sorted)
     }
   }

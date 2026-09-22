@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import siteLogo from '../assets/51/Logo.webp'
+import { compareTeams } from '../utils/detailNavigation'
 import idolImg from '../assets/idol.png'
 
 const totalFor = entry => Number(entry.total_score ?? 0)
@@ -57,7 +58,7 @@ export default function Teams() {
 
   const contestantMap = useMemo(() => new Map(contestants.map(c => [String(c.id), c])), [contestants])
   const rankedEntries = useMemo(() => {
-    const sorted = [...entries].sort((a, b) => totalFor(b) - totalFor(a) || (a.team_name || '').localeCompare(b.team_name || ''))
+    const sorted = [...entries].sort(compareTeams)
     return sorted.map(entry => {
       const rank = sorted.findIndex(item => totalFor(item) === totalFor(entry)) + 1
       return {
@@ -69,9 +70,9 @@ export default function Teams() {
   }, [contestantMap, entries])
 
   return (
-    <div style={{ padding: '1rem', position: 'relative' }}>
+    <div style={{ padding: '0.75rem 0.75rem calc(6rem + env(safe-area-inset-bottom))', position: 'relative' }}>
       <img src={idolImg} alt="" aria-hidden="true" style={{ position: 'absolute', top: '-48px', right: 'calc(-104px + env(safe-area-inset-right))', width: 'clamp(200px, 46vw, 340px)', pointerEvents: 'none', transform: 'rotate(22deg)', transformOrigin: 'top right', filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))' }} />
-      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(220px, 55vw)', margin: '0 auto 0.75rem' }} />
+      <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(170px, 43vw)', margin: '0 auto 0.75rem' }} />
       <h1 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Leaderboard</h1>
 
       {loading && <p style={{ color: 'white' }}>Loading leaderboard…</p>}
@@ -79,27 +80,27 @@ export default function Teams() {
       {!loading && viewerCanSee && rankedEntries.length === 0 && <p style={{ color: 'white' }}>No Survivor 51 teams have been created yet.</p>}
 
       {viewerCanSee && rankedEntries.map(entry => (
-        <article key={entry.id} onClick={() => navigate(`/teams/${entry.id}`)} role="button" tabIndex={0} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') navigate(`/teams/${entry.id}`) }} style={{ marginBottom: '1rem', border: entry.rank === 1 ? '2px solid #d4af37' : '1px solid #ddd', padding: '0.85rem', borderRadius: '10px', background: 'rgba(255,255,255,0.88)', cursor: 'pointer' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {entry.avatar_url && <img src={entry.avatar_url} alt="" style={{ width: 58, height: 58, borderRadius: '50%', objectFit: 'cover' }} />}
+        <article key={entry.id} onClick={() => navigate(`/teams/${entry.id}`)} role="button" tabIndex={0} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') navigate(`/teams/${entry.id}`) }} style={{ marginBottom: '0.6rem', border: entry.rank === 1 ? '2px solid #d4af37' : '1px solid #ddd', padding: '0.6rem', borderRadius: '10px', background: 'rgba(255,255,255,0.88)', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+            {entry.avatar_url && <img src={entry.avatar_url} alt="" style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover' }} />}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <h2 style={{ margin: 0, overflowWrap: 'anywhere' }}>{entry.team_name}</h2>
-              <p style={{ margin: '0.2rem 0 0', color: '#666' }}>{entry.player_name}</p>
+              <h2 style={{ margin: 0, fontSize: '1.1rem', lineHeight: 1.2, overflowWrap: 'anywhere' }}>{entry.team_name}</h2>
+              <p style={{ margin: '0.2rem 0 0', color: '#666', fontSize: '0.8rem' }}>{entry.player_name}</p>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <strong>{totalFor(entry)} Points</strong>
+              <strong style={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{totalFor(entry)} Points</strong>
               <p style={{ margin: '0.2rem 0 0', color: '#555', fontSize: '0.85rem' }}>#{entry.rank}</p>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.75rem', overflowX: 'auto' }}>
+          <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.45rem', overflowX: 'auto' }}>
             {entry.roster.length === 0 ? <span style={{ color: '#64748b', fontSize: '0.85rem' }}>Draft not submitted yet</span> : entry.roster.map(c => (
-              <div key={c.id} style={{ width: 54, flex: '0 0 auto', textAlign: 'center' }}>
-                <img src={c.picture_url || '/fallback.png'} alt={c.display_name || c.name} style={{ width: 48, height: 48, objectFit: 'cover', objectPosition: 'center top', borderRadius: 6, filter: c.is_eliminated ? 'grayscale(1)' : 'none' }} />
-                <small>{c.display_name || c.name.split(' ')[0]}</small>
+              <div key={c.id} style={{ width: 44, flex: '0 0 auto', textAlign: 'center' }}>
+                <img src={c.picture_url || '/fallback.png'} alt={c.display_name || c.name} style={{ display: 'block', margin: '0 auto 0.2rem', width: 38, height: 38, objectFit: 'cover', objectPosition: 'center top', borderRadius: 6, filter: c.is_eliminated ? 'grayscale(1)' : 'none' }} />
+                <small style={{ display: 'block', fontSize: '0.65rem', lineHeight: 1.15, overflowWrap: 'anywhere' }}>{c.display_name || c.name.split(' ')[0]}</small>
               </div>
             ))}
           </div>
-          <p style={{ margin: '0.75rem 0 0', color: '#166534', fontSize: '0.8rem' }}>{entry.team_points || 0} Team · +{entry.bonus_points || 0} Bonus</p>
+          <p style={{ margin: '0.45rem 0 0', color: '#166534', fontSize: '0.8rem' }}>{entry.team_points || 0} Team · +{entry.bonus_points || 0} Bonus</p>
         </article>
       ))}
     </div>
