@@ -66,7 +66,7 @@ export default function TeamProfileView() {
         <h2>Drafted Tribe</h2>
         {roster.length === 0 && <p>No castaways drafted yet.</p>}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(125px,1fr))', gap: 10 }}>
-          {roster.map(c => <div key={c.id} style={{ textAlign: 'center' }}><img src={c.picture_url} alt={c.name} style={{ width: '100%', aspectRatio: 1, objectFit: 'cover', objectPosition: 'center top', borderRadius: 8, filter: c.is_eliminated ? 'grayscale(1)' : 'none' }} /><strong>{c.name}</strong></div>)}
+          {roster.map(c => <Link key={c.id} to={`/castaways/${c.id}`} style={{ textAlign: 'center', color: 'inherit' }}><img src={c.picture_url} alt={c.name} style={{ width: '100%', aspectRatio: 1, objectFit: 'cover', objectPosition: 'center top', borderRadius: 8, filter: c.is_eliminated ? 'grayscale(1)' : 'none' }} /><strong>{c.name}</strong></Link>)}
         </div>
 
         <h2>Weekly Picks</h2>

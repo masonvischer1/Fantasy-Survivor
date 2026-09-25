@@ -30,7 +30,7 @@ export default function SeasonContestantDetail() {
         setSeason(castaway.seasons)
         const [{ data: seasonEntry, error: entryError }, { data: cast, error: castError }, { data: account }] = await Promise.all([
           supabase.from('season_entries').select('*').eq('season_id', castaway.season_id).eq('profile_id', authData?.user?.id).single(),
-          supabase.from('season_contestants').select('id, name, is_eliminated, elimination_day').eq('season_id', castaway.season_id),
+          supabase.from('season_contestants').select('id, name, display_name, picture_url, is_eliminated, elimination_day').eq('season_id', castaway.season_id),
           supabase.from('profiles').select('is_admin').eq('id', authData?.user?.id).single()
         ])
         if (!active) return
@@ -96,7 +96,7 @@ export default function SeasonContestantDetail() {
   return (
     <div className="castaway-detail">
       <Link to="/castaways" className="castaway-back" aria-label="Back to Castaways">← Back</Link>
-      <DetailNavigation items={castaways} id={id} basePath="/castaways" label="castaway" disabled={saving || eliminating}>
+      <DetailNavigation items={castaways} id={id} basePath="/castaways" label="castaway" previews disabled={saving || eliminating}>
       <article style={{ width: 'min(620px, 100%)', margin: '0 auto', background: 'rgba(255,255,255,0.9)', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 12px 30px rgba(15,23,42,0.25)' }}>
         <img src={contestant.picture_url} alt={contestant.name} style={{ width: '100%', aspectRatio: '1', display: 'block', objectFit: 'cover', objectPosition: 'center top', filter: contestant.is_eliminated ? 'grayscale(1)' : 'none' }} />
         <div style={{ padding: '1rem' }}>

@@ -52,6 +52,8 @@
 }
 
 .castaway-back {
+  font-family: 'Survivant', system-ui, sans-serif;
+  font-size: 0.9rem;
   position: fixed;
   top: calc(0.75rem + env(safe-area-inset-top, 0px));
   left: calc(1rem + env(safe-area-inset-left, 0px));
@@ -73,6 +75,7 @@
   z-index: 150;
 }
 
+.castaway-draft-button { min-width: clamp(106px, 32vw, 170px); }
 .castaway-draft-button, .castaway-elim-button {
   min-height: 44px;
   padding: 0.65rem 0.85rem;
@@ -174,3 +177,23 @@
 .drafted-team-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .drafted-team-name strong { display: block; font-size: 0.9rem; }
 .drafted-team-name small { display: block; color: #64748b; font-size: 0.8rem; }
+
+.detail-swipe-region.has-previews {
+  position: relative;
+  clip-path: inset(-4px -28px);
+}
+.castaway-card-preview {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  background: rgba(255,255,255,0.9);
+  border-radius: 16px;
+  overflow: hidden;
+  opacity: 0.7;
+  user-select: none;
+}
+.castaway-card-preview.is-previous { right: calc(100% + 12px); }
+.castaway-card-preview.is-next { left: calc(100% + 12px); }
+.castaway-card-preview img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; object-position: center top; }
+.castaway-card-preview h2 { padding: 1rem; }
