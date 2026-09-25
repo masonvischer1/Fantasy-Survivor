@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import siteLogo from '../assets/51/Logo.webp'
-import { compareTeams } from '../utils/detailNavigation'
+import { compareTeams, withRemainingCastaways } from '../utils/detailNavigation'
 import { ordinalPlace } from '../utils/leaderboardStats'
 import idolImg from '../assets/idol.png'
 
@@ -85,16 +85,16 @@ export default function Teams({ guestData = null }) {
 
   const contestantMap = useMemo(() => new Map(contestants.map(c => [String(c.id), c])), [contestants])
   const rankedEntries = useMemo(() => {
-    const sorted = [...entries].sort(compareTeams)
+    const sorted = withRemainingCastaways(entries, contestants).sort(compareTeams)
     return sorted.map(entry => {
-      const rank = sorted.findIndex(item => totalFor(item) === totalFor(entry)) + 1
+      const rank = sorted.findIndex(item => totalFor(item) === totalFor(entry) && item.remaining_castaways === entry.remaining_castaways) + 1
       return {
         ...entry,
         rank,
         roster: (entry.drafted_team || []).map(pick => contestantMap.get(String(pick?.id ?? pick))).filter(Boolean)
       }
     })
-  }, [contestantMap, entries])
+  }, [contestantMap, entries, contestants])
 
   async function updateWeekRanks() {
     if (!isAdmin || guestData || updatingRanks || !seasonId) return

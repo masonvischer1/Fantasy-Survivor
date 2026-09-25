@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { castawayContribution } from '../utils/leaderboardStats'
 import DetailNavigation from './DetailNavigation'
-import { compareTeams } from '../utils/detailNavigation'
+import { compareTeams, withRemainingCastaways } from '../utils/detailNavigation'
 import { supabase } from '../supabaseClient'
 
 export default function TeamProfileView({ guestData = null }) {
@@ -13,6 +13,7 @@ export default function TeamProfileView({ guestData = null }) {
   const [contestants, setContestants] = useState([])
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(true)
+  const [viewerPicks, setViewerPicks] = useState({})
   const [viewerCanSee, setViewerCanSee] = useState(false)
 
   useEffect(() => {
@@ -21,7 +22,7 @@ export default function TeamProfileView({ guestData = null }) {
       if (guestData) {
         if (!active) return
         setEntry(guestData.teams.find(t => String(t.id) === id) || null)
-        setTeams([...guestData.teams].sort(compareTeams))
+        setTeams(withRemainingCastaways(guestData.teams, guestData.castaways).sort(compareTeams))
         setContestants(guestData.castaways)
         setResults(guestData.results)
         setViewerCanSee(true)
@@ -42,14 +43,15 @@ export default function TeamProfileView({ guestData = null }) {
         supabase.from('season_contestants').select('*').eq('season_id', team.season_id),
         supabase.from('season_weekly_results').select('*').eq('season_id', team.season_id).order('week'),
         supabase.from('seasons').select('initial_draft_size').eq('id', team.season_id).single(),
-        supabase.from('season_entries').select('drafted_team').eq('season_id', team.season_id).eq('profile_id', authData?.user?.id).single(),
+        supabase.from('season_entries').select('drafted_team, weekly_picks').eq('season_id', team.season_id).eq('profile_id', authData?.user?.id).single(),
         supabase.from('season_entries').select('id, team_name, player_name, avatar_url, total_score, drafted_team').eq('season_id', team.season_id).not('team_name', 'is', null)
       ])
       if (!active) return
-      setTeams([...(teamList || [])].sort(compareTeams))
+      setTeams(withRemainingCastaways(teamList || [], cast || []).sort(compareTeams))
       setEntry(team)
       setContestants(cast || [])
       setResults(weekly || [])
+      setViewerPicks(viewer?.weekly_picks || {})
       setViewerCanSee((viewer?.drafted_team || []).length >= Number(season?.initial_draft_size || 5))
       setLoading(false)
     }
@@ -60,6 +62,8 @@ export default function TeamProfileView({ guestData = null }) {
   const contestantMap = useMemo(() => new Map(contestants.map(c => [String(c.id), c])), [contestants])
   const roster = useMemo(() => (entry?.drafted_team || []).map(pick => contestantMap.get(String(pick?.id ?? pick))).filter(Boolean), [contestantMap, entry])
   const resultMap = useMemo(() => new Map(results.map(result => [String(result.week), result])), [results])
+
+  const visibleWeeklyPicks = Object.entries(entry?.weekly_picks || {}).filter(([week]) => !!guestData || (viewerPicks[week] != null && viewerPicks[week] !== ''))
 
   if (loading) return <div style={{ padding: '1rem' }}>Loading team…</div>
   if (!entry) return <div style={{ padding: '1rem' }}>Team not found.</div>
@@ -94,9 +98,9 @@ export default function TeamProfileView({ guestData = null }) {
         </div>
 
         <h2>Weekly Picks</h2>
-        {Object.keys(entry.weekly_picks || {}).length === 0 && <p>No weekly picks submitted yet.</p>}
+        {visibleWeeklyPicks.length === 0 && <p>{guestData ? 'No weekly picks submitted yet.' : 'Team picks appear after you submit your own pick for that week.'}</p>}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 8 }}>
-          {Object.entries(entry.weekly_picks || {}).sort((a, b) => Number(a[0]) - Number(b[0])).map(([week, value]) => {
+          {visibleWeeklyPicks.sort((a, b) => Number(a[0]) - Number(b[0])).map(([week, value]) => {
             const result = resultMap.get(String(week))
             const castaway = contestantMap.get(String(value))
             const won = result?.phase === 'tribal' ? String(result.winner_team) === String(value) : (result?.winner_original_contestant_ids || []).map(String).includes(String(value))
