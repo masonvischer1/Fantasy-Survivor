@@ -4,6 +4,7 @@ import { supabase } from "./supabaseClient";
 import { TopNav, BottomNav } from "./components/Navbar";
 import "./App.css";
 
+import RankHistory from "./components/RankHistory";
 import GuestSite from "./components/GuestSite";
 import Login from "./components/Login";
 import Contestants from "./components/contestantsGrid";
@@ -30,6 +31,7 @@ function getRouteBackground(pathname) {
   if (pathname === "/create-team") return loginBg;
   if (pathname === "/profile") return profileBg;
   if (pathname.startsWith("/teams/")) return profileBg;
+  if (pathname === "/rank-history") return leaderboardBg;
   if (pathname === "/teams") return leaderboardBg;
   if (pathname === "/weekly-picks") return weeklyPicksBg;
   if (pathname === "/rules") return rulesBg;
@@ -130,6 +132,8 @@ function AppLayout({ session, profile, setProfile, needsTeamSetup }) {
                 : <Navigate to="/login" />
             }
           />
+
+          <Route path="/rank-history" element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <RankHistory />) : <Navigate to="/login" />} />
 
           <Route
             path="/teams/:id"

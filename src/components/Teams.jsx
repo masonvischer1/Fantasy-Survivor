@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import siteLogo from '../assets/51/Logo.webp'
 import { compareTeams, withRemainingCastaways } from '../utils/detailNavigation'
 import { ordinalPlace } from '../utils/leaderboardStats'
+import './RankHistory.css'
 import idolImg from '../assets/idol.png'
 
 const totalFor = entry => Number(entry.total_score ?? 0)
@@ -156,6 +157,7 @@ export default function Teams({ guestData = null }) {
           </div>
         </article>
       ))}
+      {viewerCanSee && <div className="rank-history-entry"><Link to={`${prefix}/rank-history`}>Rank History ↗</Link></div>}
       {!guestData && isAdmin && <div className="rank-admin-actions">
         <button onClick={updateWeekRanks} disabled={updatingRanks || loading}>{updatingRanks ? 'Updating…' : 'Update week ranks'}</button>
         {rankMessage && <p role="status">{rankMessage}</p>}

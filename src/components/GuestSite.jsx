@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, Routes, Route, useLocation } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import Teams from './Teams'
+import RankHistory from './RankHistory'
 import ContestantsGrid from './contestantsGrid'
 import TeamProfileView from './TeamProfileView'
 import SeasonContestantDetail from './SeasonContestantDetail'
@@ -43,6 +44,7 @@ export default function GuestSite() {
     <Routes>
       <Route index element={<Navigate to="teams" replace />} />
       <Route path="teams" element={<Teams guestData={data} />} />
+      <Route path="rank-history" element={<RankHistory guest />} />
       <Route path="teams/:id" element={<TeamProfileView key={location.pathname} guestData={data} />} />
       <Route path="castaways" element={<ContestantsGrid guestData={data} />} />
       <Route path="castaways/:id" element={<SeasonContestantDetail key={location.pathname} guestData={data} />} />
