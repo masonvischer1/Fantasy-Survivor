@@ -1,15 +1,17 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { compareCastaways } from '../utils/detailNavigation'
 import siteLogo from '../assets/51/Logo.webp'
 
-export default function ContestantsGrid() {
+export default function ContestantsGrid({ guestData = null }) {
   const navigate = useNavigate()
+  const prefix = guestData ? '/guest' : ''
   const [contestants, setContestants] = useState([])
 
   // Fetch all contestants
-  async function fetchContestants() {
+  const fetchContestants = useCallback(async () => {
+    if (guestData) { setContestants([...guestData.castaways].sort(compareCastaways)); return }
     const { data: seasonData, error: seasonError } = await supabase
       .from('seasons')
       .select('*')
@@ -32,7 +34,7 @@ export default function ContestantsGrid() {
       const sorted = [...(data || [])].sort(compareCastaways)
       setContestants(sorted)
     }
-  }
+  }, [guestData])
 
   useEffect(() => {
     Promise.resolve().then(() => {
@@ -40,6 +42,7 @@ export default function ContestantsGrid() {
     })
 
     // Keep list in sync when contestant elimination status changes elsewhere.
+    if (guestData) return
     const channel = supabase
       .channel('contestants-grid-updates')
       .on(
@@ -54,7 +57,7 @@ export default function ContestantsGrid() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [guestData, fetchContestants])
 
   return (
     <div style={{ padding: '1rem 1rem 6rem' }}>
@@ -67,7 +70,7 @@ export default function ContestantsGrid() {
         return (
           <div
             key={c.id}
-            onClick={() => navigate(`/castaways/${c.id}`)}
+            onClick={() => navigate(`${prefix}/castaways/${c.id}`)}
             style={{
               display: 'flex',
               alignItems: 'center',

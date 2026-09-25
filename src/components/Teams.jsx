@@ -3,12 +3,19 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import siteLogo from '../assets/51/Logo.webp'
 import { compareTeams } from '../utils/detailNavigation'
+import { ordinalPlace } from '../utils/leaderboardStats'
 import idolImg from '../assets/idol.png'
 
 const totalFor = entry => Number(entry.total_score ?? 0)
 
-export default function Teams() {
+export default function Teams({ guestData = null }) {
   const navigate = useNavigate()
+  const prefix = guestData ? '/guest' : ''
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [seasonId, setSeasonId] = useState(null)
+  const [rankSnapshot, setRankSnapshot] = useState({ changes: {} })
+  const [updatingRanks, setUpdatingRanks] = useState(false)
+  const [rankMessage, setRankMessage] = useState('')
   const [entries, setEntries] = useState([])
   const [contestants, setContestants] = useState([])
   const [loading, setLoading] = useState(true)
@@ -17,6 +24,14 @@ export default function Teams() {
   const [requiredDraftCount, setRequiredDraftCount] = useState(5)
 
   const loadLeaderboard = useCallback(async () => {
+    if (guestData) {
+      setRankSnapshot(guestData.rank_snapshot || { changes: {} })
+      setEntries(guestData.teams)
+      setContestants(guestData.castaways)
+      setViewerCanSee(true)
+      setLoading(false)
+      return
+    }
     const { data: activeSeason, error: seasonError } = await supabase
       .from('seasons')
       .select('*')
@@ -35,6 +50,13 @@ export default function Teams() {
       supabase.auth.getUser()
     ])
 
+    setSeasonId(activeSeason.id)
+    const [{ data: account }, { data: snapshot, error: rankError }] = await Promise.all([
+      supabase.from('profiles').select('is_admin').eq('id', authData?.user?.id).single(),
+      supabase.rpc('get_season_rank_changes', { p_season_id: activeSeason.id })
+    ])
+    setIsAdmin(!!account?.is_admin)
+    if (!rankError) setRankSnapshot(snapshot || { changes: {} })
     if (entryError || contestantError) console.error(entryError || contestantError)
     setEntries(entryData || [])
     setContestants(contestantData || [])
@@ -44,17 +66,18 @@ export default function Teams() {
     setViewerDraftCount(draftCount)
     setViewerCanSee(draftCount >= Number(activeSeason.initial_draft_size || 5))
     setLoading(false)
-  }, [])
+  }, [guestData])
 
   useEffect(() => {
     Promise.resolve().then(loadLeaderboard)
+    if (guestData) return
     const channel = supabase
       .channel('season-51-leaderboard')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'season_entries' }, loadLeaderboard)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'season_contestants' }, loadLeaderboard)
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [loadLeaderboard])
+  }, [loadLeaderboard, guestData])
 
   const contestantMap = useMemo(() => new Map(contestants.map(c => [String(c.id), c])), [contestants])
   const rankedEntries = useMemo(() => {
@@ -69,6 +92,21 @@ export default function Teams() {
     })
   }, [contestantMap, entries])
 
+  async function updateWeekRanks() {
+    if (!isAdmin || guestData || updatingRanks || !seasonId) return
+    if (!window.confirm('Save the current standings as the completed week’s ranks? Changes will compare with the previous saved standings. The first update establishes a baseline.')) return
+    setUpdatingRanks(true)
+    setRankMessage('')
+    try {
+      const { data, error } = await supabase.rpc('admin_update_week_ranks', { p_season_id: seasonId })
+      if (error) throw error
+      setRankSnapshot(data)
+      setRankMessage('Week ranks updated.')
+      await loadLeaderboard()
+    } catch (error) { setRankMessage(`Could not update ranks: ${error.message}`) }
+    finally { setUpdatingRanks(false) }
+  }
+
   return (
     <div style={{ padding: '0.75rem 0.75rem calc(6rem + env(safe-area-inset-bottom))', position: 'relative' }}>
       <img src={idolImg} alt="" aria-hidden="true" style={{ position: 'absolute', top: '-48px', right: 'calc(-104px + env(safe-area-inset-right))', width: 'clamp(200px, 46vw, 340px)', pointerEvents: 'none', transform: 'rotate(22deg)', transformOrigin: 'top right', filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))' }} />
@@ -80,16 +118,16 @@ export default function Teams() {
       {!loading && viewerCanSee && rankedEntries.length === 0 && <p style={{ color: 'white' }}>No Survivor 51 teams have been created yet.</p>}
 
       {viewerCanSee && rankedEntries.map(entry => (
-        <article key={entry.id} onClick={() => navigate(`/teams/${entry.id}`)} role="button" tabIndex={0} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') navigate(`/teams/${entry.id}`) }} style={{ marginBottom: '0.6rem', border: entry.rank === 1 ? '2px solid #d4af37' : '1px solid #ddd', padding: '0.6rem', borderRadius: '10px', background: 'rgba(255,255,255,0.88)', cursor: 'pointer' }}>
+        <article key={entry.id} onClick={() => navigate(`${prefix}/teams/${entry.id}`)} role="button" tabIndex={0} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') navigate(`${prefix}/teams/${entry.id}`) }} style={{ marginBottom: '0.6rem', border: entry.rank === 1 ? '2px solid #d4af37' : '1px solid #ddd', padding: '0.6rem', borderRadius: '10px', background: 'rgba(255,255,255,0.88)', cursor: 'pointer' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-            {entry.avatar_url && <img src={entry.avatar_url} alt="" style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover' }} />}
+            {entry.avatar_url && <img src={entry.avatar_url} alt="" style={{ width: 42, height: 42, flex: '0 0 42px', aspectRatio: 1, borderRadius: '50%', objectFit: 'cover' }} />}
             <div style={{ flex: 1, minWidth: 0 }}>
               <h2 style={{ margin: 0, fontSize: '1.1rem', lineHeight: 1.2, overflowWrap: 'anywhere' }}>{entry.team_name}</h2>
               <p style={{ margin: '0.2rem 0 0', color: '#666', fontSize: '0.8rem' }}>{entry.player_name}</p>
             </div>
             <div style={{ textAlign: 'right' }}>
               <strong style={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{totalFor(entry)} Points</strong>
-              <p style={{ margin: '0.2rem 0 0', color: '#555', fontSize: '0.85rem' }}>#{entry.rank}</p>
+              <p style={{ margin: '0.2rem 0 0', color: '#555', fontSize: '0.85rem' }}>{ordinalPlace(entry.rank)}</p>
             </div>
           </div>
           <div className="leaderboard-roster">
@@ -100,9 +138,18 @@ export default function Teams() {
               </div>
             ))}
           </div>
-          <p style={{ margin: '0.45rem 0 0', color: '#166534', fontSize: '0.8rem' }}>{entry.team_points || 0} Team · +{entry.bonus_points || 0} Bonus</p>
+          <div className="leaderboard-card-footer">
+            <span className={`rank-change ${Number(rankSnapshot.changes?.[entry.id]) > 0 ? 'rank-up' : Number(rankSnapshot.changes?.[entry.id]) < 0 ? 'rank-down' : ''}`} title="Change between the last two saved week rankings" aria-label={rankSnapshot.changes?.[entry.id] == null ? 'No previous week ranking' : `Rank change: ${rankSnapshot.changes[entry.id] > 0 ? 'up' : rankSnapshot.changes[entry.id] < 0 ? 'down' : 'unchanged'} ${Math.abs(rankSnapshot.changes[entry.id])}`}>
+              {rankSnapshot.changes?.[entry.id] == null ? '—' : rankSnapshot.changes[entry.id] > 0 ? `▲ +${rankSnapshot.changes[entry.id]}` : rankSnapshot.changes[entry.id] < 0 ? `▼ ${rankSnapshot.changes[entry.id]}` : '— 0'}
+            </span>
+            <span>{entry.team_points || 0} Tribe · +{entry.bonus_points || 0} Bonus</span>
+          </div>
         </article>
       ))}
+      {!guestData && isAdmin && <div className="rank-admin-actions">
+        <button onClick={updateWeekRanks} disabled={updatingRanks || loading}>{updatingRanks ? 'Updating…' : 'Update week ranks'}</button>
+        {rankMessage && <p role="status">{rankMessage}</p>}
+      </div>}
     </div>
   )
 }

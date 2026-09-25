@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { castawayContribution } from '../utils/leaderboardStats'
 import DetailNavigation from './DetailNavigation'
 import { compareTeams } from '../utils/detailNavigation'
 import { supabase } from '../supabaseClient'
 
-export default function TeamProfileView() {
+export default function TeamProfileView({ guestData = null }) {
   const { id } = useParams()
+  const prefix = guestData ? '/guest' : ''
   const [teams, setTeams] = useState([])
   const [entry, setEntry] = useState(null)
   const [contestants, setContestants] = useState([])
@@ -16,6 +18,16 @@ export default function TeamProfileView() {
   useEffect(() => {
     let active = true
     async function load() {
+      if (guestData) {
+        if (!active) return
+        setEntry(guestData.teams.find(t => String(t.id) === id) || null)
+        setTeams([...guestData.teams].sort(compareTeams))
+        setContestants(guestData.castaways)
+        setResults(guestData.results)
+        setViewerCanSee(true)
+        setLoading(false)
+        return
+      }
       const [{ data: team, error }, { data: authData }] = await Promise.all([
         supabase.from('season_entries').select('*').eq('id', id).single(),
         supabase.auth.getUser()
@@ -31,7 +43,7 @@ export default function TeamProfileView() {
         supabase.from('season_weekly_results').select('*').eq('season_id', team.season_id).order('week'),
         supabase.from('seasons').select('initial_draft_size').eq('id', team.season_id).single(),
         supabase.from('season_entries').select('drafted_team').eq('season_id', team.season_id).eq('profile_id', authData?.user?.id).single(),
-        supabase.from('season_entries').select('id, team_name, total_score').eq('season_id', team.season_id).not('team_name', 'is', null)
+        supabase.from('season_entries').select('id, team_name, player_name, avatar_url, total_score, drafted_team').eq('season_id', team.season_id).not('team_name', 'is', null)
       ])
       if (!active) return
       setTeams([...(teamList || [])].sort(compareTeams))
@@ -43,7 +55,7 @@ export default function TeamProfileView() {
     }
     Promise.resolve().then(load)
     return () => { active = false }
-  }, [id])
+  }, [id, guestData])
 
   const contestantMap = useMemo(() => new Map(contestants.map(c => [String(c.id), c])), [contestants])
   const roster = useMemo(() => (entry?.drafted_team || []).map(pick => contestantMap.get(String(pick?.id ?? pick))).filter(Boolean), [contestantMap, entry])
@@ -54,19 +66,31 @@ export default function TeamProfileView() {
   if (!viewerCanSee) return <div style={{ maxWidth: 620, margin: '2rem auto', padding: '1rem', borderRadius: 12, background: 'rgba(255,255,255,.9)', textAlign: 'center' }}><h1>Complete Your Draft</h1><p>Draft your five starting players before viewing other teams.</p><Link to="/castaways">Choose Castaways</Link></div>
 
   return (
-    <div style={{ padding: '1rem 1rem 6rem' }}>
-      <DetailNavigation items={teams} id={id} basePath="/teams" label="team">
-      <article style={{ maxWidth: 880, margin: '0 auto', background: 'rgba(255,255,255,.9)', borderRadius: 14, padding: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {entry.avatar_url && <img src={entry.avatar_url} alt="" style={{ width: 76, height: 76, borderRadius: '50%', objectFit: 'cover' }} />}
-          <div><h1 style={{ margin: 0 }}>{entry.team_name}</h1><p style={{ margin: '0.25rem 0 0' }}>{entry.player_name}</p></div>
-          <strong style={{ marginLeft: 'auto' }}>{entry.total_score || 0} Points</strong>
+    <div className="team-detail">
+      <Link to={`${prefix}/teams`} className="castaway-back">← Back</Link>
+      <DetailNavigation items={teams} id={id} basePath={`${prefix}/teams`} label="team" previews renderPreview={team => (
+        <div className="team-preview-content">
+          <div className="team-detail-header">{team.avatar_url && <img className="team-avatar" src={team.avatar_url} alt="" />}<h2>{team.team_name}</h2></div>
+          <p>{team.total_score || 0} Points</p>
+          <div className="team-detail-roster">{(team.drafted_team || []).map(pick => contestantMap.get(String(pick?.id ?? pick))).filter(Boolean).map(c => <img key={c.id} src={c.picture_url} alt="" />)}</div>
         </div>
+      )}>
+      <article style={{ maxWidth: 880, margin: '0 auto', background: 'rgba(255,255,255,.9)', borderRadius: 14, padding: '1rem' }}>
+        <div className="team-detail-header">
+          {entry.avatar_url && <img className="team-avatar" src={entry.avatar_url} alt="" />}
+          <div><h1>{entry.team_name}</h1><p>{entry.player_name}</p></div>
+        </div>
+        <dl className="team-score-breakdown">
+          <div><dt>Tribe</dt><dd>{entry.team_points || 0}</dd></div>
+          <div><dt>Bonus</dt><dd>{entry.bonus_points || 0}</dd></div>
+          {!!Number(entry.manual_points) && <div><dt>Adjustment</dt><dd>{entry.manual_points}</dd></div>}
+          <div><dt>Total</dt><dd>{entry.total_score || 0}</dd></div>
+        </dl>
 
         <h2>Drafted Tribe</h2>
         {roster.length === 0 && <p>No castaways drafted yet.</p>}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(125px,1fr))', gap: 10 }}>
-          {roster.map(c => <Link key={c.id} to={`/castaways/${c.id}`} style={{ textAlign: 'center', color: 'inherit' }}><img src={c.picture_url} alt={c.name} style={{ width: '100%', aspectRatio: 1, objectFit: 'cover', objectPosition: 'center top', borderRadius: 8, filter: c.is_eliminated ? 'grayscale(1)' : 'none' }} /><strong>{c.name}</strong></Link>)}
+        <div className="team-detail-roster">
+          {roster.map(c => <Link key={c.id} to={`${prefix}/castaways/${c.id}`} style={{ textAlign: 'center', color: 'inherit' }}><span className="roster-photo-wrap"><img src={c.picture_url} alt={c.name} style={{ width: '100%', aspectRatio: 1, objectFit: 'cover', objectPosition: 'center top', borderRadius: 8, filter: c.is_eliminated ? 'grayscale(1)' : 'none' }} /><span className="castaway-points-badge" aria-label={`${castawayContribution(c, contestants)} tribe points contributed`}>{castawayContribution(c, contestants)} pts</span></span><strong>{c.display_name || c.name}</strong></Link>)}
         </div>
 
         <h2>Weekly Picks</h2>
@@ -79,7 +103,6 @@ export default function TeamProfileView() {
             return <div key={week} style={{ padding: 10, borderRadius: 8, background: '#f8fafc', opacity: result && !won ? .62 : 1 }}><strong>Week {week}</strong><p>{castaway?.name || value}</p>{won && <span style={{ color: '#166534', fontWeight: 700 }}>+{result.bonus_points_awarded} points</span>}</div>
           })}
         </div>
-        <Link to="/teams" style={{ display: 'inline-block', marginTop: 18 }}>← Back to Leaderboard</Link>
       </article>
       </DetailNavigation>
     </div>

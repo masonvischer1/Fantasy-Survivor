@@ -11,13 +11,13 @@ const TRIBES = [
   { name: 'Toka', image: tokaBuff }
 ]
 
-export default function WeeklyPicks() {
+export default function WeeklyPicks({ guestData = null }) {
   const [season, setSeason] = useState(null)
   const [entry, setEntry] = useState(null)
   const [contestants, setContestants] = useState([])
   const [leagueEntries, setLeagueEntries] = useState([])
   const [result, setResult] = useState(null)
-  const [selectedWeek, setSelectedWeek] = useState(1)
+  const [selectedWeek, setSelectedWeek] = useState(guestData?.season?.current_week || 1)
   const [isAdmin, setIsAdmin] = useState(false)
   const [adminWinnerIds, setAdminWinnerIds] = useState([])
   const [adminWinnerTeam, setAdminWinnerTeam] = useState('')
@@ -27,6 +27,13 @@ export default function WeeklyPicks() {
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(async () => {
+    if (guestData) {
+      setSeason(guestData.season)
+      setContestants(guestData.castaways)
+      setResult(guestData.results.find(r => Number(r.week) === selectedWeek) || null)
+      setLeagueEntries([...guestData.teams].sort((a, b) => (a.team_name || '').localeCompare(b.team_name || '')))
+      return
+    }
     const { data: authData } = await supabase.auth.getUser()
     const user = authData.user
     if (!user) return
@@ -59,7 +66,7 @@ export default function WeeklyPicks() {
     setAdminWinnerIds(winnerIds.map(String))
     setAdminWinnerTeam(resultData.data?.winner_team || '')
     setAdminBonus(String(resultData.data?.bonus_points_awarded || ''))
-  }, [selectedWeek])
+  }, [selectedWeek, guestData])
 
   useEffect(() => {
     Promise.resolve().then(load)
@@ -131,10 +138,10 @@ export default function WeeklyPicks() {
   }
 
   return (
-    <div style={{ padding: 12 }}>
+    <div style={{ padding: '12px 12px calc(6rem + env(safe-area-inset-bottom))' }}>
       <img src={siteLogo} alt="Survivor Draft Logo" style={{ display: 'block', width: 'min(180px, 46vw)', margin: '0 auto 0.75rem' }} />
       <h1 style={{ color: 'white', textAlign: 'center', textShadow: '0 2px 8px #000' }}>Weekly Picks</h1>
-      <p style={{ color: 'white', textAlign: 'center', textShadow: '0 2px 8px #000' }}>Pick the tribal/individual immunity winner for this week for a chance to earn bonus points!</p>
+      <p style={{ color: 'white', textAlign: 'center', textShadow: '0 2px 8px #000' }}>{guestData ? 'View each team’s weekly immunity pick.' : 'Pick the tribal/individual immunity winner for this week for a chance to earn bonus points!'}</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: '52px minmax(140px,220px) 52px', justifyContent: 'center', alignItems: 'center', gap: 10, margin: '1rem auto' }}>
         <button onClick={() => setSelectedWeek(w => Math.max(1, w - 1))} disabled={selectedWeek === 1} style={{ border: 0, background: 'transparent' }}><img src={leftArrowIcon} alt="Previous week" width="48" /></button>
@@ -142,7 +149,7 @@ export default function WeeklyPicks() {
         <button onClick={() => setSelectedWeek(w => Math.min(season?.episode_count || 15, w + 1))} disabled={selectedWeek === (season?.episode_count || 15)} style={{ border: 0, background: 'transparent' }}><img src={rightArrowIcon} alt="Next week" width="48" /></button>
       </div>
 
-      <section style={{ maxWidth: 980, margin: '0 auto', background: 'rgba(255,255,255,.9)', padding: 14, borderRadius: 12 }}>
+      {!guestData && <section style={{ maxWidth: 980, margin: '0 auto', background: 'rgba(255,255,255,.9)', padding: 14, borderRadius: 12 }}>
         {currentPick ? (
           <div style={{ textAlign: 'center' }}>
             <p>Your Week {selectedWeek} pick is locked in:</p>
@@ -166,9 +173,9 @@ export default function WeeklyPicks() {
             </div>
           </>
         ) : <div style={{ textAlign: 'center' }}><strong>{isBeforePickStart ? `Weekly Picks will begin in Week ${picksStartWeek}.` : `Week ${selectedWeek} is locked.`}</strong>{!isBeforePickStart && <p>A result has already been recorded for this week.</p>}</div>}
-      </section>
+      </section>}
 
-      {currentPick && (
+      {(guestData || currentPick) && (
         <section style={{ maxWidth: 980, margin: '1rem auto 0' }}>
           <h2 style={{ color: 'white', textShadow: '0 2px 8px #000' }}>League picks</h2>
           {leagueEntries.length === 0 && <p style={{ color: 'white' }}>No other submitted picks yet.</p>}
@@ -178,10 +185,10 @@ export default function WeeklyPicks() {
               const pick = contestantMap.get(String(pickValue))
               const pickedTribe = TRIBES.find(tribe => tribe.name === pickValue)
               const won = result?.phase === 'tribal' ? result.winner_team === pickValue : winnerIds.includes(String(pick?.id))
-              return <article key={team.id} style={{ background: 'rgba(255,255,255,.9)', borderRadius: 10, padding: 10, opacity: result && !won ? .6 : 1 }}>
+              return <article key={team.id} style={{ background: 'rgba(255,255,255,.9)', borderRadius: 10, padding: 10, opacity: result && pickValue && !won ? .6 : 1 }}>
                 <strong>{team.team_name}</strong>
                 {(pick || pickedTribe) && <img src={pick?.picture_url || pickedTribe.image} alt={pick?.name || pickedTribe.name} style={{ display: 'block', width: '100%', aspectRatio: 1, objectFit: 'cover', objectPosition: 'center top', borderRadius: 8, marginTop: 8, filter: result && !won ? 'grayscale(1)' : 'none' }} />}
-                <p>{pickedTribe?.name || pick?.display_name || pick?.name || 'No pick'} {won ? `· +${result.bonus_points_awarded}` : ''}</p>
+                <p>{pickedTribe?.name || pick?.display_name || pick?.name || (guestData && isBeforePickStart ? 'Picks not open yet' : 'No pick submitted')} {won ? `· +${result.bonus_points_awarded}` : ''}</p>
               </article>
             })}
           </div>

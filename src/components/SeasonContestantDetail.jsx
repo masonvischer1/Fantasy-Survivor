@@ -5,8 +5,9 @@ import DetailNavigation from './DetailNavigation'
 import { compareCastaways } from '../utils/detailNavigation'
 import { supabase } from '../supabaseClient'
 
-export default function SeasonContestantDetail() {
+export default function SeasonContestantDetail({ guestData = null }) {
   const { id } = useParams()
+  const prefix = guestData ? '/guest' : ''
   const [castaways, setCastaways] = useState([])
   const [contestant, setContestant] = useState(null)
   const [season, setSeason] = useState(null)
@@ -19,6 +20,14 @@ export default function SeasonContestantDetail() {
   useEffect(() => {
     let active = true
     async function load() {
+      if (guestData) {
+        if (!active) return
+        setContestant(guestData.castaways.find(c => String(c.id) === id) || null)
+        setCastaways([...guestData.castaways].sort(compareCastaways))
+        setSeason(guestData.season)
+        setLoading(false)
+        return
+      }
       const [{ data: castaway, error }, { data: authData }] = await Promise.all([
         supabase.from('season_contestants').select('*, seasons(*)').eq('id', id).single(),
         supabase.auth.getUser()
@@ -44,10 +53,10 @@ export default function SeasonContestantDetail() {
     }
     Promise.resolve().then(load)
     return () => { active = false }
-  }, [id])
+  }, [id, guestData])
 
   if (loading) return <div style={{ padding: '2rem', color: 'white' }}>Loading castaway...</div>
-  if (!contestant) return <div style={{ padding: '2rem' }}><Link to="/castaways">Back to Castaways</Link></div>
+  if (!contestant) return <div style={{ padding: '2rem' }}><Link to={`${prefix}/castaways`}>Back to Castaways</Link></div>
 
   const rosterIds = (entry?.drafted_team || []).map(pick => String(pick?.id ?? pick))
   const isDrafted = rosterIds.includes(String(contestant.id))
@@ -95,8 +104,8 @@ export default function SeasonContestantDetail() {
 
   return (
     <div className="castaway-detail">
-      <Link to="/castaways" className="castaway-back" aria-label="Back to Castaways">← Back</Link>
-      <DetailNavigation items={castaways} id={id} basePath="/castaways" label="castaway" previews disabled={saving || eliminating}>
+      <Link to={`${prefix}/castaways`} className="castaway-back" aria-label="Back to Castaways">← Back</Link>
+      <DetailNavigation items={castaways} id={id} basePath={`${prefix}/castaways`} label="castaway" previews disabled={saving || eliminating}>
       <article style={{ width: 'min(620px, 100%)', margin: '0 auto', background: 'rgba(255,255,255,0.9)', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 12px 30px rgba(15,23,42,0.25)' }}>
         <img src={contestant.picture_url} alt={contestant.name} style={{ width: '100%', aspectRatio: '1', display: 'block', objectFit: 'cover', objectPosition: 'center top', filter: contestant.is_eliminated ? 'grayscale(1)' : 'none' }} />
         <div style={{ padding: '1rem' }}>
@@ -104,17 +113,17 @@ export default function SeasonContestantDetail() {
           <h1 style={{ margin: '0.2rem 0' }}>{contestant.display_name || contestant.name}</h1>
           {contestant.display_name && contestant.display_name !== contestant.name && <p style={{ margin: '0 0 0.6rem', color: '#64748b' }}>{contestant.name}</p>}
           {contestant.is_eliminated && <p><b>Eliminated:</b> Day {contestant.elimination_day}</p>}
-          <p className={`castaway-tribe tribe-${(contestant.tribe || '').toLowerCase()}`}><b>Tribe:</b> {contestant.tribe || 'Unknown'}</p>
+          <p className="castaway-tribe"><b>Tribe:</b> <span className={`tribe-${(contestant.tribe || '').toLowerCase()}`}>{contestant.tribe || 'Unknown'}</span></p>
           <p><b>Age:</b> {contestant.age}</p>
           <p><b>Occupation:</b> {contestant.occupation}</p>
           <p><b>Hometown:</b> {contestant.hometown}</p>
           <p><b>Current residence:</b> {contestant.current_residence}</p>
           <p style={{ lineHeight: 1.6 }}>{contestant.bio}</p>
-          <DraftedByTeams seasonId={contestant.season_id} contestantId={contestant.id} canView={rosterIds.length >= Number(season?.initial_draft_size || 5)} />
+          <DraftedByTeams seasonId={contestant.season_id} contestantId={contestant.id} guestData={guestData} canView={!!guestData || rosterIds.length >= Number(season?.initial_draft_size || 5)} />
         </div>
       </article>
       </DetailNavigation>
-      <div className="castaway-draft-bar">
+      {!guestData && <div className="castaway-draft-bar">
         {isAdmin && <button className="castaway-elim-button" onClick={eliminatePlayer} disabled={eliminating || saving || contestant.is_eliminated} aria-label="Eliminate castaway">{eliminating ? 'Saving…' : 'Elim'}</button>}
         <button
           onClick={draftPlayer}
@@ -126,7 +135,7 @@ export default function SeasonContestantDetail() {
         >
           {saving ? 'Saving…' : isDrafted ? 'Drafted' : 'Draft'}
         </button>
-      </div>
+      </div>}
     </div>
   )
 }

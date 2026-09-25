@@ -10,10 +10,11 @@ export function TopNav({ session }) {
   return null
 }
 
-export function BottomNav({ session, profile }) {
+export function BottomNav({ session, guest = false }) {
   const location = useLocation()
+  const prefix = guest ? '/guest' : ''
 
-  if (!session) return null
+  if (!session && !guest) return null
 
   const tabStyle = (isActive) => ({
     display: 'inline-flex',
@@ -71,35 +72,35 @@ export function BottomNav({ session, profile }) {
         boxShadow: '0 8px 22px rgba(2,6,23,0.22)'
       }}
     >
-      <Link to="/castaways" style={tabStyle(location.pathname === '/castaways' || location.pathname.startsWith('/contestant/'))}>
+      <Link to={`${prefix}/castaways`} style={tabStyle(location.pathname === `${prefix}/castaways` || location.pathname.startsWith('/contestant/'))}>
         <span style={iconWrapStyle}>
           <img src={castawaysIcon} alt="" aria-hidden="true" style={{ ...iconStyle, filter: 'brightness(0)' }} />
         </span>
         <span style={labelStyle}>Castaways</span>
       </Link>
-      <Link to="/weekly-picks" style={tabStyle(location.pathname === '/weekly-picks' || location.pathname === '/final-wagers')}>
+      <Link to={`${prefix}/weekly-picks`} style={tabStyle(location.pathname === `${prefix}/weekly-picks` || location.pathname === '/final-wagers')}>
         <span style={iconWrapStyle}>
           <img src={weeklyIcon} alt="" aria-hidden="true" style={{ ...iconStyle, width: '18px', height: '18px' }} />
         </span>
         <span style={labelStyle}>Picks</span>
       </Link>
-      <Link to="/teams" style={tabStyle(location.pathname === '/teams' || location.pathname.startsWith('/teams/'))}>
+      <Link to={`${prefix}/teams`} style={tabStyle(location.pathname === `${prefix}/teams` || location.pathname.startsWith(`${prefix}/teams/`))}>
         <span style={iconWrapStyle}>
           <img src={leaderboardIcon} alt="" aria-hidden="true" style={{ ...iconStyle, filter: 'brightness(0)' }} />
         </span>
         <span style={labelStyle}>Leaderboard</span>
       </Link>
-      <Link to="/rules" style={tabStyle(location.pathname === '/rules')}>
+      <Link to={`${prefix}/rules`} style={tabStyle(location.pathname === `${prefix}/rules`)}>
         <span style={iconWrapStyle}>
           <img src={rulesIcon} alt="" aria-hidden="true" style={iconStyle} />
         </span>
         <span style={labelStyle}>Rules</span>
       </Link>
-      <Link to="/profile" style={tabStyle(location.pathname === '/profile')}>
+      <Link to={guest ? '/login' : '/profile'} style={tabStyle(location.pathname === '/profile')}>
         <span style={iconWrapStyle}>
           <img src={accountIcon} alt="" aria-hidden="true" style={{ ...iconStyle, filter: 'brightness(0)' }} />
         </span>
-        <span style={labelStyle}>My Tribe</span>
+        <span style={labelStyle}>{guest ? 'Sign In' : 'My Tribe'}</span>
       </Link>
     </nav>
   )

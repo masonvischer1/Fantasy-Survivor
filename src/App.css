@@ -199,8 +199,49 @@
 .castaway-card-preview h2 { padding: 1rem; }
 
 .castaway-tribe { font-family: 'Survivant', system-ui, sans-serif; }
-.castaway-tribe.tribe-savu { color: #7e22ce; }
-.castaway-tribe.tribe-toka { color: #eab308; text-shadow: 0 1px 1px #713f1266; }
+.castaway-tribe .tribe-savu { color: #7e22ce; }
+.castaway-tribe .tribe-toka { color: #eab308; text-shadow: 0 1px 1px #713f1266; }
 .castaway-drafted-by .castaway-draft-percentage { margin: 0 0 0.75rem; color: #334155; }
 .castaway-draft-percentage strong { font-size: 1.5rem; color: #166534; }
 .castaway-draft-percentage span { white-space: nowrap; font-size: 0.8rem; }
+
+.castaway-tribe b { color: #111; }
+.team-detail { padding: 4.5rem 1rem calc(6rem + env(safe-area-inset-bottom, 0px)); }
+.team-detail-header { display: flex; align-items: center; gap: 12px; }
+.team-detail-header > div { min-width: 0; }
+.team-detail-header h1 { margin: 0; font-size: clamp(1.15rem, 4.5vw, 2rem); overflow-wrap: anywhere; }
+.team-detail-header p { margin: 0.25rem 0 0; overflow-wrap: anywhere; }
+.team-detail-header .team-avatar { width: 64px; height: 64px; flex: 0 0 64px; aspect-ratio: 1; border-radius: 50%; object-fit: cover; }
+.team-score-breakdown { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; padding: 0.7rem 0; border-block: 1px solid #cbd5e1; text-align: center; }
+.team-score-breakdown > div { flex: 1; }
+.team-score-breakdown dt { font-size: 0.8rem; }
+.team-score-breakdown dd { margin: 0; font-family: 'Survivant', system-ui, sans-serif; font-size: 1.35rem; }
+.team-detail-roster { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.team-detail-roster a { min-width: 0; overflow-wrap: anywhere; font-size: 0.8rem; }
+.team-detail-roster img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; object-position: center top; border-radius: 8px; }
+.team-preview-content { padding: 1rem; }
+.team-preview-content h2 { padding: 0; overflow-wrap: anywhere; }
+
+.guest-entry-link { display: block; text-align: center; padding: 1rem; margin-bottom: 1rem; border-radius: 12px; background: #166534; color: white; font-family: 'Survivant', sans-serif; }
+.guest-site { max-width: 900px; margin: auto; padding: 1rem 1rem calc(7rem + env(safe-area-inset-bottom)); color: white; }
+.guest-header { display: flex; align-items: center; flex-wrap: wrap; gap: 0.7rem; margin-bottom: 1rem; }
+.guest-header img { width: 100px; display: block; }
+.guest-header > a:last-child { margin-left: auto; color: white; text-decoration: underline; }
+.guest-header span { font-size: 0.8rem; }
+.guest-card { display: block; background: #fffffff0; border-radius: 14px; padding: 1rem; margin: 0 0 0.75rem; color: #213547; overflow-wrap: anywhere; }
+.guest-card h2 { margin: 0.4rem 0; }
+.guest-back { display: inline-block; color: #111; background: white; border-radius: 999px; padding: 0.65rem 1rem; margin-bottom: 1rem; font-family: 'Survivant',sans-serif; }
+.guest-cast-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 0.75rem; }
+.guest-cast-grid img,.guest-cast-photo { width: 100%; aspect-ratio: 1; object-fit: cover; object-position: top; border-radius: 10px; }
+.guest-nav { position: fixed; bottom: calc(0.5rem + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: min(900px,calc(100% - 1rem)); display: flex; justify-content: space-around; background: #fffffff0; border-radius: 14px; padding: 1rem 0; z-index: 160; }
+.guest-nav a { font-size: 0.8rem; color: #334155; }
+.guest-nav a[aria-current] { color: #166534; font-weight: 800; }
+
+.leaderboard-card-footer { display: flex; align-items: center; gap: 0.75rem; justify-content: space-between; margin-top: 0.45rem; color: #166534; font-size: 0.8rem; }
+.rank-change { color: #64748b; font-weight: 700; font-size: 0.75rem; white-space: nowrap; }
+.rank-change.rank-up { color: #15803d; }
+.rank-change.rank-down { color: #b91c1c; }
+.rank-admin-actions { text-align: center; margin: 1.5rem 0 0; color: white; }
+.rank-admin-actions button { font-family: 'Survivant', sans-serif; }
+.roster-photo-wrap { position: relative; display: block; }
+.castaway-points-badge { position: absolute; right: 3px; bottom: 3px; border-radius: 999px; padding: 0.15rem 0.4rem; background: #0f172ae8; color: white; font-size: 0.65rem; font-weight: 700; white-space: nowrap; }

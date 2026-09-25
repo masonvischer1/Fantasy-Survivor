@@ -4,6 +4,7 @@ import { supabase } from "./supabaseClient";
 import { TopNav, BottomNav } from "./components/Navbar";
 import "./App.css";
 
+import GuestSite from "./components/GuestSite";
 import Login from "./components/Login";
 import Contestants from "./components/contestantsGrid";
 import Teams from "./components/Teams";
@@ -24,6 +25,7 @@ import profileBg from "./assets/51/My Tribe.png";
 import loginBg from "./assets/51/Login.png";
 
 function getRouteBackground(pathname) {
+  if (pathname.startsWith("/guest")) return getRouteBackground(pathname.slice(6) || "/teams");
   if (pathname === "/login") return loginBg;
   if (pathname === "/create-team") return loginBg;
   if (pathname === "/profile") return profileBg;
@@ -61,6 +63,7 @@ function AppLayout({ session, profile, setProfile, needsTeamSetup }) {
 
       <main className="app-shell-main">
         <Routes>
+          <Route path="/guest/*" element={<GuestSite />} />
           <Route
             path="/login"
             element={
@@ -160,7 +163,7 @@ function AppLayout({ session, profile, setProfile, needsTeamSetup }) {
         </Routes>
       </main>
 
-      <BottomNav session={session} profile={profile} />
+      {!location.pathname.startsWith("/guest") && <BottomNav session={session} profile={profile} />}
     </div>
   );
 }
