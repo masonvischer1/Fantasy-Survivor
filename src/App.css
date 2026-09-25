@@ -160,3 +160,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.castaway-drafted-by { margin-top: 1.5rem; border-top: 1px solid #cbd5e1; padding-top: 1rem; }
+.castaway-drafted-by h2 { margin: 0 0 0.75rem; font-size: 1.2rem; }
+.castaway-drafted-by p { font-size: 0.9rem; color: #475569; }
+.castaway-drafted-by ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.5rem; }
+.castaway-drafted-by a { display: flex; align-items: center; gap: 0.65rem; padding: 0.65rem; border-radius: 10px; background: #f8fafc; color: #1e293b; border: 1px solid #e2e8f0; }
+.castaway-drafted-by a:hover { background: #e2e8f0; }
+.castaway-drafted-by img, .drafted-team-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.drafted-team-avatar { display: grid; place-items: center; background: #dbe5d8; color: #166534; font-weight: 700; }
+.drafted-team-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.drafted-team-name strong { display: block; font-size: 0.9rem; }
+.drafted-team-name small { display: block; color: #64748b; font-size: 0.8rem; }

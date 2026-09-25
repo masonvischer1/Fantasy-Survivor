@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import DraftedByTeams from './DraftedByTeams'
 import DetailNavigation from './DetailNavigation'
 import { compareCastaways } from '../utils/detailNavigation'
 import { supabase } from '../supabaseClient'
@@ -81,7 +82,7 @@ export default function SeasonContestantDetail() {
             <p style={{ margin: '0 0 0.6rem', fontWeight: 700 }}>Your tribe: {rosterIds.length} / {draftLimit}</p>
             <p style={{ margin: 0, fontSize: '0.85rem', color: '#475569' }}>Draft picks are permanent. Once drafted, a castaway cannot be removed or replaced.</p>
           </div>
-
+          <DraftedByTeams seasonId={contestant.season_id} contestantId={contestant.id} canView={rosterIds.length >= Number(season?.initial_draft_size || 5)} />
         </div>
       </article>
       </DetailNavigation>
