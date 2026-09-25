@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import siteLogo from '../assets/51/Logo.webp'
 import leftArrowIcon from '../assets/arrow-left-circle.svg'
@@ -17,17 +17,24 @@ export default function WeeklyPicks({ guestData = null }) {
   const [contestants, setContestants] = useState([])
   const [leagueEntries, setLeagueEntries] = useState([])
   const [result, setResult] = useState(null)
-  const [selectedWeek, setSelectedWeek] = useState(guestData?.season?.current_week || 1)
+  const [selectedWeek, setSelectedWeek] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [adminWinnerIds, setAdminWinnerIds] = useState([])
   const [adminWinnerTeam, setAdminWinnerTeam] = useState('')
   const [adminBonus, setAdminBonus] = useState('')
   const [adminMergeWeek, setAdminMergeWeek] = useState('7')
-  const [adminCurrentWeek, setAdminCurrentWeek] = useState('1')
+  const currentSeasonWeek = useRef(null)
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(async () => {
     if (guestData) {
+      const seasonWeek = `${guestData.season.id}:${guestData.season.current_week}`
+      if (currentSeasonWeek.current !== seasonWeek) {
+        currentSeasonWeek.current = seasonWeek
+        setSelectedWeek(Number(guestData.season.current_week || 1))
+        setSeason(guestData.season)
+        return
+      }
       setSeason(guestData.season)
       setContestants(guestData.castaways)
       setResult(guestData.results.find(r => Number(r.week) === selectedWeek) || null)
@@ -44,6 +51,14 @@ export default function WeeklyPicks({ guestData = null }) {
     ])
     if (seasonError) return console.error(seasonError)
 
+    const seasonWeek = `${activeSeason.id}:${activeSeason.current_week}`
+    if (currentSeasonWeek.current !== seasonWeek) {
+      currentSeasonWeek.current = seasonWeek
+      setSelectedWeek(Number(activeSeason.current_week || 1))
+      setSeason(activeSeason)
+      return
+    }
+
     const [entryResult, contestantsResult, resultData, leagueResult] = await Promise.all([
       supabase.from('season_entries').select('*').eq('season_id', activeSeason.id).eq('profile_id', user.id).single(),
       supabase.from('season_contestants').select('*').eq('season_id', activeSeason.id).order('name'),
@@ -55,8 +70,6 @@ export default function WeeklyPicks({ guestData = null }) {
     if (firstError) console.error(firstError)
     setSeason(activeSeason)
     setAdminMergeWeek(String(activeSeason.merge_week || 7))
-    setAdminCurrentWeek(String(activeSeason.current_week || 1))
-    setSelectedWeek(week => week || activeSeason.current_week || 1)
     setEntry(entryResult.data)
     setContestants(contestantsResult.data || [])
     setResult(resultData.data || null)
@@ -70,7 +83,12 @@ export default function WeeklyPicks({ guestData = null }) {
 
   useEffect(() => {
     Promise.resolve().then(load)
-  }, [load])
+    if (guestData) return
+    const channel = supabase.channel('weekly-picks-current-season')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'seasons' }, load).subscribe()
+    window.addEventListener('focus', load)
+    return () => { supabase.removeChannel(channel); window.removeEventListener('focus', load) }
+  }, [load, guestData])
 
   const activeContestants = useMemo(() => contestants.filter(c => !c.is_eliminated), [contestants])
   const contestantMap = useMemo(() => new Map(contestants.map(c => [String(c.id), c])), [contestants])
@@ -127,15 +145,7 @@ export default function WeeklyPicks({ guestData = null }) {
     await load()
   }
 
-  async function saveCurrentWeek() {
-    const currentWeek = Number(adminCurrentWeek)
-    if (!season || currentWeek < 1 || currentWeek > Number(season.episode_count || 15)) return alert('Enter a valid current week.')
-    setSaving(true)
-    const { error } = await supabase.rpc('admin_update_current_week', { p_season_id: season.id, p_current_week: currentWeek })
-    if (error) alert(error.message)
-    setSaving(false)
-    await load()
-  }
+  if (!season || selectedWeek === null) return <p style={{ color: 'white', padding: '1rem' }}>Loading weekly picks…</p>
 
   return (
     <div style={{ padding: '12px 12px calc(6rem + env(safe-area-inset-bottom))' }}>
@@ -208,11 +218,7 @@ export default function WeeklyPicks({ guestData = null }) {
           <label>Individual picks begin in week <input type="number" min="2" max={season?.episode_count || 15} value={adminMergeWeek} onChange={event => setAdminMergeWeek(event.target.value)} style={{ marginLeft: 8, width: 70 }} /></label>
           <p style={{ color: '#475569', fontSize: '.85rem' }}>Weeks before this use Savu/Toka tribal picks. This setting is currently Week {season?.merge_week || 7}.</p>
           <button onClick={saveSeasonSettings} disabled={saving}>Update merge week</button>
-          <div style={{ marginTop: '1rem' }}>
-            <label>Current season week <input type="number" min="1" max={season?.episode_count || 15} value={adminCurrentWeek} onChange={event => setAdminCurrentWeek(event.target.value)} style={{ marginLeft: 8, width: 70 }} /></label>
-            <p style={{ color: '#475569', fontSize: '.85rem' }}>Saving the result for the current week advances this automatically. Use this only to correct the week.</p>
-            <button onClick={saveCurrentWeek} disabled={saving}>Update current week</button>
-          </div>
+
         </section>
       )}
     </div>

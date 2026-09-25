@@ -12,6 +12,8 @@ export default function Teams({ guestData = null }) {
   const navigate = useNavigate()
   const prefix = guestData ? '/guest' : ''
   const [isAdmin, setIsAdmin] = useState(false)
+  const [currentWeek, setCurrentWeek] = useState(1)
+  const [episodeCount, setEpisodeCount] = useState(15)
   const [seasonId, setSeasonId] = useState(null)
   const [rankSnapshot, setRankSnapshot] = useState({ changes: {} })
   const [updatingRanks, setUpdatingRanks] = useState(false)
@@ -51,6 +53,8 @@ export default function Teams({ guestData = null }) {
     ])
 
     setSeasonId(activeSeason.id)
+    setCurrentWeek(activeSeason.current_week)
+    setEpisodeCount(activeSeason.episode_count)
     const [{ data: account }, { data: snapshot, error: rankError }] = await Promise.all([
       supabase.from('profiles').select('is_admin').eq('id', authData?.user?.id).single(),
       supabase.rpc('get_season_rank_changes', { p_season_id: activeSeason.id })
@@ -94,14 +98,20 @@ export default function Teams({ guestData = null }) {
 
   async function updateWeekRanks() {
     if (!isAdmin || guestData || updatingRanks || !seasonId) return
-    if (!window.confirm('Save the current standings as the completed week’s ranks? Changes will compare with the previous saved standings. The first update establishes a baseline.')) return
+    const input = window.prompt(`Week number to shift to (1–${episodeCount}). Current week: ${currentWeek}. This also saves the current rankings.`, String(Math.min(currentWeek + 1, episodeCount)))
+    if (input === null) return
+    const targetWeek = Number(input.trim())
+    if (!input.trim() || !Number.isInteger(targetWeek) || targetWeek < 1 || targetWeek > episodeCount) {
+      window.alert(`Enter a whole week number from 1 to ${episodeCount}.`)
+      return
+    }
     setUpdatingRanks(true)
     setRankMessage('')
     try {
-      const { data, error } = await supabase.rpc('admin_update_week_ranks', { p_season_id: seasonId })
+      const { data, error } = await supabase.rpc('admin_update_week_ranks', { p_season_id: seasonId, p_target_week: targetWeek })
       if (error) throw error
       setRankSnapshot(data)
-      setRankMessage('Week ranks updated.')
+      setRankMessage(`Rankings saved. Season is now on Week ${targetWeek}.`)
       await loadLeaderboard()
     } catch (error) { setRankMessage(`Could not update ranks: ${error.message}`) }
     finally { setUpdatingRanks(false) }
