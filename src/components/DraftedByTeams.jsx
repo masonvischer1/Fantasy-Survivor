@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 
 export default function DraftedByTeams({ seasonId, contestantId, canView }) {
+  const [totalTeams, setTotalTeams] = useState(0)
   const [teams, setTeams] = useState([])
   const [status, setStatus] = useState('loading')
   const [attempt, setAttempt] = useState(0)
@@ -24,6 +25,7 @@ export default function DraftedByTeams({ seasonId, contestantId, canView }) {
         setStatus('error')
         return
       }
+      setTotalTeams((data || []).length)
       setTeams((data || []).filter(team =>
         (team.drafted_team || []).some(pick => String(pick?.id ?? pick) === String(contestantId))
       ).sort((a, b) => (a.team_name || '').localeCompare(b.team_name || '')))
@@ -41,6 +43,7 @@ export default function DraftedByTeams({ seasonId, contestantId, canView }) {
 
   return (
     <section className="castaway-drafted-by" aria-labelledby="drafted-by-heading">
+      {canView && status === 'ready' && <p className="castaway-draft-percentage"><strong>{totalTeams ? Math.round(teams.length / totalTeams * 100) : 0}%</strong> of league teams <span>({teams.length} of {totalTeams})</span></p>}
       <h2 id="drafted-by-heading">Drafted by</h2>
       {!canView ? <p>Complete your starting draft to see which teams drafted this castaway.</p> : status === 'loading' ? <p role="status">Loading teams…</p> : status === 'error' ? (
         <div><p>Couldn’t load teams.</p><button type="button" onClick={() => { setStatus('loading'); setAttempt(value => value + 1) }}>Try again</button></div>

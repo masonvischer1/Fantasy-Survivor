@@ -197,3 +197,10 @@
 .castaway-card-preview.is-next { left: calc(100% + 12px); }
 .castaway-card-preview img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; object-position: center top; }
 .castaway-card-preview h2 { padding: 1rem; }
+
+.castaway-tribe { font-family: 'Survivant', system-ui, sans-serif; }
+.castaway-tribe.tribe-savu { color: #7e22ce; }
+.castaway-tribe.tribe-toka { color: #eab308; text-shadow: 0 1px 1px #713f1266; }
+.castaway-drafted-by .castaway-draft-percentage { margin: 0 0 0.75rem; color: #334155; }
+.castaway-draft-percentage strong { font-size: 1.5rem; color: #166534; }
+.castaway-draft-percentage span { white-space: nowrap; font-size: 0.8rem; }

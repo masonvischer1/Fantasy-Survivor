@@ -104,16 +104,12 @@ export default function SeasonContestantDetail() {
           <h1 style={{ margin: '0.2rem 0' }}>{contestant.display_name || contestant.name}</h1>
           {contestant.display_name && contestant.display_name !== contestant.name && <p style={{ margin: '0 0 0.6rem', color: '#64748b' }}>{contestant.name}</p>}
           {contestant.is_eliminated && <p><b>Eliminated:</b> Day {contestant.elimination_day}</p>}
-          <p><b>Tribe:</b> {contestant.tribe || 'Unknown'}</p>
+          <p className={`castaway-tribe tribe-${(contestant.tribe || '').toLowerCase()}`}><b>Tribe:</b> {contestant.tribe || 'Unknown'}</p>
           <p><b>Age:</b> {contestant.age}</p>
           <p><b>Occupation:</b> {contestant.occupation}</p>
           <p><b>Hometown:</b> {contestant.hometown}</p>
           <p><b>Current residence:</b> {contestant.current_residence}</p>
           <p style={{ lineHeight: 1.6 }}>{contestant.bio}</p>
-          <div style={{ margin: '1rem 0', padding: '0.85rem', borderRadius: 10, background: '#f8fafc', border: '1px solid #cbd5e1' }}>
-            <p style={{ margin: '0 0 0.6rem', fontWeight: 700 }}>Your tribe: {rosterIds.length} / {draftLimit}</p>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#475569' }}>Draft picks are permanent. Once drafted, a castaway cannot be removed or replaced.</p>
-          </div>
           <DraftedByTeams seasonId={contestant.season_id} contestantId={contestant.id} canView={rosterIds.length >= Number(season?.initial_draft_size || 5)} />
         </div>
       </article>
