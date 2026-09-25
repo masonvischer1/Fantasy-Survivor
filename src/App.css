@@ -48,7 +48,7 @@
 }
 
 .castaway-detail {
-  padding: 4.5rem 1rem calc(11rem + env(safe-area-inset-bottom, 0px));
+  padding: 4.5rem 1rem calc(6rem + env(safe-area-inset-bottom, 0px));
 }
 
 .castaway-back {
@@ -66,24 +66,26 @@
 
 .castaway-draft-bar {
   position: fixed;
-  bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(620px, calc(100% - 2rem));
+  top: calc(0.75rem + env(safe-area-inset-top, 0px));
+  right: calc(1rem + env(safe-area-inset-right, 0px));
+  display: flex;
+  gap: 0.4rem;
   z-index: 150;
 }
 
-.castaway-draft-button {
-  width: 100%;
-  min-height: 54px;
+.castaway-draft-button, .castaway-elim-button {
+  min-height: 44px;
+  padding: 0.65rem 0.85rem;
   border: 1px solid transparent;
   border-radius: 999px;
   background: #b91c1c;
   color: white;
   font-family: 'Survivant', system-ui, sans-serif;
-  font-size: 1.2rem;
-  box-shadow: 0 4px 16px #0003;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 10px #0003;
 }
+.castaway-elim-button { background: #fff; color: #b91c1c; }
+.castaway-elim-button:disabled { color: #6b7280; cursor: not-allowed; }
 
 .castaway-draft-button.is-drafted { background: #6b7280; }
 .castaway-draft-button.is-full {
