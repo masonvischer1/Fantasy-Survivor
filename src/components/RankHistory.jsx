@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { ordinalPlace } from '../utils/leaderboardStats'
@@ -10,13 +10,22 @@ export default function RankHistory({ guest = false }) {
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
   const chartRef = useRef(null)
-  const [size, setSize] = useState({ width: 360, height: 620 })
-  useEffect(() => {
-    if (!data || !chartRef.current) return
-    const observer = new ResizeObserver(([entry]) => setSize({ width: entry.contentRect.width, height: entry.contentRect.height }))
-    observer.observe(chartRef.current)
+  const [size, setSize] = useState(null)
+  const hasData = !!data
+  useLayoutEffect(() => {
+    const chart = chartRef.current
+    if (!hasData || !chart) return
+    // Measure before paint so the first chart uses the actual available space.
+    const measure = () => {
+      const width = chart.clientWidth
+      const height = chart.clientHeight
+      setSize(previous => previous?.width === width && previous?.height === height ? previous : { width, height })
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(chart)
     return () => observer.disconnect()
-  }, [data])
+  }, [hasData])
   useEffect(() => {
     let active = true
     async function load() {
@@ -45,8 +54,8 @@ export default function RankHistory({ guest = false }) {
   const weeks = [{ week: 0, ranks: Object.fromEntries(teams.map(team => [team.id, 1])) }, ...savedWeeks.filter(w => w.week > 0)]
   const count = Math.max(teams.length, ...weeks.flatMap(w => Object.values(w.ranks || {}).map(Number)), 2)
   const weekCount = Math.max(1, ...weeks.map(w => w.week))
-  const width = Math.max(size.width, 190 + weekCount * 46)
-  const height = Math.max(size.height, count * 28 + 52)
+  const width = Math.max(size?.width || 0, 190 + weekCount * 46)
+  const height = Math.max(size?.height || 0, count * 28 + 52)
   const x = week => 32 + week * (width - 185) / weekCount
   const y = rank => 26 + (rank - 1) * (height - 68) / (count - 1)
   const latest = weeks.at(-1)
@@ -68,7 +77,7 @@ export default function RankHistory({ guest = false }) {
       </div>
       <section className="history-panel" aria-label="Weekly ranking chart">
         <div ref={chartRef} className="history-scroll" tabIndex={0} role="region" aria-label="Scrollable rank chart">
-            <svg width={width} height={height} role="group" aria-label="Weekly team rankings. First place at the top. Week zero starts every team in first place. Team pictures link to profiles.">
+            {size && <svg width={width} height={height} role="group" aria-label="Weekly team rankings. First place at the top. Week zero starts every team in first place. Team pictures link to profiles.">
               {Array.from({ length: count }, (_, i) => <g key={i}><line x1="28" x2={x(weekCount)} y1={y(i + 1)} y2={y(i + 1)} stroke="#ffffff35" /><text x="22" y={y(i + 1) + 4} textAnchor="end" fill="#cbd5e1" fontSize="12">{i + 1}</text></g>)}
               {Array.from({ length: weekCount + 1 }, (_, i) => <g key={i}><line x1={x(i)} x2={x(i)} y1="30" y2={height - 35} stroke="#ffffff08" /><text x={x(i)} y={height - 12} textAnchor="middle" fill={weeks.some(w => w.week === i) ? '#fff' : '#718096'} fontSize="12" fontWeight="700">WK {i}</text></g>)}
               <text x="12" y="18" fill="#cbd5e1" fontSize="8">RANK</text>
@@ -100,7 +109,7 @@ export default function RankHistory({ guest = false }) {
                   </Link>
                 </g>
               })}
-            </svg>
+            </svg>}
           </div>
       </section>
     </>}

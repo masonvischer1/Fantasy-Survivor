@@ -443,7 +443,7 @@ export default function ContestantDetail() {
               onClick={setJuryVotes}
               style={{
                 marginTop: '0.7rem',
-                backgroundColor: '#1d4ed8',
+                backgroundColor: '#172b3a',
                 color: 'white',
                 minWidth: isMobile ? '70%' : 'auto',
                 padding: isMobile ? '0.56rem 0.95rem' : '0.5rem 1rem',

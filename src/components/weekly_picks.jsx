@@ -177,10 +177,10 @@ export default function WeeklyPicks({ guestData = null }) {
         <button onClick={() => setSelectedWeek(w => Math.min(season?.episode_count || 15, w + 1))} disabled={selectedWeek === (season?.episode_count || 15)} className="weekly-week-arrow"><img src={rightArrowIcon} alt="Next week" width="48" /></button>
       </div>
 
-      {!guestData && <section style={{ maxWidth: 980, margin: '0 auto', background: 'rgba(255,255,255,.9)', padding: 14, borderRadius: 12 }}>
+      {!guestData && <section style={{ maxWidth: 980, margin: '0 auto', background: 'rgba(255,255,255,.9)', padding: currentPick ? '8px 12px' : 14, borderRadius: 12 }}>
         {currentPick ? (
-          <div style={{ textAlign: 'center' }}>
-            <p>Your Week {selectedWeek} pick is locked in:</p>
+          <div className="weekly-locked-pick">
+            <span>Week {selectedWeek} pick locked:</span>
             <strong>{currentPickLabel || 'Unknown pick'}</strong>
           </div>
         ) : isPickOpen ? (
@@ -258,7 +258,7 @@ export default function WeeklyPicks({ guestData = null }) {
       )}
 
       {isAdmin && (
-        <section style={{ maxWidth: 980, margin: '1rem auto 5rem', background: 'rgba(255,255,255,.92)', padding: 14, borderRadius: 12 }}>
+        <section className="admin-panel" style={{ maxWidth: 980, margin: '1rem auto 5rem' }}>
           <h2>Admin: Week {selectedWeek} result</h2>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {pickPhase === 'tribal' ? TRIBES.map(tribe => <button key={tribe.name} onClick={() => setAdminWinnerTeam(tribe.name)} style={{ background: adminWinnerTeam === tribe.name ? '#166534' : '#e5e7eb', color: adminWinnerTeam === tribe.name ? 'white' : '#111' }}>{tribe.name}</button>) : activeContestants.map(c => <button key={c.id} onClick={() => setAdminWinnerIds(ids => ids.includes(String(c.id)) ? ids.filter(id => id !== String(c.id)) : [...ids, String(c.id)])} style={{ background: adminWinnerIds.includes(String(c.id)) ? '#166534' : '#e5e7eb', color: adminWinnerIds.includes(String(c.id)) ? 'white' : '#111' }}>{c.display_name || c.name}</button>)}
@@ -268,7 +268,7 @@ export default function WeeklyPicks({ guestData = null }) {
           <hr style={{ margin: '1.25rem 0' }} />
           <h2>Admin: Season settings</h2>
           <label>Individual picks begin in week <input type="number" min="2" max={season?.episode_count || 15} value={adminMergeWeek} onChange={event => setAdminMergeWeek(event.target.value)} style={{ marginLeft: 8, width: 70 }} /></label>
-          <p style={{ color: '#475569', fontSize: '.85rem' }}>Weeks before this use Savu/Toka tribal picks. This setting is currently Week {season?.merge_week || 7}.</p>
+          <p className="admin-panel-note">Weeks before this use Savu/Toka tribal picks. This setting is currently Week {season?.merge_week || 7}.</p>
           <button onClick={saveSeasonSettings} disabled={saving}>Update merge week</button>
 
         </section>
