@@ -116,6 +116,8 @@ export default function WeeklyPicks({ guestData = null }) {
     ...option,
     count: submittedPicks.filter(value => value === option.value).length
   }))
+  const distributionColors = ['#166534', '#2563eb', '#be123c', '#7e22ce', '#b45309', '#0e7490']
+  const distributionColor = (option, index) => option.value === 'Savu' ? '#7e22ce' : option.value === 'Toka' ? '#f8e51c' : distributionColors[index % distributionColors.length]
 
   async function savePick(pickValue, pickLabel) {
     if (!entry || currentPick) return
@@ -227,6 +229,14 @@ export default function WeeklyPicks({ guestData = null }) {
           <h2 style={{ color: 'white', textShadow: '0 2px 8px #000' }}>League picks</h2>
           <div className="weekly-pick-percentages" aria-label="Percentage of submitted picks">
             {submittedPicks.length > 0 ? pickDistribution.map(option => <span key={option.value} className={option.value === 'Savu' ? 'percentage-savu' : option.value === 'Toka' ? 'percentage-toka' : 'percentage-individual'}><strong>{Math.round(option.count / submittedPicks.length * 100)}%</strong> {option.label}</span>) : <p>{isBeforePickStart ? 'Picks not open yet.' : 'No picks submitted yet.'}</p>}
+            {submittedPicks.length > 0 && <div className="weekly-pick-split">
+              <div className="weekly-pick-split-bar" role="img" aria-label={pickDistribution.map(option => `${option.label}: ${Math.round(option.count / submittedPicks.length * 100)}%`).join(', ')}>
+                {pickDistribution.filter(option => option.count > 0).map(option => {
+                  const index = pickDistribution.indexOf(option)
+                  return <span key={option.value} style={{ width: `${option.count / submittedPicks.length * 100}%`, background: distributionColor(option, index) }} />
+                })}
+              </div>
+            </div>}
           </div>
           <div className="weekly-picks-grid">
             {leagueEntries.map(team => {
