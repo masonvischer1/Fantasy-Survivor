@@ -198,14 +198,8 @@ export default function WeeklyPicks({ guestData = null }) {
       {canViewLeaguePicks && (
         <section style={{ maxWidth: 980, margin: '1rem auto 0' }}>
           <h2 style={{ color: 'white', textShadow: '0 2px 8px #000' }}>League picks</h2>
-          <div className="weekly-pick-distribution">
-            <h3>Pick distribution</h3>
-            {submittedPicks.length > 0 ? <>
-              <div className="weekly-pick-percentages">
-                {pickDistribution.map(option => <span key={option.value}><strong>{Math.round(option.count / submittedPicks.length * 100)}%</strong> {option.label}</span>)}
-              </div>
-              <p>Based on {submittedPicks.length} submitted {submittedPicks.length === 1 ? 'pick' : 'picks'} · {leagueEntries.length - submittedPicks.length} TBD</p>
-            </> : <p>{isBeforePickStart ? 'Picks not open yet.' : 'No picks submitted yet.'}</p>}
+          <div className="weekly-pick-percentages" aria-label="Percentage of submitted picks">
+            {submittedPicks.length > 0 ? pickDistribution.map(option => <span key={option.value} className={option.value === 'Savu' ? 'percentage-savu' : option.value === 'Toka' ? 'percentage-toka' : 'percentage-individual'}><strong>{Math.round(option.count / submittedPicks.length * 100)}%</strong> {option.label}</span>) : <p>{isBeforePickStart ? 'Picks not open yet.' : 'No picks submitted yet.'}</p>}
           </div>
           <div className="weekly-picks-grid">
             {leagueEntries.map(team => {
@@ -216,7 +210,7 @@ export default function WeeklyPicks({ guestData = null }) {
               return <article key={team.id} style={{ background: 'rgba(255,255,255,.9)', borderRadius: 10, padding: 10, opacity: result && pickValue && !won ? .6 : 1 }}>
                 <div className="weekly-pick-team">
                   {team.avatar_url ? <img src={team.avatar_url} alt="" /> : <span className="weekly-pick-avatar-placeholder" aria-hidden="true">{(team.team_name || 'T').charAt(0)}</span>}
-                  <strong>{team.team_name}</strong>
+                  <strong title={team.team_name}>{team.team_name}</strong>
                 </div>
                 {(pick || pickedTribe) ? <img src={pick?.picture_url || pickedTribe?.image || '/fallback.png'} alt={pick?.name || pickedTribe.name} style={{ display: 'block', width: '100%', aspectRatio: 1, objectFit: 'cover', objectPosition: 'center top', borderRadius: 8, marginTop: 8, filter: result && !won ? 'grayscale(1)' : 'none' }} /> : <div className="weekly-pick-placeholder">{pickValue ? 'Unknown pick' : 'TBD'}</div>}
                 <p>{pickedTribe?.name || pick?.display_name || pick?.name || (pickValue ? 'Unknown pick' : isBeforePickStart ? 'Picks not open yet' : 'No pick submitted')} {won ? `· +${result.bonus_points_awarded}` : ''}</p>

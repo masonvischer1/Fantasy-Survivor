@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { castawayContribution } from '../utils/leaderboardStats'
 import DetailNavigation from './DetailNavigation'
+import savuBuff from '../assets/51/Savu.png'
+import tokaBuff from '../assets/51/Toka.png'
 import { compareTeams, withRemainingCastaways } from '../utils/detailNavigation'
 import { supabase } from '../supabaseClient'
 
@@ -99,12 +101,13 @@ export default function TeamProfileView({ guestData = null }) {
 
         <h2>Weekly Picks</h2>
         {visibleWeeklyPicks.length === 0 && <p>{guestData ? 'No weekly picks submitted yet.' : 'Team picks appear after you submit your own pick for that week.'}</p>}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 8 }}>
+        <div className="team-detail-weekly-picks">
           {visibleWeeklyPicks.sort((a, b) => Number(a[0]) - Number(b[0])).map(([week, value]) => {
             const result = resultMap.get(String(week))
             const castaway = contestantMap.get(String(value))
+            const pickImage = value === 'Savu' ? savuBuff : value === 'Toka' ? tokaBuff : castaway?.picture_url || '/fallback.png'
             const won = result?.phase === 'tribal' ? String(result.winner_team) === String(value) : (result?.winner_original_contestant_ids || []).map(String).includes(String(value))
-            return <div key={week} style={{ padding: 10, borderRadius: 8, background: '#f8fafc', opacity: result && !won ? .62 : 1 }}><strong>Week {week}</strong><p>{castaway?.name || value}</p>{won && <span style={{ color: '#166534', fontWeight: 700 }}>+{result.bonus_points_awarded} points</span>}</div>
+            return <div key={week} style={{ padding: 10, borderRadius: 8, background: '#f8fafc', opacity: result && !won ? .62 : 1 }}><strong>Week {week}</strong><img className="team-detail-pick-photo" src={pickImage} alt={castaway?.display_name || castaway?.name || String(value)} title={castaway?.display_name || castaway?.name || String(value)} style={{ filter: result && !won ? 'grayscale(1)' : 'none' }} />{won && <span style={{ color: '#166534', fontWeight: 700 }}>+{result.bonus_points_awarded} points</span>}</div>
           })}
         </div>
       </article>
