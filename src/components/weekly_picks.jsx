@@ -63,7 +63,7 @@ export default function WeeklyPicks({ guestData = null }) {
       supabase.from('season_entries').select('*').eq('season_id', activeSeason.id).eq('profile_id', user.id).single(),
       supabase.from('season_contestants').select('*').eq('season_id', activeSeason.id).order('name'),
       supabase.from('season_weekly_results').select('*').eq('season_id', activeSeason.id).eq('week', selectedWeek).maybeSingle(),
-      supabase.from('season_entries').select('id, team_name, player_name, weekly_picks').eq('season_id', activeSeason.id).not('team_name', 'is', null)
+      supabase.from('season_entries').select('id, team_name, player_name, avatar_url, weekly_picks').eq('season_id', activeSeason.id).not('team_name', 'is', null).order('team_name')
     ])
 
     const firstError = entryResult.error || contestantsResult.error || resultData.error || leagueResult.error
@@ -73,7 +73,7 @@ export default function WeeklyPicks({ guestData = null }) {
     setEntry(entryResult.data)
     setContestants(contestantsResult.data || [])
     setResult(resultData.data || null)
-    setLeagueEntries((leagueResult.data || []).filter(item => item.weekly_picks?.[selectedWeek]))
+    setLeagueEntries(leagueResult.data || [])
     setIsAdmin(!!account?.is_admin)
     const winnerIds = resultData.data?.winner_original_contestant_ids || (resultData.data?.winner_original_contestant_id ? [resultData.data.winner_original_contestant_id] : [])
     setAdminWinnerIds(winnerIds.map(String))
@@ -100,6 +100,16 @@ export default function WeeklyPicks({ guestData = null }) {
   const isPickOpen = !result && !isBeforePickStart
   const currentPickContestant = contestantMap.get(String(currentPick))
   const currentPickLabel = TRIBES.find(tribe => tribe.name === currentPick)?.name || currentPickContestant?.display_name || currentPickContestant?.name
+  // Distribution and cards must share the same per-week visibility rule.
+  const canViewLeaguePicks = !!guestData || !!currentPick
+  const submittedPicks = canViewLeaguePicks ? leagueEntries.map(team => team.weekly_picks?.[selectedWeek]).filter(Boolean).map(String) : []
+  const distributionOptions = pickPhase === 'tribal'
+    ? TRIBES.map(tribe => ({ value: tribe.name, label: tribe.name }))
+    : [...new Set(submittedPicks)].map(value => ({ value, label: contestantMap.get(value)?.display_name || contestantMap.get(value)?.name || 'Unknown pick' }))
+  const pickDistribution = distributionOptions.map(option => ({
+    ...option,
+    count: submittedPicks.filter(value => value === option.value).length
+  }))
 
   async function savePick(pickValue, pickLabel) {
     if (!entry || currentPick) return
@@ -185,20 +195,31 @@ export default function WeeklyPicks({ guestData = null }) {
         ) : <div style={{ textAlign: 'center' }}><strong>{isBeforePickStart ? `Weekly Picks will begin in Week ${picksStartWeek}.` : `Week ${selectedWeek} is locked.`}</strong>{!isBeforePickStart && <p>A result has already been recorded for this week.</p>}</div>}
       </section>}
 
-      {(guestData || currentPick) && (
+      {canViewLeaguePicks && (
         <section style={{ maxWidth: 980, margin: '1rem auto 0' }}>
           <h2 style={{ color: 'white', textShadow: '0 2px 8px #000' }}>League picks</h2>
-          {leagueEntries.length === 0 && <p style={{ color: 'white' }}>No other submitted picks yet.</p>}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 10 }}>
+          <div className="weekly-pick-distribution">
+            <h3>Pick distribution</h3>
+            {submittedPicks.length > 0 ? <>
+              <div className="weekly-pick-percentages">
+                {pickDistribution.map(option => <span key={option.value}><strong>{Math.round(option.count / submittedPicks.length * 100)}%</strong> {option.label}</span>)}
+              </div>
+              <p>Based on {submittedPicks.length} submitted {submittedPicks.length === 1 ? 'pick' : 'picks'} · {leagueEntries.length - submittedPicks.length} TBD</p>
+            </> : <p>{isBeforePickStart ? 'Picks not open yet.' : 'No picks submitted yet.'}</p>}
+          </div>
+          <div className="weekly-picks-grid">
             {leagueEntries.map(team => {
               const pickValue = team.weekly_picks?.[selectedWeek]
               const pick = contestantMap.get(String(pickValue))
               const pickedTribe = TRIBES.find(tribe => tribe.name === pickValue)
               const won = result?.phase === 'tribal' ? result.winner_team === pickValue : winnerIds.includes(String(pick?.id))
               return <article key={team.id} style={{ background: 'rgba(255,255,255,.9)', borderRadius: 10, padding: 10, opacity: result && pickValue && !won ? .6 : 1 }}>
-                <strong>{team.team_name}</strong>
-                {(pick || pickedTribe) && <img src={pick?.picture_url || pickedTribe.image} alt={pick?.name || pickedTribe.name} style={{ display: 'block', width: '100%', aspectRatio: 1, objectFit: 'cover', objectPosition: 'center top', borderRadius: 8, marginTop: 8, filter: result && !won ? 'grayscale(1)' : 'none' }} />}
-                <p>{pickedTribe?.name || pick?.display_name || pick?.name || (guestData && isBeforePickStart ? 'Picks not open yet' : 'No pick submitted')} {won ? `· +${result.bonus_points_awarded}` : ''}</p>
+                <div className="weekly-pick-team">
+                  {team.avatar_url ? <img src={team.avatar_url} alt="" /> : <span className="weekly-pick-avatar-placeholder" aria-hidden="true">{(team.team_name || 'T').charAt(0)}</span>}
+                  <strong>{team.team_name}</strong>
+                </div>
+                {(pick || pickedTribe) ? <img src={pick?.picture_url || pickedTribe?.image || '/fallback.png'} alt={pick?.name || pickedTribe.name} style={{ display: 'block', width: '100%', aspectRatio: 1, objectFit: 'cover', objectPosition: 'center top', borderRadius: 8, marginTop: 8, filter: result && !won ? 'grayscale(1)' : 'none' }} /> : <div className="weekly-pick-placeholder">{pickValue ? 'Unknown pick' : 'TBD'}</div>}
+                <p>{pickedTribe?.name || pick?.display_name || pick?.name || (pickValue ? 'Unknown pick' : isBeforePickStart ? 'Picks not open yet' : 'No pick submitted')} {won ? `· +${result.bonus_points_awarded}` : ''}</p>
               </article>
             })}
           </div>
