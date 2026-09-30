@@ -16,6 +16,7 @@ export default function GuestSite() {
   const location = useLocation()
   useEffect(() => {
     let active = true
+    let releaseTimer
     async function load() {
       try {
         let next
@@ -28,14 +29,21 @@ export default function GuestSite() {
           if (result.error) throw result.error
           next = result.data
         }
-        if (active) { setData(next); setError('') }
+        if (active) {
+          setData(next)
+          setError('')
+          clearTimeout(releaseTimer)
+          const untilRelease = Date.parse(next?.season?.guest_pick_release_at) - Date.now()
+          if (untilRelease > 0) releaseTimer = setTimeout(load, Math.min(untilRelease + 250, 2147483647))
+        }
       } catch {
         if (active) setError('Guest standings are temporarily unavailable. Please try again shortly.')
       }
     }
     load()
     const timer = setInterval(load, 60000)
-    return () => { active = false; clearInterval(timer) }
+    window.addEventListener('focus', load)
+    return () => { active = false; clearInterval(timer); clearTimeout(releaseTimer); window.removeEventListener('focus', load) }
   }, [])
   if (!data) return <p className="guest-card" role={error ? 'alert' : 'status'}>{error || 'Loading league…'}</p>
   if (!data.season) return <p className="guest-card">No active season yet.</p>

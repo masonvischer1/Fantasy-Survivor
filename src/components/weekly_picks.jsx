@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { guestPickReleaseMessage, isGuestPickWeekReleased } from '../utils/guestPickVisibility'
 import { supabase } from '../supabaseClient'
 import siteLogo from '../assets/51/Logo.webp'
 import leftArrowIcon from '../assets/arrow-left-circle.svg'
@@ -102,7 +103,7 @@ export default function WeeklyPicks({ guestData = null }) {
   const currentPickContestant = contestantMap.get(String(currentPick))
   const currentPickLabel = TRIBES.find(tribe => tribe.name === currentPick)?.name || currentPickContestant?.display_name || currentPickContestant?.name
   // Distribution and cards must share the same per-week visibility rule.
-  const canViewLeaguePicks = !!guestData || !!currentPick
+  const canViewLeaguePicks = guestData ? isGuestPickWeekReleased(guestData.season, selectedWeek) : !!currentPick
   const submittedPicks = canViewLeaguePicks ? leagueEntries.map(team => team.weekly_picks?.[selectedWeek]).filter(Boolean).map(String) : []
   const distributionOptions = pickPhase === 'tribal'
     ? TRIBES.map(tribe => ({ value: tribe.name, label: tribe.name }))
@@ -195,6 +196,8 @@ export default function WeeklyPicks({ guestData = null }) {
           </>
         ) : <div style={{ textAlign: 'center' }}><strong>{isBeforePickStart ? `Weekly Picks will begin in Week ${picksStartWeek}.` : `Week ${selectedWeek} is locked.`}</strong>{!isBeforePickStart && <p>A result has already been recorded for this week.</p>}</div>}
       </section>}
+
+      {guestData && !canViewLeaguePicks && <p className="guest-card" style={{ maxWidth: 980, margin: '1rem auto' }} role="status">{guestPickReleaseMessage(guestData.season, selectedWeek)}</p>}
 
       {canViewLeaguePicks && (
         <section style={{ maxWidth: 980, margin: '1rem auto 0' }}>

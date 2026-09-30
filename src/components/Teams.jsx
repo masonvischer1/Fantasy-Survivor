@@ -160,6 +160,7 @@ export default function Teams({ guestData = null }) {
       {viewerCanSee && <div className="rank-history-entry"><Link to={`${prefix}/rank-history`}>Rank History ↗</Link></div>}
       {!guestData && isAdmin && <div className="rank-admin-actions">
         <button onClick={updateWeekRanks} disabled={updatingRanks || loading}>{updatingRanks ? 'Updating…' : 'Update week ranks'}</button>
+        <p>Activating a new week schedules its guest picks for the next Wednesday at 7:55 p.m. Eastern. Saving the same week again keeps its release time.</p>
         {rankMessage && <p role="status">{rankMessage}</p>}
       </div>}
     </div>

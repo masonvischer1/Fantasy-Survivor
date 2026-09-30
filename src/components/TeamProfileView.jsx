@@ -6,6 +6,7 @@ import savuBuff from '../assets/51/Savu.png'
 import tokaBuff from '../assets/51/Toka.png'
 import { compareTeams, withRemainingCastaways } from '../utils/detailNavigation'
 import { supabase } from '../supabaseClient'
+import { guestPickReleaseMessage, isGuestPickWeekReleased } from '../utils/guestPickVisibility'
 
 export default function TeamProfileView({ guestData = null }) {
   const { id } = useParams()
@@ -65,7 +66,7 @@ export default function TeamProfileView({ guestData = null }) {
   const roster = useMemo(() => (entry?.drafted_team || []).map(pick => contestantMap.get(String(pick?.id ?? pick))).filter(Boolean), [contestantMap, entry])
   const resultMap = useMemo(() => new Map(results.map(result => [String(result.week), result])), [results])
 
-  const visibleWeeklyPicks = Object.entries(entry?.weekly_picks || {}).filter(([week]) => !!guestData || (viewerPicks[week] != null && viewerPicks[week] !== ''))
+  const visibleWeeklyPicks = Object.entries(entry?.weekly_picks || {}).filter(([week]) => guestData ? isGuestPickWeekReleased(guestData.season, week) : (viewerPicks[week] != null && viewerPicks[week] !== ''))
 
   if (loading) return <div style={{ padding: '1rem' }}>Loading team…</div>
   if (!entry) return <div style={{ padding: '1rem' }}>Team not found.</div>
@@ -100,7 +101,8 @@ export default function TeamProfileView({ guestData = null }) {
         </div>
 
         <h2>Weekly Picks</h2>
-        {visibleWeeklyPicks.length === 0 && <p>{guestData ? 'No weekly picks submitted yet.' : 'Team picks appear after you submit your own pick for that week.'}</p>}
+        {guestData && !isGuestPickWeekReleased(guestData.season, guestData.season.current_week) && <p role="status">{guestPickReleaseMessage(guestData.season)}</p>}
+        {visibleWeeklyPicks.length === 0 && <p>{guestData ? 'No released picks to display yet.' : 'Team picks appear after you submit your own pick for that week.'}</p>}
         <div className="team-detail-weekly-picks">
           {visibleWeeklyPicks.sort((a, b) => Number(a[0]) - Number(b[0])).map(([week, value]) => {
             const result = resultMap.get(String(week))
