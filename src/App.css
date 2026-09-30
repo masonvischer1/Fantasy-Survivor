@@ -245,21 +245,28 @@
 .rank-admin-actions button { font-family: 'Survivant', sans-serif; }
 .roster-photo-wrap { position: relative; display: block; }
 .weekly-picks-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.weekly-picks-grid article { min-width: 0; overflow-wrap: anywhere; }
-.weekly-pick-team { display: flex; align-items: center; gap: 6px; height: 32px; }
-.weekly-pick-team strong { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: clamp(.65rem, 2vw, .95rem); }
+.weekly-pick-card { display: grid; grid-template-rows: subgrid; grid-row: span 3; row-gap: 0; min-width: 0; overflow-wrap: anywhere; color: #213547; }
+.weekly-pick-card:hover { color: #213547; }
+.weekly-pick-card:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+.weekly-pick-team { display: flex; align-items: center; gap: 6px; min-height: 32px; }
+.weekly-pick-team strong { min-width: 0; white-space: normal; overflow-wrap: anywhere; font-size: clamp(.65rem, 2vw, .95rem); }
 .weekly-pick-team img, .weekly-pick-avatar-placeholder { width: 28px; height: 28px; flex: 0 0 28px; border-radius: 50%; object-fit: cover; }
 .weekly-pick-avatar-placeholder { display: grid; place-items: center; background: #dbe5d8; color: #166534; font-weight: 700; }
 .weekly-pick-placeholder { display: grid; place-items: center; width: 100%; aspect-ratio: 1; margin-top: 8px; border-radius: 8px; background: #e2e8f0; color: #475569; font-weight: 700; }
-.weekly-pick-percentages { display: flex; justify-content: center; align-items: baseline; flex-wrap: wrap; gap: 12px 28px; margin: 0 0 18px; color: white; text-shadow: 0 2px 5px #000; }
+.weekly-pick-percentages { display: flex; justify-content: center; align-items: baseline; flex-wrap: wrap; gap: 12px 28px; margin: 0 0 18px; padding: 12px; border-radius: 10px; background: rgba(255,255,255,.95); color: #213547; }
 .weekly-pick-percentages > span { font-size: clamp(1.1rem, 4vw, 1.6rem); font-weight: 700; }
 .weekly-pick-percentages strong { font-size: clamp(2rem, 8vw, 3.2rem); }
-.weekly-pick-percentages .percentage-savu { color: #d8b4fe; }
-.weekly-pick-percentages .percentage-toka { color: #facc15; }
-.weekly-pick-percentages .percentage-individual { color: #86efac; }
-.weekly-picks-grid article > p { margin: 8px 0 0; font-size: clamp(.65rem, 2vw, .95rem); }
+.weekly-pick-percentages .percentage-savu { color: #7e22ce; }
+.weekly-pick-percentages .percentage-toka { color: #a16207; }
+.weekly-pick-percentages .percentage-individual { color: #166534; }
+.weekly-pick-card > p { margin: 8px 0 0; font-size: clamp(.65rem, 2vw, .95rem); }
 .team-detail-weekly-picks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .team-detail-weekly-picks > div { min-width: 0; }
 .team-detail-pick-photo { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; object-position: center top; border-radius: 8px; margin: 8px 0; }
 
 .castaway-points-badge { position: absolute; right: 3px; bottom: 3px; border-radius: 999px; padding: 0.15rem 0.4rem; background: #0f172ae8; color: white; font-size: 0.65rem; font-weight: 700; white-space: nowrap; }
+
+.weekly-week-navigation { display: grid; grid-template-columns: 48px minmax(0, 220px) 48px; justify-content: center; align-items: center; gap: 10px; margin: 1rem auto; }
+.weekly-week-arrow { display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 0; background: transparent; }
+.weekly-week-arrow img { display: block; width: 48px; height: 48px; filter: brightness(0) invert(1); }
+.weekly-week-arrow:disabled { opacity: .4; cursor: default; }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import siteLogo from '../assets/51/Logo.webp'
 import leftArrowIcon from '../assets/arrow-left-circle.svg'
@@ -163,10 +164,10 @@ export default function WeeklyPicks({ guestData = null }) {
       <h1 style={{ color: 'white', textAlign: 'center', textShadow: '0 2px 8px #000' }}>Weekly Picks</h1>
       <p style={{ color: 'white', textAlign: 'center', textShadow: '0 2px 8px #000' }}>{guestData ? 'View each team’s weekly immunity pick.' : 'Pick the tribal/individual immunity winner for this week for a chance to earn bonus points!'}</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '52px minmax(140px,220px) 52px', justifyContent: 'center', alignItems: 'center', gap: 10, margin: '1rem auto' }}>
-        <button onClick={() => setSelectedWeek(w => Math.max(1, w - 1))} disabled={selectedWeek === 1} style={{ border: 0, background: 'transparent' }}><img src={leftArrowIcon} alt="Previous week" width="48" /></button>
+      <div className="weekly-week-navigation">
+        <button onClick={() => setSelectedWeek(w => Math.max(1, w - 1))} disabled={selectedWeek === 1} className="weekly-week-arrow"><img src={leftArrowIcon} alt="Previous week" width="48" /></button>
         <div style={{ background: 'rgba(255,255,255,.9)', borderRadius: 10, padding: 12, textAlign: 'center', fontWeight: 800 }}>Week {selectedWeek}</div>
-        <button onClick={() => setSelectedWeek(w => Math.min(season?.episode_count || 15, w + 1))} disabled={selectedWeek === (season?.episode_count || 15)} style={{ border: 0, background: 'transparent' }}><img src={rightArrowIcon} alt="Next week" width="48" /></button>
+        <button onClick={() => setSelectedWeek(w => Math.min(season?.episode_count || 15, w + 1))} disabled={selectedWeek === (season?.episode_count || 15)} className="weekly-week-arrow"><img src={rightArrowIcon} alt="Next week" width="48" /></button>
       </div>
 
       {!guestData && <section style={{ maxWidth: 980, margin: '0 auto', background: 'rgba(255,255,255,.9)', padding: 14, borderRadius: 12 }}>
@@ -207,14 +208,14 @@ export default function WeeklyPicks({ guestData = null }) {
               const pick = contestantMap.get(String(pickValue))
               const pickedTribe = TRIBES.find(tribe => tribe.name === pickValue)
               const won = result?.phase === 'tribal' ? result.winner_team === pickValue : winnerIds.includes(String(pick?.id))
-              return <article key={team.id} style={{ background: 'rgba(255,255,255,.9)', borderRadius: 10, padding: 10, opacity: result && pickValue && !won ? .6 : 1 }}>
+              return <Link key={team.id} className="weekly-pick-card" to={`${guestData ? '/guest' : ''}/teams/${team.id}`} aria-label={`View ${team.team_name}`} style={{ background: 'rgba(255,255,255,.9)', borderRadius: 10, padding: 10, opacity: result && pickValue && !won ? .6 : 1 }}>
                 <div className="weekly-pick-team">
                   {team.avatar_url ? <img src={team.avatar_url} alt="" /> : <span className="weekly-pick-avatar-placeholder" aria-hidden="true">{(team.team_name || 'T').charAt(0)}</span>}
                   <strong title={team.team_name}>{team.team_name}</strong>
                 </div>
                 {(pick || pickedTribe) ? <img src={pick?.picture_url || pickedTribe?.image || '/fallback.png'} alt={pick?.name || pickedTribe.name} style={{ display: 'block', width: '100%', aspectRatio: 1, objectFit: 'cover', objectPosition: 'center top', borderRadius: 8, marginTop: 8, filter: result && !won ? 'grayscale(1)' : 'none' }} /> : <div className="weekly-pick-placeholder">{pickValue ? 'Unknown pick' : 'TBD'}</div>}
                 <p>{pickedTribe?.name || pick?.display_name || pick?.name || (pickValue ? 'Unknown pick' : isBeforePickStart ? 'Picks not open yet' : 'No pick submitted')} {won ? `· +${result.bonus_points_awarded}` : ''}</p>
-              </article>
+              </Link>
             })}
           </div>
         </section>
