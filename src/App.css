@@ -257,7 +257,7 @@
 .weekly-pick-percentages > span { font-size: clamp(1.1rem, 4vw, 1.6rem); font-weight: 700; }
 .weekly-pick-percentages strong { font-size: clamp(2rem, 8vw, 3.2rem); }
 .weekly-pick-percentages .percentage-savu { color: #7e22ce; }
-.weekly-pick-percentages .percentage-toka { color: #a16207; }
+.weekly-pick-percentages .percentage-toka { color: #998000; }
 .weekly-pick-percentages .percentage-individual { color: #166534; }
 .weekly-pick-card > p { margin: 8px 0 0; font-size: clamp(.65rem, 2vw, .95rem); }
 .team-detail-weekly-picks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
