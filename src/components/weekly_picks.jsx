@@ -19,6 +19,7 @@ export default function WeeklyPicks({ guestData = null }) {
   const [contestants, setContestants] = useState([])
   const [leagueEntries, setLeagueEntries] = useState([])
   const [result, setResult] = useState(null)
+  const [tribalResults, setTribalResults] = useState(null)
   const [selectedWeek, setSelectedWeek] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [adminWinnerIds, setAdminWinnerIds] = useState([])
@@ -40,6 +41,7 @@ export default function WeeklyPicks({ guestData = null }) {
       setSeason(guestData.season)
       setContestants(guestData.castaways)
       setResult(guestData.results.find(r => Number(r.week) === selectedWeek) || null)
+      setTribalResults(guestData.results.filter(r => r.phase === 'tribal' && Number(r.week) < selectedWeek))
       setLeagueEntries([...guestData.teams].sort((a, b) => (a.team_name || '').localeCompare(b.team_name || '')))
       return
     }
@@ -61,20 +63,22 @@ export default function WeeklyPicks({ guestData = null }) {
       return
     }
 
-    const [entryResult, contestantsResult, resultData, leagueResult] = await Promise.all([
+    const [entryResult, contestantsResult, resultData, leagueResult, tribalResultsData] = await Promise.all([
       supabase.from('season_entries').select('*').eq('season_id', activeSeason.id).eq('profile_id', user.id).single(),
       supabase.from('season_contestants').select('*').eq('season_id', activeSeason.id).order('name'),
       supabase.from('season_weekly_results').select('*').eq('season_id', activeSeason.id).eq('week', selectedWeek).maybeSingle(),
-      supabase.from('season_entries').select('id, team_name, player_name, avatar_url, weekly_picks').eq('season_id', activeSeason.id).not('team_name', 'is', null).order('team_name')
+      supabase.from('season_entries').select('id, team_name, player_name, avatar_url, weekly_picks').eq('season_id', activeSeason.id).not('team_name', 'is', null).order('team_name'),
+      supabase.from('season_weekly_results').select('winner_team').eq('season_id', activeSeason.id).eq('phase', 'tribal').lt('week', selectedWeek)
     ])
 
-    const firstError = entryResult.error || contestantsResult.error || resultData.error || leagueResult.error
+    const firstError = entryResult.error || contestantsResult.error || resultData.error || leagueResult.error || tribalResultsData.error
     if (firstError) console.error(firstError)
     setSeason(activeSeason)
     setAdminMergeWeek(String(activeSeason.merge_week || 7))
     setEntry(entryResult.data)
     setContestants(contestantsResult.data || [])
     setResult(resultData.data || null)
+    setTribalResults(tribalResultsData.error ? null : tribalResultsData.data || [])
     setLeagueEntries(leagueResult.data || [])
     setIsAdmin(!!account?.is_admin)
     const winnerIds = resultData.data?.winner_original_contestant_ids || (resultData.data?.winner_original_contestant_id ? [resultData.data.winner_original_contestant_id] : [])
@@ -180,6 +184,25 @@ export default function WeeklyPicks({ guestData = null }) {
         ) : isPickOpen ? (
           <>
             <h2 style={{ marginTop: 0 }}>Make your pick</h2>
+            {pickPhase === 'tribal' && <details key={selectedWeek} className="weekly-tribe-breakdowns">
+              <summary>View tribe breakdowns</summary>
+              <div className="weekly-tribe-lists">
+                {TRIBES.map(tribe => {
+                  const members = activeContestants.filter(contestant => contestant.tribe?.trim().toLowerCase() === tribe.name.toLowerCase())
+                  const wins = tribalResults?.filter(weeklyResult => weeklyResult.winner_team === tribe.name).length
+                  return <section key={tribe.name} aria-label={`${tribe.name} surviving castaways`}>
+                    <h3 className={`weekly-tribe-${tribe.name.toLowerCase()}`}>{tribe.name} <span>{members.length} remaining</span></h3>
+                    <p className="weekly-tribe-wins" title={`Recorded immunity wins before Week ${selectedWeek}`}>{wins == null ? 'Wins unavailable' : `${wins} immunity ${wins === 1 ? 'win' : 'wins'}`}</p>
+                    {members.length ? <ul>
+                      {members.map(contestant => <li key={contestant.id}>
+                        <img src={contestant.picture_url || '/fallback.png'} alt="" loading="lazy" />
+                        <span>{contestant.display_name || contestant.name}</span>
+                      </li>)}
+                    </ul> : <p>No surviving castaways listed.</p>}
+                  </section>
+                })}
+              </div>
+            </details>}
             <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8, justifyContent: pickPhase === 'tribal' ? 'center' : 'flex-start' }}>
               {pickPhase === 'tribal' ? TRIBES.map(tribe => (
                 <button key={tribe.name} onClick={() => savePick(tribe.name, tribe.name)} disabled={saving} style={{ flex: '0 0 min(230px,42vw)', border: '1px solid #d1d5db', borderRadius: 10, padding: 8, background: 'white' }}>
