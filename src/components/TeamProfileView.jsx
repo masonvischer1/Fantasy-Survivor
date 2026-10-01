@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { castawayContribution } from '../utils/leaderboardStats'
 import DetailNavigation from './DetailNavigation'
@@ -18,6 +18,7 @@ export default function TeamProfileView({ guestData = null }) {
   const [loading, setLoading] = useState(true)
   const [viewerPicks, setViewerPicks] = useState({})
   const [viewerCanSee, setViewerCanSee] = useState(false)
+  const photoDialog = useRef(null)
 
   useEffect(() => {
     let active = true
@@ -84,7 +85,7 @@ export default function TeamProfileView({ guestData = null }) {
       )}>
       <article style={{ maxWidth: 880, margin: '0 auto', background: 'rgba(255,255,255,.9)', borderRadius: 14, padding: '1rem' }}>
         <div className="team-detail-header">
-          {entry.avatar_url && <img className="team-avatar" src={entry.avatar_url} alt="" />}
+          {entry.avatar_url && <button type="button" className="team-avatar-button" aria-label={`Enlarge ${entry.team_name}'s profile picture`} onClick={() => photoDialog.current?.showModal()}><img className="team-avatar" src={entry.avatar_url} alt="" /></button>}
           <div><h1>{entry.team_name}</h1><p>{entry.player_name}</p></div>
         </div>
         <dl className="team-score-breakdown">
@@ -114,6 +115,14 @@ export default function TeamProfileView({ guestData = null }) {
         </div>
       </article>
       </DetailNavigation>
+      {entry.avatar_url && <dialog ref={photoDialog} className="team-photo-dialog" aria-label={`${entry.team_name}'s profile picture`} onClick={event => {
+        if (event.target === event.currentTarget) photoDialog.current.close()
+      }}>
+        <div className="team-photo-content">
+          <button type="button" className="team-photo-close" aria-label="Close profile picture" onClick={() => photoDialog.current.close()} autoFocus>×</button>
+          <img src={entry.avatar_url} alt={`${entry.team_name}'s profile picture`} />
+        </div>
+      </dialog>}
     </div>
   )
 }
