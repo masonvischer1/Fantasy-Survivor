@@ -80,7 +80,6 @@ export default function ContestantsGrid({ guestData = null }) {
               cursor: 'pointer',
               background: 'linear-gradient(135deg, rgba(0,0,0,0.8), rgba(70,40,0,0.6))',
               border: '1px solid #fff',
-              filter: isEliminated ? 'grayscale(100%)' : 'none',
               opacity: isEliminated ? 0.6 : 1
             }}
           >
@@ -93,7 +92,8 @@ export default function ContestantsGrid({ guestData = null }) {
                 borderRadius: '10px',
                 objectFit: 'cover',
                 border: '2px solid #fff',
-                objectPosition: 'center top'
+                objectPosition: 'center top',
+                filter: isEliminated ? 'grayscale(100%)' : 'none'
               }}
             />
             <div style={{ flex: 1, color: 'white' }}>
@@ -107,10 +107,10 @@ export default function ContestantsGrid({ guestData = null }) {
                 style={{
                   fontWeight: 'bold',
                   fontSize: '0.8rem',
-                  color: '#FFD700'
+                  color: { savu: '#a855f7', toka: '#f8e51c', dina: '#f52353' }[c.tribe?.trim().toLowerCase()] || '#fff'
                 }}
               >
-                Contestant Details
+                {c.tribe || 'Unknown tribe'}
               </span>
             </div>
           </div>
