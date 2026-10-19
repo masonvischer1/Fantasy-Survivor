@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { ordinalPlace } from '../utils/leaderboardStats'
 import { compareCastaways } from '../utils/detailNavigation'
 import siteLogo from '../assets/51/Logo.webp'
 
@@ -66,6 +67,13 @@ export default function ContestantsGrid({ guestData = null }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
       {contestants.map(c => {
         const isEliminated = c.is_eliminated === true
+        const eliminationDay = c.elimination_day
+        const bootOrder = eliminationDay == null ? null : 1 + contestants.filter(other =>
+          other.is_eliminated === true && other.elimination_day != null && Number(other.elimination_day) < Number(eliminationDay)
+        ).length
+        const statusLabel = isEliminated
+          ? bootOrder == null ? 'Eliminated — day unknown' : `${ordinalPlace(bootOrder).replace(' Place', '')} boot - day ${eliminationDay}`
+          : c.tribe || 'Unknown tribe'
 
         return (
           <div
@@ -107,10 +115,10 @@ export default function ContestantsGrid({ guestData = null }) {
                 style={{
                   fontWeight: 'bold',
                   fontSize: '0.8rem',
-                  color: { savu: '#a855f7', toka: '#f8e51c', dina: '#f52353' }[c.tribe?.trim().toLowerCase()] || '#fff'
+                  color: isEliminated ? '#fff' : { savu: '#a855f7', toka: '#f8e51c', dina: '#f52353' }[c.tribe?.trim().toLowerCase()] || '#fff'
                 }}
               >
-                {c.tribe || 'Unknown tribe'}
+                {statusLabel}
               </span>
             </div>
           </div>
