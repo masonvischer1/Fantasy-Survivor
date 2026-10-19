@@ -5,12 +5,14 @@ import { supabase } from '../supabaseClient'
 import siteLogo from '../assets/51/Logo.webp'
 import leftArrowIcon from '../assets/arrow-left-circle.svg'
 import rightArrowIcon from '../assets/arrow-right-circle.svg'
+import dinaBuff from '../assets/51/Dina.png'
 import tokaBuff from '../assets/51/Toka.png'
 
 const savuBuff = new URL('../assets/51/Savu.png', import.meta.url).href
 const TRIBES = [
   { name: 'Savu', image: savuBuff },
-  { name: 'Toka', image: tokaBuff }
+  { name: 'Toka', image: tokaBuff },
+  { name: 'Dina', image: dinaBuff }
 ]
 
 export default function WeeklyPicks({ guestData = null }) {
@@ -98,29 +100,31 @@ export default function WeeklyPicks({ guestData = null }) {
 
   const activeContestants = useMemo(() => contestants.filter(c => !c.is_eliminated), [contestants])
   const contestantMap = useMemo(() => new Map(contestants.map(c => [String(c.id), c])), [contestants])
-  const currentPick = entry?.weekly_picks?.[selectedWeek]
+  const isNotApplicable = (season?.disabled_pick_weeks || []).includes(Number(selectedWeek))
+  const availableTribes = TRIBES.filter(tribe => tribe.name !== 'Dina' || Number(selectedWeek) > 4)
+  const currentPick = isNotApplicable ? null : entry?.weekly_picks?.[selectedWeek]
   const winnerIds = (result?.winner_original_contestant_ids || []).map(String)
   const pickPhase = result?.phase || (selectedWeek < Number(season?.merge_week || 7) ? 'tribal' : 'individual')
   const picksStartWeek = Number(season?.picks_start_week || 1)
   const isBeforePickStart = selectedWeek < picksStartWeek
-  const isPickOpen = !result && !isBeforePickStart
+  const isPickOpen = !isNotApplicable && !result && !isBeforePickStart
   const currentPickContestant = contestantMap.get(String(currentPick))
   const currentPickLabel = TRIBES.find(tribe => tribe.name === currentPick)?.name || currentPickContestant?.display_name || currentPickContestant?.name
   // Distribution and cards must share the same per-week visibility rule.
-  const canViewLeaguePicks = guestData ? isGuestPickWeekReleased(guestData.season, selectedWeek) : !!currentPick
+  const canViewLeaguePicks = !isNotApplicable && (guestData ? isGuestPickWeekReleased(guestData.season, selectedWeek) : !!currentPick)
   const submittedPicks = canViewLeaguePicks ? leagueEntries.map(team => team.weekly_picks?.[selectedWeek]).filter(Boolean).map(String) : []
   const distributionOptions = pickPhase === 'tribal'
-    ? TRIBES.map(tribe => ({ value: tribe.name, label: tribe.name }))
+    ? availableTribes.map(tribe => ({ value: tribe.name, label: tribe.name }))
     : [...new Set(submittedPicks)].map(value => ({ value, label: contestantMap.get(value)?.display_name || contestantMap.get(value)?.name || 'Unknown pick' }))
   const pickDistribution = distributionOptions.map(option => ({
     ...option,
     count: submittedPicks.filter(value => value === option.value).length
   }))
   const distributionColors = ['#166534', '#2563eb', '#be123c', '#7e22ce', '#b45309', '#0e7490']
-  const distributionColor = (option, index) => option.value === 'Savu' ? '#7e22ce' : option.value === 'Toka' ? '#f8e51c' : distributionColors[index % distributionColors.length]
+  const distributionColor = (option, index) => option.value === 'Savu' ? '#7e22ce' : option.value === 'Toka' ? '#f8e51c' : option.value === 'Dina' ? '#f52353' : distributionColors[index % distributionColors.length]
 
   async function savePick(pickValue, pickLabel) {
-    if (!entry || currentPick) return
+    if (!entry || currentPick || !isPickOpen) return
     if (!window.confirm(`Lock in ${pickLabel} for Week ${selectedWeek}?`)) return
     setSaving(true)
     const { data, error } = await supabase.rpc('submit_season_weekly_pick', {
@@ -178,7 +182,7 @@ export default function WeeklyPicks({ guestData = null }) {
       </div>
 
       {!guestData && <section style={{ maxWidth: 980, margin: '0 auto', background: 'rgba(255,255,255,.9)', padding: currentPick ? '8px 12px' : 14, borderRadius: 12 }}>
-        {currentPick ? (
+        {isNotApplicable ? <p style={{ textAlign: 'center' }}><strong>Week {selectedWeek}: N/A — tribe swap</strong><br />No weekly picks or bonus points for this week.</p> : currentPick ? (
           <div className="weekly-locked-pick">
             <span>Week {selectedWeek} pick locked:</span>
             <strong>{currentPickLabel || 'Unknown pick'}</strong>
@@ -189,7 +193,7 @@ export default function WeeklyPicks({ guestData = null }) {
             {pickPhase === 'tribal' && <details key={selectedWeek} className="weekly-tribe-breakdowns">
               <summary>View tribe breakdowns</summary>
               <div className="weekly-tribe-lists">
-                {TRIBES.map(tribe => {
+                {availableTribes.map(tribe => {
                   const members = activeContestants.filter(contestant => contestant.tribe?.trim().toLowerCase() === tribe.name.toLowerCase())
                   const wins = tribalResults?.filter(weeklyResult => weeklyResult.winner_team === tribe.name).length
                   return <section key={tribe.name} aria-label={`${tribe.name} surviving castaways`}>
@@ -206,8 +210,8 @@ export default function WeeklyPicks({ guestData = null }) {
               </div>
             </details>}
             <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8, justifyContent: pickPhase === 'tribal' ? 'center' : 'flex-start' }}>
-              {pickPhase === 'tribal' ? TRIBES.map(tribe => (
-                <button key={tribe.name} onClick={() => savePick(tribe.name, tribe.name)} disabled={saving} style={{ flex: '0 0 min(230px,42vw)', border: '1px solid #d1d5db', borderRadius: 10, padding: 8, background: 'white' }}>
+              {pickPhase === 'tribal' ? availableTribes.map(tribe => (
+                <button key={tribe.name} onClick={() => savePick(tribe.name, tribe.name)} disabled={saving} style={{ flex: '0 1 230px', minWidth: 0, border: '1px solid #d1d5db', borderRadius: 10, padding: 8, background: 'white' }}>
                   <img src={tribe.image} alt={`${tribe.name} buff`} style={{ width: '100%', aspectRatio: 1, objectFit: 'cover', objectPosition: 'center top', borderRadius: 8 }} />
                   <strong>{tribe.name}</strong>
                 </button>
@@ -222,7 +226,8 @@ export default function WeeklyPicks({ guestData = null }) {
         ) : <div style={{ textAlign: 'center' }}><strong>{isBeforePickStart ? `Weekly Picks will begin in Week ${picksStartWeek}.` : `Week ${selectedWeek} is locked.`}</strong>{!isBeforePickStart && <p>A result has already been recorded for this week.</p>}</div>}
       </section>}
 
-      {guestData && !canViewLeaguePicks && <p className="guest-card" style={{ maxWidth: 980, margin: '1rem auto' }} role="status">{guestPickReleaseMessage(guestData.season, selectedWeek)}</p>}
+      {guestData && isNotApplicable && <p className="guest-card" style={{ maxWidth: 980, margin: '1rem auto' }}>Week {selectedWeek}: N/A — tribe swap. No weekly picks or bonus points.</p>}
+      {guestData && !isNotApplicable && !canViewLeaguePicks && <p className="guest-card" style={{ maxWidth: 980, margin: '1rem auto' }} role="status">{guestPickReleaseMessage(guestData.season, selectedWeek)}</p>}
 
       {canViewLeaguePicks && (
         <section style={{ maxWidth: 980, margin: '1rem auto 0' }}>
@@ -260,15 +265,17 @@ export default function WeeklyPicks({ guestData = null }) {
       {isAdmin && (
         <section className="admin-panel" style={{ maxWidth: 980, margin: '1rem auto 5rem' }}>
           <h2>Admin: Week {selectedWeek} result</h2>
+          {!isNotApplicable && <>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {pickPhase === 'tribal' ? TRIBES.map(tribe => <button key={tribe.name} onClick={() => setAdminWinnerTeam(tribe.name)} style={{ background: adminWinnerTeam === tribe.name ? '#166534' : '#e5e7eb', color: adminWinnerTeam === tribe.name ? 'white' : '#111' }}>{tribe.name}</button>) : activeContestants.map(c => <button key={c.id} onClick={() => setAdminWinnerIds(ids => ids.includes(String(c.id)) ? ids.filter(id => id !== String(c.id)) : [...ids, String(c.id)])} style={{ background: adminWinnerIds.includes(String(c.id)) ? '#166534' : '#e5e7eb', color: adminWinnerIds.includes(String(c.id)) ? 'white' : '#111' }}>{c.display_name || c.name}</button>)}
+            {pickPhase === 'tribal' ? availableTribes.map(tribe => <button key={tribe.name} onClick={() => setAdminWinnerTeam(tribe.name)} style={{ background: adminWinnerTeam === tribe.name ? '#166534' : '#e5e7eb', color: adminWinnerTeam === tribe.name ? 'white' : '#111' }}>{tribe.name}</button>) : activeContestants.map(c => <button key={c.id} onClick={() => setAdminWinnerIds(ids => ids.includes(String(c.id)) ? ids.filter(id => id !== String(c.id)) : [...ids, String(c.id)])} style={{ background: adminWinnerIds.includes(String(c.id)) ? '#166534' : '#e5e7eb', color: adminWinnerIds.includes(String(c.id)) ? 'white' : '#111' }}>{c.display_name || c.name}</button>)}
           </div>
           {pickPhase === 'individual' && <label style={{ display: 'block', marginTop: 12 }}>Bonus points <input type="number" min="1" value={adminBonus} onChange={e => setAdminBonus(e.target.value)} style={{ marginLeft: 8, width: 80 }} /></label>}
           <button onClick={saveResult} disabled={saving} style={{ marginTop: 12 }}>Save result and recalculate scores</button>
+          </>}
           <hr style={{ margin: '1.25rem 0' }} />
           <h2>Admin: Season settings</h2>
           <label>Individual picks begin in week <input type="number" min="2" max={season?.episode_count || 15} value={adminMergeWeek} onChange={event => setAdminMergeWeek(event.target.value)} style={{ marginLeft: 8, width: 70 }} /></label>
-          <p className="admin-panel-note">Weeks before this use Savu/Toka tribal picks. This setting is currently Week {season?.merge_week || 7}.</p>
+          <p className="admin-panel-note">Weeks before this use tribal picks. This setting is currently Week {season?.merge_week || 7}.</p>
           <button onClick={saveSeasonSettings} disabled={saving}>Update merge week</button>
 
         </section>
