@@ -272,6 +272,7 @@
 .weekly-pick-percentages strong { font-size: clamp(1.8rem, 7vw, 2.8rem); line-height: 1.1; }
 .weekly-pick-percentages .percentage-savu { color: #7e22ce; }
 .weekly-pick-percentages .percentage-toka { color: #b39b00; }
+.weekly-pick-percentages .percentage-dina { color: #f52353; }
 .weekly-pick-percentages .percentage-individual { color: #166534; }
 .weekly-pick-split { flex: 0 0 100%; min-width: 0; }
 .weekly-pick-split-bar { display: flex; width: 100%; height: 16px; overflow: hidden; border-radius: 999px; background: #e2e8f0; }
