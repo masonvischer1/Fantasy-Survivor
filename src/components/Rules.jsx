@@ -27,7 +27,8 @@ export default function Rules() {
           remaining player that you think will WIN the immunity challenge.
         </p>
         <p>
-          A correct tribal immunity pick earns 3 bonus points. After the merge, a correct individual
+          Starting in Week 5, a correct tribal immunity pick earns 5 bonus points. Earlier awards
+          stay unchanged, and Week 4 (tribe swap) awards no bonus points. After the merge, a correct individual
           immunity pick earns bonus points equal to the number of players remaining in the game!
           (Example: if there are 12 players remaining you will earn 12 bonus points.)
         </p>

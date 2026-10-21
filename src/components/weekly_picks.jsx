@@ -150,7 +150,7 @@ export default function WeeklyPicks({ guestData = null }) {
       p_winner_team: pickPhase === 'tribal' ? adminWinnerTeam : null,
       p_winner_contestant_ids: pickPhase === 'individual' ? adminWinnerIds.map(Number) : [],
       p_players_remaining: activeContestants.length,
-      p_bonus_points_awarded: pickPhase === 'tribal' ? 3 : Number(adminBonus)
+      p_bonus_points_awarded: pickPhase === 'tribal' ? (result?.bonus_points_awarded ?? (selectedWeek >= 5 ? 5 : 3)) : Number(adminBonus)
     })
     if (error) alert(error.message)
     setSaving(false)
