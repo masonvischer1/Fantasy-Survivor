@@ -20,6 +20,7 @@ export default function Teams({ guestData = null }) {
   const [updatingRanks, setUpdatingRanks] = useState(false)
   const [rankMessage, setRankMessage] = useState('')
   const [entries, setEntries] = useState([])
+  const [viewerEntryId, setViewerEntryId] = useState(null)
   const [contestants, setContestants] = useState([])
   const [loading, setLoading] = useState(true)
   const [viewerCanSee, setViewerCanSee] = useState(false)
@@ -28,6 +29,7 @@ export default function Teams({ guestData = null }) {
 
   const loadLeaderboard = useCallback(async () => {
     if (guestData) {
+      setViewerEntryId(null)
       setRankSnapshot(guestData.rank_snapshot || { changes: {} })
       setEntries(guestData.teams)
       setContestants(guestData.castaways)
@@ -66,6 +68,7 @@ export default function Teams({ guestData = null }) {
     setEntries(entryData || [])
     setContestants(contestantData || [])
     const viewerEntry = (entryData || []).find(entry => String(entry.profile_id) === String(authData?.user?.id))
+    setViewerEntryId(authData?.user ? viewerEntry?.id ?? null : null)
     const draftCount = Array.isArray(viewerEntry?.drafted_team) ? viewerEntry.drafted_team.length : 0
     setRequiredDraftCount(Number(activeSeason.initial_draft_size || 5))
     setViewerDraftCount(draftCount)
@@ -129,7 +132,7 @@ export default function Teams({ guestData = null }) {
       {!loading && viewerCanSee && rankedEntries.length === 0 && <p style={{ color: 'white' }}>No Survivor 51 teams have been created yet.</p>}
 
       {viewerCanSee && rankedEntries.map(entry => (
-        <article key={entry.id} onClick={() => navigate(`${prefix}/teams/${entry.id}`)} role="button" tabIndex={0} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') navigate(`${prefix}/teams/${entry.id}`) }} style={{ marginBottom: '0.6rem', border: entry.rank === 1 ? '2px solid #d4af37' : '1px solid #ddd', padding: '0.6rem', borderRadius: '10px', background: 'rgba(255,255,255,0.88)', cursor: 'pointer' }}>
+        <article key={entry.id} className={`leaderboard-card${entry.id === viewerEntryId ? ' leaderboard-card-own' : ''}`} onClick={() => navigate(`${prefix}/teams/${entry.id}`)} role="button" tabIndex={0} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') navigate(`${prefix}/teams/${entry.id}`) }} style={{ marginBottom: '0.6rem', border: entry.rank === 1 ? '2px solid #d4af37' : undefined, padding: '0.6rem', borderRadius: '10px', cursor: 'pointer' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
             {entry.avatar_url && <img src={entry.avatar_url} alt="" style={{ width: 42, height: 42, flex: '0 0 42px', aspectRatio: 1, borderRadius: '50%', objectFit: 'cover' }} />}
             <div style={{ flex: 1, minWidth: 0 }}>

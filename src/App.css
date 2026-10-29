@@ -139,6 +139,13 @@
   stroke-linejoin: round;
 }
 .detail-side-arrow:disabled { opacity: 0.4; cursor: default; }
+.leaderboard-card { border: 1px solid #ddd; background: rgba(255,255,255,0.88); }
+.leaderboard-card-own {
+  border-color: #d4af37;
+  background: #fff9db;
+  box-shadow: inset 4px 0 0 #eab308, 0 0 0 2px rgba(234,179,8,0.35);
+}
+.leaderboard-card:focus-visible { outline: 3px solid #166534; outline-offset: 3px; }
 .leaderboard-roster {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
