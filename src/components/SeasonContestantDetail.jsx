@@ -1,3 +1,4 @@
+import { isMergeOpen } from '../utils/mergeWindow'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import DraftedByTeams from './DraftedByTeams'
@@ -60,10 +61,11 @@ export default function SeasonContestantDetail({ guestData = null }) {
 
   const rosterIds = (entry?.drafted_team || []).map(pick => String(pick?.id ?? pick))
   const isDrafted = rosterIds.includes(String(contestant.id))
-  const draftLimit = Number(season?.current_week || 1) >= Number(season?.merge_week || 7) ? Number(season?.merge_draft_size || 6) : Number(season?.initial_draft_size || 5)
+  const draftLimit = isMergeOpen() ? Number(season?.merge_draft_size || 6) : Number(season?.initial_draft_size || 5)
 
   async function draftPlayer() {
     if (!entry || saving || isDrafted || contestant.is_eliminated || rosterIds.length >= draftLimit) return
+    if (!window.confirm(`Lock in ${contestant.display_name || contestant.name}? This pick is permanent.`)) return
     setSaving(true)
     const { data, error } = await supabase.rpc('set_season_draft_pick', {
       p_season_id: contestant.season_id,
@@ -133,7 +135,7 @@ export default function SeasonContestantDetail({ guestData = null }) {
           aria-pressed={isDrafted}
           aria-busy={saving}
         >
-          {saving ? 'Saving…' : isDrafted ? 'Drafted' : 'Draft'}
+          {saving ? 'Saving…' : isDrafted ? 'Drafted' : !isMergeOpen() ? 'Draft closed' : 'Draft merge pick'}
         </button>
       </div>}
     </div>

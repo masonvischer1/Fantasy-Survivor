@@ -1,3 +1,4 @@
+import MergeGate from './MergeGate'
 import { useEffect, useState } from 'react'
 import { Navigate, Routes, Route, useLocation } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
@@ -51,9 +52,9 @@ export default function GuestSite() {
     {error && <p className="guest-card" role="alert">{error}</p>}
     <Routes>
       <Route index element={<Navigate to="teams" replace />} />
-      <Route path="teams" element={<Teams guestData={data} />} />
-      <Route path="rank-history" element={<RankHistory guest />} />
-      <Route path="teams/:id" element={<TeamProfileView key={location.pathname} guestData={data} />} />
+      <Route path="teams" element={<MergeGate guest><Teams guestData={data} /></MergeGate>} />
+      <Route path="rank-history" element={<MergeGate guest><RankHistory guest /></MergeGate>} />
+      <Route path="teams/:id" element={<MergeGate guest><TeamProfileView key={location.pathname} guestData={data} /></MergeGate>} />
       <Route path="castaways" element={<ContestantsGrid guestData={data} />} />
       <Route path="castaways/:id" element={<SeasonContestantDetail key={location.pathname} guestData={data} />} />
       <Route path="weekly-picks" element={<WeeklyPicks guestData={data} />} />

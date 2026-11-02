@@ -317,3 +317,26 @@
 
 .castaway-tribe .tribe-dina, .weekly-tribe-dina { color: #f52353; }
 .weekly-tribe-lists { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+
+.weekly-individual-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); gap: 10px; }
+.weekly-individual-options button { min-width: 0; font-size: .85rem; }
+
+.castaway-draft-button:not(:disabled) { background: #166534; color: white; }
+.castaway-draft-button:not(:disabled):hover { background: #15803d; }
+.merge-locked-page { position: relative; min-height: 85dvh; overflow: hidden; }
+.merge-blurred-content { filter: blur(22px); pointer-events: none; user-select: none; }
+.merge-lock-overlay { position: absolute; inset: 0; display: grid; place-items: start center; padding: max(100px, 24dvh) 20px 40px; background: rgba(15,23,42,.28); }
+.merge-lock-message { position: sticky; top: 24dvh; width: min(420px, 100%); box-sizing: border-box; padding: 28px 22px; border-radius: 18px; background: rgba(255,255,255,.97); box-shadow: 0 16px 48px #0005; text-align: center; }
+.merge-lock-message h1 { font-size: 1.5rem; margin: 0 0 12px; }
+.merge-lock-deadline { color: #64748b; font-size: .85rem; }
+.merge-lock-message a { display: inline-block; background: #166534; color: white; padding: 12px 20px; border-radius: 9px; font-weight: 700; }
+.weekly-pick-profiles { display: flex; flex-wrap: nowrap; gap: 16px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #94a3b8 transparent; background: rgba(248,250,252,.96); border-radius: 14px; padding: 12px 16px 10px; margin-bottom: 18px; }
+.weekly-pick-profile { display: flex; flex: 0 0 58px; flex-direction: column; align-items: center; gap: 8px; padding: 2px 0 4px; text-align: center; }
+.weekly-pick-profile img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; object-position: center top; border: 2px solid white; box-shadow: 0 0 0 1px #cbd5e1; }
+.weekly-pick-profile strong { color: #334e93; font-size: 1.2rem; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.weekly-pick-profile strong small { font-size: .75rem; margin-left: 1px; }
+.weekly-pick-profile { flex-basis: 76px; }
+.weekly-profile-photo { width: 54px; height: 54px; border-radius: 50%; overflow: hidden; border: 2px solid var(--castaway-color); }
+.weekly-profile-photo img { display: block; width: 100%; height: 100%; border: 0; box-shadow: none; transform: scale(1.3); transform-origin: 50% 35%; }
+.weekly-profile-name { width: 100%; color: #475569; font-size: .72rem; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+.weekly-pick-profile strong { color: var(--castaway-color, #334e93); }

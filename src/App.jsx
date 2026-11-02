@@ -4,6 +4,7 @@ import { supabase } from "./supabaseClient";
 import { TopNav, BottomNav } from "./components/Navbar";
 import "./App.css";
 
+import MergeGate from "./components/MergeGate";
 import RankHistory from "./components/RankHistory";
 import GuestSite from "./components/GuestSite";
 import Login from "./components/Login";
@@ -128,16 +129,16 @@ function AppLayout({ session, profile, setProfile, needsTeamSetup }) {
               session
                 ? (needsTeamSetup
                   ? <Navigate to="/create-team" />
-                  : <Teams />)
+                  : <MergeGate><Teams /></MergeGate>)
                 : <Navigate to="/login" />
             }
           />
 
-          <Route path="/rank-history" element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <RankHistory />) : <Navigate to="/login" />} />
+          <Route path="/rank-history" element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <MergeGate><RankHistory /></MergeGate>) : <Navigate to="/login" />} />
 
           <Route
             path="/teams/:id"
-            element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <TeamProfileView key={location.pathname} />) : <Navigate to="/login" />}
+            element={session ? (needsTeamSetup ? <Navigate to="/create-team" /> : <MergeGate><TeamProfileView key={location.pathname} /></MergeGate>) : <Navigate to="/login" />}
           />
 
           <Route

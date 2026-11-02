@@ -115,13 +115,11 @@ export default function WeeklyPicks({ guestData = null }) {
   const submittedPicks = canViewLeaguePicks ? leagueEntries.map(team => team.weekly_picks?.[selectedWeek]).filter(Boolean).map(String) : []
   const distributionOptions = pickPhase === 'tribal'
     ? availableTribes.map(tribe => ({ value: tribe.name, label: tribe.name }))
-    : [...new Set(submittedPicks)].map(value => ({ value, label: contestantMap.get(value)?.display_name || contestantMap.get(value)?.name || 'Unknown pick' }))
+    : contestants.filter(c => !c.is_eliminated || submittedPicks.includes(String(c.id))).map(c => ({ value: String(c.id), label: c.display_name || c.name }))
   const pickDistribution = distributionOptions.map(option => ({
     ...option,
     count: submittedPicks.filter(value => value === option.value).length
   }))
-  const distributionColors = ['#166534', '#2563eb', '#be123c', '#7e22ce', '#b45309', '#0e7490']
-  const distributionColor = (option, index) => option.value === 'Savu' ? '#7e22ce' : option.value === 'Toka' ? '#f8e51c' : option.value === 'Dina' ? '#f52353' : distributionColors[index % distributionColors.length]
 
   async function savePick(pickValue, pickLabel) {
     if (!entry || currentPick || !isPickOpen) return
@@ -183,9 +181,11 @@ export default function WeeklyPicks({ guestData = null }) {
 
       {!guestData && <section style={{ maxWidth: 980, margin: '0 auto', background: 'rgba(255,255,255,.9)', padding: currentPick ? '8px 12px' : 14, borderRadius: 12 }}>
         {isNotApplicable ? <p style={{ textAlign: 'center' }}><strong>Week {selectedWeek}: N/A — tribe swap</strong><br />No weekly picks or bonus points for this week.</p> : currentPick ? (
-          <div className="weekly-locked-pick">
-            <span>Week {selectedWeek} pick locked:</span>
-            <strong>{currentPickLabel || 'Unknown pick'}</strong>
+          <div>
+            <div className="weekly-locked-pick">
+              <span>Week {selectedWeek} pick locked:</span>
+              <strong>{currentPickLabel || 'Unknown pick'}</strong>
+            </div>
           </div>
         ) : isPickOpen ? (
           <>
@@ -209,7 +209,7 @@ export default function WeeklyPicks({ guestData = null }) {
                 })}
               </div>
             </details>}
-            <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8, justifyContent: pickPhase === 'tribal' ? 'center' : 'flex-start' }}>
+            <div className={pickPhase === 'individual' ? 'weekly-individual-options' : ''} style={pickPhase === 'tribal' ? { display: 'flex', gap: 10, justifyContent: 'center' } : undefined}>
               {pickPhase === 'tribal' ? availableTribes.map(tribe => (
                 <button key={tribe.name} onClick={() => savePick(tribe.name, tribe.name)} disabled={saving} style={{ flex: '0 1 230px', minWidth: 0, border: '1px solid #d1d5db', borderRadius: 10, padding: 8, background: 'white' }}>
                   <img src={tribe.image} alt={`${tribe.name} buff`} style={{ width: '100%', aspectRatio: 1, objectFit: 'cover', objectPosition: 'center top', borderRadius: 8 }} />
@@ -231,18 +231,29 @@ export default function WeeklyPicks({ guestData = null }) {
 
       {canViewLeaguePicks && (
         <section style={{ maxWidth: 980, margin: '1rem auto 0' }}>
-          <h2 style={{ color: 'white', textShadow: '0 2px 8px #000' }}>League picks</h2>
-          <div className="weekly-pick-percentages" aria-label="Percentage of submitted picks">
-            {submittedPicks.length > 0 ? pickDistribution.map(option => <span key={option.value} className={option.value === 'Savu' ? 'percentage-savu' : option.value === 'Toka' ? 'percentage-toka' : option.value === 'Dina' ? 'percentage-dina' : 'percentage-individual'}><strong>{Math.round(option.count / submittedPicks.length * 100)}%</strong> {option.label}</span>) : <p>{isBeforePickStart ? 'Picks not open yet.' : 'No picks submitted yet.'}</p>}
-            {submittedPicks.length > 0 && <div className="weekly-pick-split">
-              <div className="weekly-pick-split-bar" role="img" aria-label={pickDistribution.map(option => `${option.label}: ${Math.round(option.count / submittedPicks.length * 100)}%`).join(', ')}>
-                {pickDistribution.filter(option => option.count > 0).map(option => {
-                  const index = pickDistribution.indexOf(option)
-                  return <span key={option.value} style={{ width: `${option.count / submittedPicks.length * 100}%`, background: distributionColor(option, index) }} />
-                })}
+          <h2 style={{ color: 'white', textShadow: '0 2px 8px #000' }}>League predictions</h2>
+          {pickPhase === 'tribal' ? <div className="weekly-pick-percentages" aria-label="Percentage of submitted predictions">
+            {submittedPicks.length > 0 ? <>
+              {pickDistribution.map(option => <span key={option.value} className={`percentage-${option.value.toLowerCase()}`}><strong>{Math.round(option.count / submittedPicks.length * 100)}%</strong> {option.label}</span>)}
+              <div className="weekly-pick-split">
+                <div className="weekly-pick-split-bar" role="img" aria-label={pickDistribution.map(option => `${option.label}: ${Math.round(option.count / submittedPicks.length * 100)}%`).join(', ')}>
+                  {pickDistribution.filter(option => option.count > 0).map(option => <span key={option.value} style={{ width: `${option.count / submittedPicks.length * 100}%`, background: option.value === 'Savu' ? '#7e22ce' : option.value === 'Toka' ? '#f8e51c' : '#f52353' }} />)}
+                </div>
               </div>
-            </div>}
-          </div>
+            </> : <p>{isBeforePickStart ? 'Predictions open soon.' : 'No predictions yet.'}</p>}
+          </div> : <div className="weekly-pick-profiles" tabIndex={0} role="region" aria-label="Prediction percentages, most selected first">
+            {submittedPicks.length > 0 ? pickDistribution.filter(option => option.count > 0).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label)).map(option => {
+              const image = contestantMap.get(option.value)?.picture_url
+              // Stable castaway order keeps colors consistent as vote rankings change.
+              const colorIndex = [...contestants].sort((a, b) => Number(a.id) - Number(b.id)).findIndex(c => String(c.id) === option.value)
+              const color = `hsl(${(colorIndex * 137.508 + 220) % 360} 62% 35%)`
+              return <div key={option.value} className="weekly-pick-profile" style={{ '--castaway-color': color }} title={option.label} aria-label={`${option.label}: ${Math.round(option.count / submittedPicks.length * 100)}%`}>
+                <div className="weekly-profile-photo"><img src={image || '/fallback.png'} alt={option.label} /></div>
+                <span className="weekly-profile-name">{option.label}</span>
+                <strong>{Math.round(option.count / submittedPicks.length * 100)}<small>%</small></strong>
+              </div>
+            }) : <p>{isBeforePickStart ? 'Predictions open soon.' : 'No predictions yet.'}</p>}
+          </div>}
           <div className="weekly-picks-grid">
             {leagueEntries.map(team => {
               const pickValue = team.weekly_picks?.[selectedWeek]
