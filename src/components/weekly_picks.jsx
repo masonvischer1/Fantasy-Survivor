@@ -113,7 +113,8 @@ export default function WeeklyPicks({ guestData = null }) {
   // Distribution and cards must share the same per-week visibility rule.
   const canViewLeaguePicks = !isNotApplicable && (guestData ? isGuestPickWeekReleased(guestData.season, selectedWeek) : !!currentPick)
   const submittedPicks = canViewLeaguePicks ? leagueEntries.map(team => team.weekly_picks?.[selectedWeek]).filter(Boolean).map(String) : []
-  const distributionOptions = pickPhase === 'tribal'
+  const isIndividualTracker = pickPhase === 'individual' || submittedPicks.some(value => contestantMap.has(value))
+  const distributionOptions = !isIndividualTracker
     ? availableTribes.map(tribe => ({ value: tribe.name, label: tribe.name }))
     : contestants.filter(c => !c.is_eliminated || submittedPicks.includes(String(c.id))).map(c => ({ value: String(c.id), label: c.display_name || c.name }))
   const pickDistribution = distributionOptions.map(option => ({
@@ -232,7 +233,7 @@ export default function WeeklyPicks({ guestData = null }) {
       {canViewLeaguePicks && (
         <section style={{ maxWidth: 980, margin: '1rem auto 0' }}>
           <h2 style={{ color: 'white', textShadow: '0 2px 8px #000' }}>League predictions</h2>
-          {pickPhase === 'tribal' ? <div className="weekly-pick-percentages" aria-label="Percentage of submitted predictions">
+          {!isIndividualTracker ? <div className="weekly-pick-percentages" aria-label="Percentage of submitted predictions">
             {submittedPicks.length > 0 ? <>
               {pickDistribution.map(option => <span key={option.value} className={`percentage-${option.value.toLowerCase()}`}><strong>{Math.round(option.count / submittedPicks.length * 100)}%</strong> {option.label}</span>)}
               <div className="weekly-pick-split">

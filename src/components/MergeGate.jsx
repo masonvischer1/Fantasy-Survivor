@@ -25,7 +25,7 @@ export default function MergeGate({ children, guest = false }) {
       <section className="merge-lock-message" role="status">
         <h1>Make your merge pick</h1>
         <p>Pick your final castaway to see the leaderboard.</p>
-        <p className="merge-lock-deadline">Closes Nov. 4 at 8:20 PM EST.</p>
+        <p className="merge-lock-deadline">Closes Nov. 4 at 8 PM EST.</p>
         <Link to={guest ? '/login' : '/castaways'}>Choose castaway →</Link>
       </section>
     </div>
